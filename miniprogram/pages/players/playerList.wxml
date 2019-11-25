@@ -1,0 +1,10 @@
+<!--miniprogram/pages/players/playerList.wxml-->
+<view 
+	wx:for="{{players}}"
+  wx:key="{item._id}"
+	class="uploader">
+
+	<navigator url="../players/detail?id={{item.id}}" open-type="navigate" class="uploader-text">
+	  <text>{{item.name}}</text>
+	</navigator>
+</view>
