@@ -1,0 +1,12 @@
+<!--miniprogram/pages/matchList/matchList.wxml-->
+
+
+<view 
+	wx:for="{{matchlist}}"
+	class="uploader">
+
+	<navigator url="../matchList/detail?title={{item.title}}" open-type="navigate" class="uploader-text">
+	  <text>{{item.title}}</text>
+	</navigator>
+</view>
+
