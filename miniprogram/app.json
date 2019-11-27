@@ -17,7 +17,8 @@
     "pages/matches/matchList",
     "pages/matches/detail",
     "pages/players/playerList",
-    "pages/players/detail"
+    "pages/players/detail",
+    "pages/clubs/clubList"
   ],
   "window": {
     "backgroundColor": "#F6F6F6",

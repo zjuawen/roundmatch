@@ -12,9 +12,9 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
-    this.setData({
-      players: [{ name: '2019-01-01' }, { name: '2019-22-22' }]
-    })
+    // this.setData({
+    //   players: [{ name: '2019-01-01' }, { name: '2019-22-22' }]
+    // })
     this.loadPlayers();
     
   },

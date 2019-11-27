@@ -1,4 +1,4 @@
-// miniprogram/pages/matchList/matchList.js
+// miniprogram/pages/clubs/clubList.js
 Page({
 
   /**
@@ -12,8 +12,8 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
-    this.setData({ clubid: options.clubid });
-    this.loadMatches(this.data.clubid);
+    this.loadClubs();
+
   },
 
   /**
@@ -65,19 +65,19 @@ Page({
 
   },
 
-  loadMatches: function (clubid) {
-    const db = wx.cloud.database();//({env:'test-roundmatch'});
+
+
+  loadClubs: function () {
+    const db = wx.cloud.database(); //({env:'test-roundmatch'});
     const $ = db.command.aggregate;
 
-    db.collection('matches')
+    db.collection('clubs')
       .aggregate()
-      .match({
-        clubid: clubid,
-      })
       .project({
         _id: false,
         id: true,
-        clubid: true,
+        shortName: true,
+        wholeName: true,
         createDate: $.dateToString({
           date: '$createDate',
           format: '%Y-%m-%d'
@@ -88,12 +88,9 @@ Page({
         // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
         console.log(res.list)
         this.setData({
-          matches: res.list
+          clubs: res.list
         })
       })
   },
 
-  onNewGame: function() {
-
-  }
 })

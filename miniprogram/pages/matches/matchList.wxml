@@ -1,12 +1,16 @@
 <!--miniprogram/pages/matchList/matchList.wxml-->
 
+<view class="userinfo-nickname-wrapper">
+      <button class="userinfo-nickname" bindtap="onNewGame">点击新建</button>
+    </view>
 
 <view 
-	wx:for="{{matchlist}}"
+	wx:for="{{matches}}"
+  	wx:key="{item.id}"
 	class="uploader">
 
-	<navigator url="../matchList/detail?title={{item.title}}" open-type="navigate" class="uploader-text">
-	  <text>{{item.title}}</text>
+	<navigator url="../matches/detail?clubid={{item.clubid}}&matchid={{item.id}}" open-type="navigate" class="uploader-text">
+	  <text>{{item.createDate}}</text>
 	</navigator>
 </view>
 

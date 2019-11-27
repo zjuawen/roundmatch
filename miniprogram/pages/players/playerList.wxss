@@ -1,1 +1,3 @@
 /* miniprogram/pages/players/playerList.wxss */
+
+@import "../../style/images.wxss";

@@ -1,2 +1,12 @@
 <!--miniprogram/pages/matchList/detail.wxml-->
-<text>{{title}}</text>
+
+<view 
+	wx:for="{{games}}"
+  	wx:key="{item.id}"
+	class="uploader">
+
+	<text>{{item.playerName1}}&{{item.playerName2}}</text>
+  <text> {{item.score1}}:{{item.score2}} </text>
+  <text>{{item.playerName3}}&{{item.playerName4}}</text>
+    
+</view>

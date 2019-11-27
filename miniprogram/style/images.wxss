@@ -1,0 +1,7 @@
+.checkbox {
+  margin: 10rpx;
+  height: 16px;
+  width: 16px;
+  border-width: 1;
+  border-color: 'red';
+}

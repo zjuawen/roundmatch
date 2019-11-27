@@ -1,1 +1,3 @@
 /* miniprogram/pages/matchList/matchList.wxss */
+
+@import "../../style/styles.wxss";

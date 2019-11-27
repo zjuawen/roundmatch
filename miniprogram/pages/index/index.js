@@ -11,6 +11,13 @@ Page({
   },
 
   onLoad: function() {
+    //debug
+    wx.redirectTo({
+      url: '../matches/matchList?clubid=1',
+    })
+    return;
+    //end of debug
+
     if (!wx.cloud) {
       wx.redirectTo({
         url: '../chooseLib/chooseLib',
@@ -56,7 +63,8 @@ Page({
         app.globalData.openid = res.result.openid
         wx.navigateTo({
           // url: '../matchList/matchList',
-          url: '../players/playerList',
+          // url: '../players/playerList',
+          url: '../clubs/clubList',
         })
       },
       fail: err => {
