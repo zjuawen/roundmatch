@@ -94,6 +94,8 @@ Page({
   },
 
   onNewGame: function() {
-
+    wx.navigateTo({
+      url: '../players/playerList?clubid=1&action=new',
+    })
   }
 })

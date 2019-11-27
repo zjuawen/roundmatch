@@ -8,14 +8,80 @@ Page({
 
   },
 
+  loadPlayers: function(clubid) {
+    const db = wx.cloud.database();//({env:'test-roundmatch'});
+
+    db.collection('players')
+    .where({
+      clubid: clubid
+    })
+    .get()
+    .then(res => {
+      // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
+      console.log(res.data)
+      this.setData({
+        players: res.data
+      })
+    })
+  },
+
+  onSelectPlayer: function(event) {
+    let data = this.data.players;
+    let playerid = event.target.dataset.id;
+    for( let i = 0; i<data.length; i++){
+      if( data[i].id == playerid){
+         data[i].enable = !data[i].enable;
+         this.setData({players:data});
+         return;
+      }
+    }
+  },
+
+  getSelectedPlayers: function() {
+    let data = this.data.players;
+    let playerArray = [];
+    for( let i = 0; i<data.length; i++){
+      if( data[i].enable){
+         playerArray.push(data[i].id)
+      }
+    }
+    return playerArray;
+  },
+
+  onPlayerSelected: function(event) {
+    let func = 'createNewMatch';
+    let playerArray = this.getSelectedPlayers();
+    console.log('selected: '+ playerArray);
+    wx.cloud.callFunction({
+      name: func,
+      data: playerArray,
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result);
+        wx.navigateTo({
+          // url: '../matchList/matchList',
+          // url: '../players/playerList',
+          url: '../matches/detail?matchid=' + res.result.matchid,
+        })
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
+  },
+
+
   /**
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
-    // this.setData({
-    //   players: [{ name: '2019-01-01' }, { name: '2019-22-22' }]
-    // })
-    this.loadPlayers();
+    this.setData({
+      clubid: options.clubid,
+      action: options.action,
+    });
+    this.loadPlayers(this.data.clubid);
     
   },
 
@@ -68,15 +134,5 @@ Page({
 
   },
 
-  loadPlayers: function(){
-    const db = wx.cloud.database();//({env:'test-roundmatch'});
-    db.collection('players').get().then(res => {
-      // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-      console.log(res.data)
-      this.setData({
-        players: res.data
-      })
-    })
-    
-  },
+ 
 })

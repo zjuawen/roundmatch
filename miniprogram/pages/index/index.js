@@ -13,7 +13,7 @@ Page({
   onLoad: function() {
     //debug
     wx.redirectTo({
-      url: '../matches/matchList?clubid=1',
+      url: '../players/playerList?clubid=1',
     })
     return;
     //end of debug
