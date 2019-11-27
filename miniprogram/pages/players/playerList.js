@@ -54,13 +54,14 @@ Page({
     console.log('selected: '+ playerArray);
     wx.cloud.callFunction({
       name: func,
-      data: playerArray,
+      data: {data:playerArray},
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result);
+        var data = JSON.stringify(res.result.data);
         wx.navigateTo({
           // url: '../matchList/matchList',
           // url: '../players/playerList',
-          url: '../matches/detail?matchid=' + res.result.matchid,
+          url: '../matches/detail?action=new&clubid=' + this.data.clubid + '&data=' + data,
         })
       },
       fail: err => {

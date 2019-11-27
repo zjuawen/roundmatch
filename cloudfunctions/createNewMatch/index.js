@@ -82,14 +82,14 @@ exports.main = async (event, context) => {
       player2: playerArray[orderArray[i][0][1]],
       player3: playerArray[orderArray[i][1][0]],
       player4: playerArray[orderArray[i][1][1]],
-      score1: 0,
-      score2: 0,
+      score1: -1,
+      score2: -1,
     };
     games.push(game);
   }
 
   return {
-    result: games,
+    data: games,
     event,
     openid: wxContext.OPENID,
     appid: wxContext.APPID,

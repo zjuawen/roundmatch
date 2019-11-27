@@ -9,7 +9,7 @@
   	wx:key="{item.id}"
 	class="uploader">
 
-	<navigator url="../matches/detail?clubid={{item.clubid}}&matchid={{item.id}}" open-type="navigate" class="uploader-text">
+	<navigator url="../matches/detail?action=old&clubid={{item.clubid}}&matchid={{item.id}}" open-type="navigate" class="uploader-text">
 	  <text>{{item.createDate}}</text>
 	</navigator>
 </view>

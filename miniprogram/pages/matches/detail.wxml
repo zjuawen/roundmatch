@@ -6,7 +6,12 @@
 	class="uploader">
 
 	<text>{{item.playerName1}}&{{item.playerName2}}</text>
-  <text> {{item.score1}}:{{item.score2}} </text>
-  <text>{{item.playerName3}}&{{item.playerName4}}</text>
+	<view wx:if="{{(item.score1+item.score2)<0}}" >
+		<text> vs </text>
+	</view>
+	<view wx:if="{{(item.score1+item.score2)>=0}}" >
+		<text> {{item.score1}}:{{item.score2}} </text>
+	</view>
+	<text>{{item.playerName3}}&{{item.playerName4}}</text>
     
 </view>

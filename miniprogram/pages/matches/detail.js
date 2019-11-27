@@ -8,68 +8,38 @@ Page({
 
   },
 
-  /**
-   * 生命周期函数--监听页面加载
-   */
-  onLoad: function (options) {
-    this.setData({ 
-      clubid: options.clubid,
-      matchid: options.matchid
-    });
-    this.loadData(this.data.clubid, this.data.matchid);
-    // this.test(this.data.clubid, this.data.matchid);
+  loadNewMatch: function (clubid, matchdata) {
+    const db = wx.cloud.database();//({env:'test-roundmatch'});
+    db.collection('players')
+      .where({
+        clubid: clubid
+      })
+      .get()
+      .then(res => {
+      // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
+      console.log(res.data);
+      this.setData({
+        players: res.data
+      });
+      this.renderNewMatch(matchdata);
+    }) 
   },
 
-  /**
-   * 生命周期函数--监听页面初次渲染完成
-   */
-  onReady: function () {
-
+  renderNewMatch: function(matchdata) {
+    let data = matchdata;
+    for( let i = 0; i<data.length; i++){
+      data[i].playerName1 = this.playerToName(data[i].player1);
+      data[i].playerName2 = this.playerToName(data[i].player2);
+      data[i].playerName3 = this.playerToName(data[i].player3);
+      data[i].playerName4 = this.playerToName(data[i].player4);
+    }
+    console.log(data)
+    this.setData({
+      games: data
+    })
   },
 
-  /**
-   * 生命周期函数--监听页面显示
-   */
-  onShow: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面隐藏
-   */
-  onHide: function () {
-
-  },
-
-  /**
-   * 生命周期函数--监听页面卸载
-   */
-  onUnload: function () {
-
-  },
-
-  /**
-   * 页面相关事件处理函数--监听用户下拉动作
-   */
-  onPullDownRefresh: function () {
-
-  },
-
-  /**
-   * 页面上拉触底事件的处理函数
-   */
-  onReachBottom: function () {
-
-  },
-
-  /**
-   * 用户点击右上角分享
-   */
-  onShareAppMessage: function () {
-
-  },
-
-  loadData: function (clubid, matchid) {
+  loadMatchData: function (clubid, matchid) {
     const db = wx.cloud.database();//({env:'test-roundmatch'});
     db.collection('players')
       .where({
@@ -123,6 +93,89 @@ Page({
       })
   },
 
+  playerToName: function (playerid) {
+    let data = this.data.players;
+    for( let i = 0; i<data.length; i++){
+      if( data[i].id == playerid){
+        return data[i].name;
+      }
+    }
+    return "ERR!";
+  },
+
+  /**
+   * 生命周期函数--监听页面加载
+   */
+  onLoad: function (options) {
+    let action = options.action;
+    if( action == 'old'){
+      this.setData({ 
+        action: options.action,
+        clubid: options.clubid,
+        matchid: options.matchid
+      });
+      this.loadMatchData(this.data.clubid, this.data.matchid);
+      // this.test(this.data.clubid, this.data.matchid);
+    } else if( action == 'new'){
+      var matchdata = JSON.parse(options.data);
+      this.setData({ 
+        action: options.action,
+        clubid: options.clubid,
+        matchdata: matchdata,
+      });
+      this.loadNewMatch(this.data.clubid, this.data.matchdata)
+    }
+  },
+
+  /**
+   * 生命周期函数--监听页面初次渲染完成
+   */
+  onReady: function () {
+
+  },
+
+  /**
+   * 生命周期函数--监听页面显示
+   */
+  onShow: function () {
+
+  },
+
+  /**
+   * 生命周期函数--监听页面隐藏
+   */
+  onHide: function () {
+
+  },
+
+  /**
+   * 生命周期函数--监听页面卸载
+   */
+  onUnload: function () {
+
+  },
+
+  /**
+   * 页面相关事件处理函数--监听用户下拉动作
+   */
+  onPullDownRefresh: function () {
+
+  },
+
+  /**
+   * 页面上拉触底事件的处理函数
+   */
+  onReachBottom: function () {
+
+  },
+
+  /**
+   * 用户点击右上角分享
+   */
+  onShareAppMessage: function () {
+
+  },
+
   // test: function(clubid, matchid) {
   //   const db = wx.cloud.database();//({env:'test-roundmatch'});
 
@@ -146,16 +199,4 @@ Page({
   //       })
   //     })
   // },
-
-
-  playerToName: function (playerid) {
-    let data = this.data.players;
-    for( let i = 0; i<data.length; i++){
-      if( data[i].id == playerid){
-        return data[i].name;
-      }
-    }
-    return "ERR!";
-  }
-
 })
