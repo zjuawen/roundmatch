@@ -49,12 +49,17 @@ Page({
   },
 
   onPlayerSelected: function(event) {
-    let func = 'createNewMatch';
+
+    let func = 'matchService';
     let playerArray = this.getSelectedPlayers();
     console.log('selected: '+ playerArray);
+
     wx.cloud.callFunction({
       name: func,
-      data: {data:playerArray},
+      data: {
+        action: 'create',
+        players:playerArray
+      },
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result);
         var data = JSON.stringify(res.result.data);

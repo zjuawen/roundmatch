@@ -9,11 +9,12 @@ Page({
     takeSession: false,
     requestResult: ''
   },
-
+  
   onLoad: function() {
     //debug
     wx.redirectTo({
-      url: '../players/playerList?clubid=1',
+      // url: '../players/playerList?clubid=1',
+      url: '../matches/matchList?clubid=1',
     })
     return;
     //end of debug

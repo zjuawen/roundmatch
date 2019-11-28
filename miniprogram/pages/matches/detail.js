@@ -16,18 +16,18 @@ Page({
       })
       .get()
       .then(res => {
-      // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-      console.log(res.data);
-      this.setData({
-        players: res.data
-      });
-      this.renderNewMatch(matchdata);
-    }) 
+        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
+        console.log(res.data);
+        this.setData({
+          players: res.data
+        });
+        this.renderNewMatch(matchdata);
+      })
   },
 
-  renderNewMatch: function(matchdata) {
+  renderNewMatch: function (matchdata) {
     let data = matchdata;
-    for( let i = 0; i<data.length; i++){
+    for (let i = 0; i < data.length; i++) {
       data[i].playerName1 = this.playerToName(data[i].player1);
       data[i].playerName2 = this.playerToName(data[i].player2);
       data[i].playerName3 = this.playerToName(data[i].player3);
@@ -47,13 +47,13 @@ Page({
       })
       .get()
       .then(res => {
-      // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-      console.log(res.data);
-      this.setData({
-        players: res.data
-      });
-      this.loadGames(matchid);
-    }) 
+        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
+        console.log(res.data);
+        this.setData({
+          players: res.data
+        });
+        this.loadGames(matchid);
+      })
   },
 
   loadGames: function (matchid) {
@@ -80,7 +80,7 @@ Page({
         // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
         console.log(res.list)
         let data = res.list;
-        for( let i = 0; i<data.length; i++){
+        for (let i = 0; i < data.length; i++) {
           data[i].playerName1 = this.playerToName(data[i].player1);
           data[i].playerName2 = this.playerToName(data[i].player2);
           data[i].playerName3 = this.playerToName(data[i].player3);
@@ -95,12 +95,42 @@ Page({
 
   playerToName: function (playerid) {
     let data = this.data.players;
-    for( let i = 0; i<data.length; i++){
-      if( data[i].id == playerid){
+    for (let i = 0; i < data.length; i++) {
+      if (data[i].id == playerid) {
         return data[i].name;
       }
     }
     return "ERR!";
+  },
+
+  onSaveMatch: function (event) {
+
+    let func = 'saveMatch';
+    console.log('saving match ...');
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        data:this.data.matchdata,
+        clubid: this.data.clubid
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result);
+        this.onSaveOK();
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
+  },
+
+  onSaveOK: function () {
+    this.setData({
+      action:'old'
+    });
   },
 
   /**
@@ -108,17 +138,17 @@ Page({
    */
   onLoad: function (options) {
     let action = options.action;
-    if( action == 'old'){
-      this.setData({ 
+    if (action == 'old') {
+      this.setData({
         action: options.action,
         clubid: options.clubid,
         matchid: options.matchid
       });
       this.loadMatchData(this.data.clubid, this.data.matchid);
       // this.test(this.data.clubid, this.data.matchid);
-    } else if( action == 'new'){
+    } else if (action == 'new') {
       var matchdata = JSON.parse(options.data);
-      this.setData({ 
+      this.setData({
         action: options.action,
         clubid: options.clubid,
         matchdata: matchdata,

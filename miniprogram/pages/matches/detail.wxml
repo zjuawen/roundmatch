@@ -1,5 +1,12 @@
 <!--miniprogram/pages/matchList/detail.wxml-->
 
+
+<button 
+	wx:if="{{action=='new'}}" 
+	class="userinfo-nickname" bindtap="onSaveMatch">
+	<text>保存</text>
+</button>
+
 <view 
 	wx:for="{{games}}"
   	wx:key="{item.id}"

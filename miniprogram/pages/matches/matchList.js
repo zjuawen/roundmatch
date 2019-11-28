@@ -8,9 +8,42 @@ Page({
 
   },
 
+  loadMatches: function (clubid) {
+
+    let func = 'matchService';
+    let playerArray = this.getSelectedPlayers();
+    console.log('selected: '+ playerArray);
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: 'list',
+        clubid: clubid
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.data);
+        this.setData({
+          matches: res.data
+        })
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
+  },
+
+  onNewGame: function() {
+    wx.navigateTo({
+      url: '../players/playerList?clubid=1&action=new',
+    })
+  },
+
   /**
-   * 生命周期函数--监听页面加载
-   */
+ * 生命周期函数--监听页面加载
+ */
   onLoad: function (options) {
     this.setData({ clubid: options.clubid });
     this.loadMatches(this.data.clubid);
@@ -64,38 +97,4 @@ Page({
   onShareAppMessage: function () {
 
   },
-
-  loadMatches: function (clubid) {
-    const db = wx.cloud.database();//({env:'test-roundmatch'});
-    const $ = db.command.aggregate;
-
-    db.collection('matches')
-      .aggregate()
-      .match({
-        clubid: clubid,
-      })
-      .project({
-        _id: false,
-        id: true,
-        clubid: true,
-        createDate: $.dateToString({
-          date: '$createDate',
-          format: '%Y-%m-%d'
-        })
-      })
-      .end()
-      .then(res => {
-        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-        console.log(res.list)
-        this.setData({
-          matches: res.list
-        })
-      })
-  },
-
-  onNewGame: function() {
-    wx.navigateTo({
-      url: '../players/playerList?clubid=1&action=new',
-    })
-  }
 })
