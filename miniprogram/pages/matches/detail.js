@@ -105,14 +105,16 @@ Page({
 
   onSaveMatch: function (event) {
 
-    let func = 'saveMatch';
+    let func = 'matchService';
     console.log('saving match ...');
 
     wx.cloud.callFunction({
       name: func,
       data: {
-        data:this.data.matchdata,
-        clubid: this.data.clubid
+        action: 'save',
+        matchdata: this.data.matchdata,
+        clubid: this.data.clubid,
+        // remark: "test"
       },
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result);

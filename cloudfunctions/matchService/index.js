@@ -19,7 +19,14 @@ exports.main = async (event, context) => {
     data = createMatchData(event.players);
   } else if (action == 'list') {
     data = await getMatchList(event.clubid);
+  } else if (action == 'save') {
+    data = await saveMatchData(event.clubid, event.matchdata);
+  } else if (action == 'read') {
+    data = await readMatch(event.matchid);
   }
+  // else if (action == 'debug') {
+  //   debug();
+  // }
 
   return {
     data: data,
@@ -28,6 +35,59 @@ exports.main = async (event, context) => {
     appid: wxContext.APPID,
     unionid: wxContext.UNIONID,
   }
+}
+
+//保存新增的比赛数据
+saveMatchData = async (clubid, matchdata, remark="") => {
+  return await db.collection('matches')
+    .add({
+      // data 字段表示需新增的 JSON 数据
+      data: {
+        // id: _.inc(1),
+        clubid: clubid,
+        createDate: db.serverDate(),
+        remark: remark,
+      }
+    })
+    .then(res => {
+      console.log(res)
+      let matchid = res._id;
+      console.log("added new match: " + matchid);
+      return  savaGames(matchid, matchdata);
+    })
+}
+
+//保存对阵数据
+savaGames = async (matchid, matchdata) => {
+  let data = matchdata;
+
+  let count = 0;
+  for (let i = 0; i < data.length; i++) {
+    await db.collection('games')
+      .add({
+        // data 字段表示需新增的 JSON 数据
+        data: {
+          // id: db.command.inc(1).toString(),
+          matchid: matchid,
+          player1: data[i].player1.toString(),
+          player2: data[i].player2.toString(),
+          player3: data[i].player3.toString(),
+          player4: data[i].player4.toString(),
+          score1: -1,
+          score2: -1,
+          createDate: db.serverDate(),
+        }
+      })
+      .then(res => {
+        console.log(res)
+        count += 1;
+        return count;
+      })
+  }
+  return {
+    gamecount: count,
+    matchid: matchid
+  };
 }
 
 //创建比赛数据（排阵，未保存）
@@ -53,6 +113,32 @@ createMatchData = (playerArray) => {
   return games;
 }
 
+//读取比赛对阵数据
+readMatch = async (matchid) => {
+
+  return await db.collection('games')
+    .aggregate()
+    .match({
+      matchid: matchid,
+    })
+    // .project({
+    //   _id: false,
+    //   matchid: true,
+    //   player1: true,
+    //   player2: true,
+    //   player3: true,
+    //   player4: true,
+    //   score1: true,
+    //   score2: true,
+    //   createDate: true,
+    // })
+    .end()
+    .then(res => {
+      console.log(res.list)
+      return res.list;
+    })
+}
+
 //获取比赛列表
 getMatchList = async (clubid) => {
 
@@ -65,7 +151,7 @@ getMatchList = async (clubid) => {
       createDate: -1
     })
     .project({
-      _id: false,
+      _id: true,
       // id: true,
       clubid: true,
       createDate: $.dateToString({
@@ -89,38 +175,38 @@ shuffleArray = (array) => {
   return array;
 }
 
-// private final static int[][][] ORDERS_4 = new int[][][]{
-//   { { 0, 1 }, { 2, 3 } },
-//   { { 0, 2 }, { 1, 3 } },
-//   { { 0, 3 }, { 1, 2 } }
-// };
+const ORDERS_4 = [
+  [[0, 1], [2, 3]],
+  [[0, 2], [1, 3]],
+  [[0, 3], [1, 2]]
+];
 
-//     private final static int[][][] ORDERS_5 = new int[][][]{
-//   { { 0, 1 }, { 2, 3 } },
-//   { { 1, 2 }, { 3, 4 } },
-//   { { 2, 4 }, { 0, 3 } },
-//   { { 1, 3 }, { 0, 4 } },
-//   { { 1, 4 }, { 0, 2 } }
-// };
+const ORDERS_5 = [
+  [[0, 1], [2, 3]],
+  [[1, 2], [3, 4]],
+  [[2, 4], [0, 3]],
+  [[1, 3], [0, 4]],
+  [[1, 4], [0, 2]]
+];
 
-//     private final static int[][][] ORDERS_6 = new int[][][]{
-//   { { 1, 5 }, { 2, 4 } }, { { 0, 1 }, { 2, 3 } },
-//   { { 0, 2 }, { 4, 5 } }, { { 0, 4 }, { 1, 3 } },
-//   { { 1, 2 }, { 3, 5 } }, { { 0, 3 }, { 2, 5 } },
-//   { { 0, 5 }, { 1, 4 } }, { { 3, 4 }, { 1, 2 } }
-// };
+const ORDERS_6 = [
+  [[1, 5], [2, 4]], [[0, 1], [2, 3]],
+  [[0, 2], [4, 5]], [[0, 4], [1, 3]],
+  [[1, 2], [3, 5]], [[0, 3], [2, 5]],
+  [[0, 5], [1, 4]], [[3, 4], [1, 2]]
+];
 
-//     private final static int[][][] ORDERS_7 = new int[][][]{
-//   { { 2, 5 }, { 0, 6 } }, { { 0, 1 }, { 3, 4 } },
-//   { { 2, 3 }, { 4, 6 } }, { { 0, 5 }, { 1, 3 } },
-//   { { 1, 4 }, { 5, 6 } }, { { 0, 3 }, { 2, 6 } },
-//   { { 0, 2 }, { 4, 5 } }, { { 3, 6 }, { 1, 5 } },
-//   { { 1, 6 }, { 0, 4 } }, { { 3, 5 }, { 2, 4 } },
-//   { { 1, 2 }, { 0, 5 } }, { { 3, 4 }, { 2, 5 } },
-//   { { 1, 4 }, { 2, 6 } }, { { 1, 3 }, { 0, 6 } }
-// };
+const ORDERS_7 = [
+  [[2, 5], [0, 6]], [[0, 1], [3, 4]],
+  [[2, 3], [4, 6]], [[0, 5], [1, 3]],
+  [[1, 4], [5, 6]], [[0, 3], [2, 6]],
+  [[0, 2], [4, 5]], [[3, 6], [1, 5]],
+  [[1, 6], [0, 4]], [[3, 5], [2, 4]],
+  [[1, 2], [0, 5]], [[3, 4], [2, 5]],
+  [[1, 4], [2, 6]], [[1, 3], [0, 6]]
+];
 
-let ORDERS_8 = [
+const ORDERS_8 = [
   [[0, 1], [2, 3]], [[4, 5], [6, 7]],
   [[0, 2], [4, 6]], [[1, 3], [5, 7]],
   [[2, 4], [3, 5]], [[1, 7], [0, 6]],
@@ -136,10 +222,25 @@ let ORDERS_8 = [
 //   //            { {0,3},{1,2} }
 // };
 
-let ORDERS = [
+const ORDERS = [
   [], [], [], [],
-  [], [], [], [],
+  ORDERS_4, 
+  ORDERS_5,
+  ORDERS_6,
+  ORDERS_7,
   ORDERS_8,
   []
 ];
 
+//清除matches和games数据
+// debug = () => {
+//   let collectionName = 'games';
+//   db.collection(collectionName)
+//   .where({
+//     score1: -1
+//   })
+//   .remove()
+//   .then(res => {
+//     console.log(res)
+//   });
+// }
