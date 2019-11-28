@@ -11,8 +11,7 @@ Page({
   loadMatches: function (clubid) {
 
     let func = 'matchService';
-    let playerArray = this.getSelectedPlayers();
-    console.log('selected: '+ playerArray);
+    console.log('list matches');
 
     wx.cloud.callFunction({
       name: func,
@@ -21,9 +20,9 @@ Page({
         clubid: clubid
       },
       success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.data);
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
         this.setData({
-          matches: res.data
+          matches: res.result.data
         })
       },
       fail: err => {
