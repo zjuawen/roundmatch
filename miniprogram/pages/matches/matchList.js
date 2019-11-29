@@ -5,8 +5,23 @@ Page({
    * 页面的初始数据
    */
   data: {
-
+    // showActionsheet: false,
+    // actions: [
+    //   { text: '示例菜单', value: 1 },
+    //   { text: '示例菜单', value: 2 },
+    //   { text: '负向菜单', type: 'warn', value: 3 }
+    // ]
   },
+
+  // close: function () {
+  //   this.setData({
+  //     showActionsheet: false
+  //   })
+  // },
+  // btnClick(e) {
+  //   console.log(e)
+  //   this.close()
+  // },
 
   loadMatches: function (clubid) {
 

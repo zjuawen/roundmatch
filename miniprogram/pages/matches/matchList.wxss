@@ -1,3 +1,15 @@
 /* miniprogram/pages/matchList/matchList.wxss */
 
-@import "../../style/styles.wxss";
+/* @import "../../style/styles.wxss"; */
+
+.header-toolbar {
+  flex-direction: "column";
+  /* align-items: "flex-end"; */
+  background-color: red;
+}
+
+
+.btn-new {
+  /* flex-direction: "column"; */
+  background-color: grey;
+}

@@ -1,10 +1,13 @@
 <!--miniprogram/pages/matchList/detail.wxml-->
 
+<mp-navigation-bar loading="{{false}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{background}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
 <button 
 	wx:if="{{action=='new'}}" 
-	class="userinfo-nickname" bindtap="onSaveMatch">
-	<text>保存</text>
+	class="weui-btn" type="primary" 
+  style="margin-top: 20rpx" 
+  bindtap="onSaveMatch">
+	保存
 </button>
 
 <view 

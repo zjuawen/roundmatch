@@ -14,7 +14,8 @@ Page({
     //debug
     wx.redirectTo({
       // url: '../players/playerList?clubid=1',
-      url: '../matches/matchList?clubid=1',
+      // url: '../matches/matchList?clubid=1',
+      url: '../matches/detail?action=old&clubid=1&matchid=d980b84f5de0da0c0069a1435e82045f',
     })
     return;
     //end of debug
