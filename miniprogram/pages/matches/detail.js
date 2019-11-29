@@ -5,7 +5,34 @@ Page({
    * 页面的初始数据
    */
   data: {
-    title: '比赛详情'
+    title: '比赛详情',
+    dialogShow: false,
+    buttons: [{ text: '取消' }, { text: '确定' }],
+    clickIndex: 0,
+  },
+
+  onClickScore: function(event) {
+    console.log(event);
+    let index = event.target.dataset.index;
+    this.openConfirm(index);
+  },
+
+  onClickNone: function (event) {
+    console.log("onClickNone");
+  },
+
+  openConfirm: function (index) {
+    this.setData({
+      dialogShow: true,
+      clickIndex: index,
+    })
+  },
+
+  tapDialogButton(e) {
+    this.setData({
+      dialogShow: false,
+      // showOneButtonDialog: false
+    })
   },
 
   loadNewMatch: function (clubid, matchdata) {
@@ -57,40 +84,37 @@ Page({
   },
 
   loadGames: function (matchid) {
-    const db = wx.cloud.database();//({env:'test-roundmatch'});
 
-    db.collection('games')
-      .aggregate()
-      .match({
-        matchid: matchid,
-      })
-      .project({
-        _id: false,
-        id: true,
-        player1: true,
-        player2: true,
-        player3: true,
-        player4: true,
-        score1: true,
-        score2: true,
-        createDate: true,
-      })
-      .end()
-      .then(res => {
-        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-        console.log(res.list)
-        let data = res.list;
+    let func = 'matchService';
+    let action = 'read';
+    console.log(func + " " + action);
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        matchid: matchid
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
+        let data = res.result.data;
         for (let i = 0; i < data.length; i++) {
           data[i].playerName1 = this.playerToName(data[i].player1);
           data[i].playerName2 = this.playerToName(data[i].player2);
           data[i].playerName3 = this.playerToName(data[i].player3);
           data[i].playerName4 = this.playerToName(data[i].player4);
         }
-        console.log(data)
         this.setData({
           games: data
         })
-      })
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
   },
 
   playerToName: function (playerid) {
