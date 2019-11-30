@@ -18,7 +18,6 @@
   style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
 
 	<button 
-    wx:if="{{(item.score1+item.score2)<0}}"
     type="default" 
     size="mini" 
     loading="{{loading}}" 
@@ -29,7 +28,6 @@
     {{item.playerName1}}
   </button>
   <button 
-    wx:if="{{(item.score1+item.score2)<0}}"
     type="default" 
     size="mini" 
     loading="{{loading}}" 
@@ -67,7 +65,6 @@
   </button>
 	
 	<button 
-    wx:if="{{(item.score1+item.score2)<0}}"
     type="default" 
     size="mini" 
     loading="{{loading}}" 
@@ -78,7 +75,6 @@
     {{item.playerName3}}
   </button>
   <button 
-    wx:if="{{(item.score1+item.score2)<0}}"
     type="default" 
     size="mini" 
     loading="{{loading}}" 
@@ -99,9 +95,9 @@
 
   <view style="display: flex; flex-direction: column;">  
     <view style="display: flex; flex-direction: row; margin-bottom: 20px; justify-content: center;">  
-      <input style="background-color: #EEE; width: 30%; flex: 3; height: 30px; font-size: 20px; padding-top: 5px; "></input>
+      <input style="background-color: #EEE; width: 30%; flex: 3; height: 30px; font-size: 20px; padding-top: 5px; " value="{{games[clickIndex].score1}}" bindchange="getScore1" ></input>
       <text style="flex: 1; padding-top: 5px; ">:</text>
-      <input style="background-color: #EEE; width: 30%; flex: 3; height: 30px; font-size: 20px; padding-top: 5px; "></input>
+      <input style="background-color: #EEE; width: 30%; flex: 3; height: 30px; font-size: 20px; padding-top: 5px; "value="{{games[clickIndex].score2}}" bindchange="getScore2" ></input>
     </view>    
     <view style="display: flex; flex-direction: row; justify-content: center;">  
       <view style="flex: 4" >

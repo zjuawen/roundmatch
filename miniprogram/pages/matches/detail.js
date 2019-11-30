@@ -29,9 +29,57 @@ Page({
   },
 
   tapDialogButton(e) {
+    if( e.detail.index === 1){
+      this.onSaveGame(this.data.clickIndex);
+    }
     this.setData({
       dialogShow: false,
       // showOneButtonDialog: false
+    })
+  },
+  
+  getScore1: function(e) {
+    console.log(e);
+    let value = e.detail.value;
+    let data = this.data.games;
+    data[this.data.clickIndex].score1 = parseInt(value);
+    this.setData({
+      games: data
+    })
+  },
+
+  getScore2: function(e) {
+    console.log(e);
+    let value = e.detail.value;
+    let data = this.data.games;
+    data[this.data.clickIndex].score2 = parseInt(value);
+    this.setData({
+      games: data
+    })
+  },
+
+  onSaveGame: function(gameIndex) {
+    let func = 'gameService';
+    let action = 'save';
+    console.log(func + " " + action);
+
+    let gamedata = this.data.games[gameIndex];
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        gamedata: gamedata,
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
     })
   },
 
