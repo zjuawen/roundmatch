@@ -1,13 +1,17 @@
 <!--miniprogram/pages/clubs/clubList.wxml-->
 
+<mp-navigation-bar loading="{{false}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
+
 <view 
 	wx:for="{{clubs}}"
   	wx:key="{item.id}"
 	class="uploader">
 
 	<navigator url="../matches/matchList?clubid={{item.id}}" open-type="navigate" class="uploader-text">
-    <text>{{item.wholeName}}</text>
-    <text> ({{item.shortName}})</text>
-    <text class="textalignend, debug">{{item.createDate}}</text>
+    <view style="display: flex;">
+      <text style="flex:1" >{{item.wholeName}}</text>
+      <text style="flex:1; align-content: left" > ({{item.shortName}})</text>
+      <text style="flex:1" >{{item.createDate}}</text>
+    </view>
 	</navigator>
 </view>

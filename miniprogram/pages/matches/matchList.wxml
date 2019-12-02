@@ -3,7 +3,7 @@
 <!-- <mp-actionSheet bindactiontap="btnClick" show="{{showActionsheet}}" actions="{{actions}}" title="这是一个标题，可以为一行或者两行。">
 </mp-actionSheet> -->
 
-<mp-navigation-bar loading="{{false}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{background}}" title="比赛列表" back="{{true}}"></mp-navigation-bar>
+<mp-navigation-bar loading="{{false}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
 <!-- <view style="flex-direction:row;"> -->
 <!-- <mp-searchbar bindselectresult="selectResult" search="{{search}}"></mp-searchbar> -->

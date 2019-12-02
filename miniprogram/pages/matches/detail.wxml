@@ -1,4 +1,4 @@
-<!--miniprogram/pages/matchList/detail.wxml-->
+<!--miniprogram/pages/matches/detail.wxml-->
 
 <mp-navigation-bar loading="{{false}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
@@ -10,88 +10,133 @@
 	保存
 </button>
 
-<view 
-	wx:for="{{games}}"
-  wx:key="{item._id}"
-  wx:for-index="index" 
-	class="uploader"
-  style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
+<view style="margin-bottom:70px" >
 
-	<button 
-    type="default" 
-    size="mini" 
-    loading="{{loading}}" 
-    plain="{{true}}"
-    disabled="{{disabled}}" 
-    bindtap="onClickNone"
-    style="border: none; flex: 1" > 
-    {{item.playerName1}}
-  </button>
-  <button 
-    type="default" 
-    size="mini" 
-    loading="{{loading}}" 
-    plain="{{true}}"
-    disabled="{{disabled}}" 
-    bindtap="onClickNone"
-    style="border: none; flex: 1" > 
-    {{item.playerName2}}
-  </button>
+  <!-- games -->
+  <view wx:if="{{tabIndex==0}}" >
 
-	<button 
-    wx:if="{{(item.score1+item.score2)<0}}"
-    type="default" 
-    size="mini" 
-    loading="{{loading}}" 
-    plain="{{true}}"
-    disabled="{{disabled}}" 
-    bindtap="onClickScore"
-    data-id="{{item._id}}" 
-    data-index="{{index}}" 
-    style="border: none; flex: 1" > 
-    vs
-  </button>
+    <view 
+      wx:for="{{games}}"
+      wx:key="{item._id}"
+      wx:for-index="index" 
+      class="uploader"
+      style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
 
-  <button 
-    wx:if="{{(item.score1+item.score2)>0}}"
-    type="default" 
-    size="mini" 
-    loading="{{loading}}" 
-    plain="{{true}}"
-    disabled="{{disabled}}" 
-    bindtap="onClickNone"
-    style="border: none; flex: 1" > 
-    {{item.score1}}:{{item.score2}}
-  </button>
-	
-	<button 
-    type="default" 
-    size="mini" 
-    loading="{{loading}}" 
-    plain="{{true}}"
-    disabled="{{disabled}}" 
-    bindtap="onClickNone"
-    style="border: none; flex: 1" > 
-    {{item.playerName3}}
-  </button>
-  <button 
-    type="default" 
-    size="mini" 
-    loading="{{loading}}" 
-    plain="{{true}}"
-    disabled="{{disabled}}" 
-    bindtap="onClickNone"
-    style="border: none; flex: 1" > 
-    {{item.playerName4}}
-  </button>
-    
+      <button 
+        type="default" 
+        size="mini" 
+        loading="{{loading}}"
+        plain="{{true}}"
+        disabled="{{disabled}}" 
+        bindtap="onClickNone"
+        style="border: none; flex: 1" > 
+        {{item.playerName1}}
+      </button>
+      <button 
+        type="default" 
+        size="mini" 
+        loading="{{loading}}" 
+        plain="{{true}}"
+        disabled="{{disabled}}" 
+        bindtap="onClickNone"
+        style="border: none; flex: 1" > 
+        {{item.playerName2}}
+      </button>
+
+      <button 
+        wx:if="{{(item.score1+item.score2)<0}}"
+        type="default" 
+        size="mini" 
+        loading="{{loading}}" 
+        plain="{{true}}"
+        disabled="{{disabled}}" 
+        bindtap="onClickScore"
+        data-id="{{item._id}}" 
+        data-index="{{index}}" 
+        style="border: none; flex: 1" > 
+        vs
+      </button>
+
+      <button 
+        wx:if="{{(item.score1+item.score2)>0}}"
+        type="default" 
+        size="mini" 
+        loading="{{loading}}" 
+        plain="{{true}}"
+        disabled="{{disabled}}" 
+        bindtap="onClickNone"
+        style="border: none; flex: 1" > 
+        {{item.score1}}:{{item.score2}}
+      </button>
+      
+      <button 
+        type="default" 
+        size="mini" 
+        loading="{{loading}}" 
+        plain="{{true}}"
+        disabled="{{disabled}}" 
+        bindtap="onClickNone"
+        style="border: none; flex: 1" > 
+        {{item.playerName3}}
+      </button>
+      <button 
+        type="default" 
+        size="mini" 
+        loading="{{loading}}" 
+        plain="{{true}}"
+        disabled="{{disabled}}" 
+        bindtap="onClickNone"
+        style="border: none; flex: 1" > 
+        {{item.playerName4}}
+      </button>
+        
+    </view>
+
+  </view>
+
+  <!-- stats -->
+  <view wx:if="{{tabIndex==1}}" >
+
+    <view 
+      wx:for="{{matchPlayers}}"
+      wx:key="{item._id}"
+      wx:for-index="index" 
+      class="uploader"
+      style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
+
+      <label style="border: none; flex: 1; text-align: center;" > 
+        {{item.name}}
+      </label >
+
+      <label style="border: none; flex: 1; text-align: center;" > 
+        {{item.win}}
+      </label>
+
+      <label style="border: none; flex: 1; text-align: center;" > 
+        {{item.lost}}
+      </label>
+
+      <label style="border: none; flex: 1; text-align: center;" > 
+        {{item.delta}}
+      </label>
+      
+      <label style="border: none; flex: 1; text-align: center;" > 
+        {{item.total}}
+      </label>
+
+    </view>
+
+  </view>
+
 </view>
+
+<mp-tabbar style="position:fixed;bottom:0;width:100%;left:0;right:0;" list="{{list}}" bindchange="tabChange"></mp-tabbar>
 
 <mp-dialog 
   title="比分" 
   show="{{dialogShow}}" 
   bindbuttontap="tapDialogButton" 
-  buttons="{{buttons}}">
+  buttons="{{dialogBtns}}">
 
   <view style="display: flex; flex-direction: column;">  
     <view style="display: flex; flex-direction: row; margin-bottom: 20px; justify-content: center;">  
@@ -109,5 +154,4 @@
       </view>
     </view>
   </view>
-
 </mp-dialog>

@@ -16,6 +16,7 @@ Page({
       // url: '../players/playerList?clubid=1',
       // url: '../matches/matchList?clubid=1',
       url: '../matches/detail?action=old&clubid=1&matchid=d980b84f5de0da0c0069a1435e82045f',
+      // url: '../clubs/clubList',
     })
     return;
     //end of debug

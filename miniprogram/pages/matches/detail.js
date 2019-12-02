@@ -6,9 +6,36 @@ Page({
    */
   data: {
     title: '比赛详情',
-    dialogShow: false,
-    buttons: [{ text: '取消' }, { text: '确定' }],
+    
+    games: [],
+    matchPlayers: [],  //该次比赛参与人员
+    
+    //dialog
     clickIndex: 0,
+    dialogShow: false,
+    dialogBtns: [{ text: '取消' }, { text: '确定' }],
+
+    //tabbar
+    tabIndex: 0,
+    list: [{
+      "text": "比分",
+      "iconPath": "../../images/score.svg",
+      "selectedIconPath": "../../images/score.svg",
+      dot: true
+    },
+    {
+      "text": "统计",
+      "iconPath": "../../images/stats.svg",
+      "selectedIconPath": "../../images/stats.svg",
+      // badge: 'New'
+    }],
+
+  },
+
+  tabChange(e) {
+    console.log('tab change', e);
+    let index = e.detail.index;
+    this.setData({tabIndex:index});
   },
 
   onClickScore: function(event) {
@@ -73,6 +100,7 @@ Page({
       },
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result.data);
+        this.statistic();
       },
       fail: err => {
         console.error('[云函数] ' + func + ' 调用失败', err)
@@ -94,7 +122,7 @@ Page({
         // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
         console.log(res.data);
         this.setData({
-          players: res.data
+          players: res.data,
         });
         this.renderNewMatch(matchdata);
       })
@@ -146,6 +174,9 @@ Page({
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result.data);
         let data = res.result.data;
+        this.setData({
+          matchPlayers:[]
+        });
         for (let i = 0; i < data.length; i++) {
           data[i].playerName1 = this.playerToName(data[i].player1);
           data[i].playerName2 = this.playerToName(data[i].player2);
@@ -155,6 +186,8 @@ Page({
         this.setData({
           games: data
         })
+        this.statistic();
+        // this.listStatsPlayers();
       },
       fail: err => {
         console.error('[云函数] ' + func + ' 调用失败', err)
@@ -165,10 +198,125 @@ Page({
     })
   },
 
+  addToMatchPlayers: function (player) {
+    let data = this.data.matchPlayers;
+    
+    let found = false;
+    for (let i = 0; i < data.length; i++) {
+      if( data[i]._id == player._id){
+        found = true;
+        break;
+      }
+    }
+
+    if( !found){
+      player.win = 0;
+      player.lost = 0;
+      player.delta = 0;
+      player.total = 0;
+      
+      data.push(player);
+      console.log('addToMatchPlayers: ' + player.name);
+    }
+
+    this.setData({
+      matchPlayers: data
+    });
+  },
+
+  statistic: function () {
+    
+    let players = this.data.matchPlayers;
+
+    //clear
+    for( let player of this.data.matchPlayers) {
+      player.win = 0;
+      player.lost = 0;
+      player.delta = 0;
+      player.total = 0;
+    }
+
+    //start statis
+    for( let game of this.data.games) {
+      let score1 = game.score1;
+      let score2 = game.score2;
+      if( score1 < 0 || score2 < 0){
+        continue;
+      }
+      let delta = score1 - score2;
+
+      let index1 = this.findMatchPlayerIndex(this.data.matchPlayers, game.player1);
+      let index2 = this.findMatchPlayerIndex(this.data.matchPlayers, game.player2);
+      let index3 = this.findMatchPlayerIndex(this.data.matchPlayers, game.player3);
+      let index4 = this.findMatchPlayerIndex(this.data.matchPlayers, game.player4);
+      this.data.matchPlayers[index1].delta += delta;
+      this.data.matchPlayers[index2].delta += delta;
+      this.data.matchPlayers[index3].delta -= delta;
+      this.data.matchPlayers[index4].delta -= delta;
+
+      this.data.matchPlayers[index1].total += score1;
+      this.data.matchPlayers[index2].total += score1;
+      this.data.matchPlayers[index3].total += score2;
+      this.data.matchPlayers[index4].total += score2;
+     
+      if( delta > 0){
+        this.data.matchPlayers[index1].win++;
+        this.data.matchPlayers[index2].win++;
+        this.data.matchPlayers[index3].lost++;
+        this.data.matchPlayers[index4].lost++;
+      } else {
+        this.data.matchPlayers[index1].lost++;
+        this.data.matchPlayers[index2].lost++;
+        this.data.matchPlayers[index3].win++;
+        this.data.matchPlayers[index4].win++;
+      }
+    }
+
+    //sort
+    this.data.matchPlayers.sort( this.comparePlayer);
+
+    this.setData({
+      matchPlayers: this.data.matchPlayers
+    })
+
+  },
+
+  comparePlayer: function(player1, player2) {
+    //比较胜率
+    let rate1 = Math.round((player1.win/(player1.win+player1.lost))*100)*100;
+    let rate2 = Math.round((player2.win/(player2.win+player2.lost))*100)*100;
+    if( rate1 != rate2){
+      return rate2 - rate1;
+    }
+
+    //比较净胜分
+    let delta1 = player1.delta;
+    let delta2 = player2.delta;
+    if( delta1 != delta2){
+      return delta2 - delta1;
+    }
+
+    //比较总得分
+    let total1 = player1.total;
+    let total2 = player2.total;
+    if( total1 != total2){
+      return total2 - total1;
+    }
+  },
+
+  findMatchPlayerIndex: function( players, id ) { 
+    return players.findIndex(
+      function(player, index, array){
+        return player.id == id;
+      }
+    ); 
+  },
+
   playerToName: function (playerid) {
     let data = this.data.players;
     for (let i = 0; i < data.length; i++) {
       if (data[i].id == playerid) {
+        this.addToMatchPlayers(data[i]);
         return data[i].name;
       }
     }

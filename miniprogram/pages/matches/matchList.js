@@ -5,6 +5,7 @@ Page({
    * 页面的初始数据
    */
   data: {
+    title: "比赛列表",
     // showActionsheet: false,
     // actions: [
     //   { text: '示例菜单', value: 1 },
