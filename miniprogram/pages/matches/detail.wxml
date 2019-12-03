@@ -1,6 +1,6 @@
 <!--miniprogram/pages/matches/detail.wxml-->
 
-<mp-navigation-bar loading="{{false}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
+<mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
 <button 
 	wx:if="{{action=='new'}}" 
@@ -22,10 +22,14 @@
       class="uploader"
       style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
 
+      <label 
+        style="border: none; flex: 1; text-align: center;" > 
+        {{(index+1)}}
+      </label>
+
       <button 
         type="default" 
         size="mini" 
-        loading="{{loading}}"
         plain="{{true}}"
         disabled="{{disabled}}" 
         bindtap="onClickNone"
@@ -35,7 +39,6 @@
       <button 
         type="default" 
         size="mini" 
-        loading="{{loading}}" 
         plain="{{true}}"
         disabled="{{disabled}}" 
         bindtap="onClickNone"
@@ -44,10 +47,9 @@
       </button>
 
       <button 
-        wx:if="{{(item.score1+item.score2)<0}}"
+        wx:if="{{(item.score1<0 || item.score2<0)}}"
         type="default" 
         size="mini" 
-        loading="{{loading}}" 
         plain="{{true}}"
         disabled="{{disabled}}" 
         bindtap="onClickScore"
@@ -58,10 +60,9 @@
       </button>
 
       <button 
-        wx:if="{{(item.score1+item.score2)>0}}"
-        type="default" 
+        wx:if="{{(item.score1>=0 && item.score2>=0)}}"
+        type="default"
         size="mini" 
-        loading="{{loading}}" 
         plain="{{true}}"
         disabled="{{disabled}}" 
         bindtap="onClickNone"
@@ -72,7 +73,6 @@
       <button 
         type="default" 
         size="mini" 
-        loading="{{loading}}" 
         plain="{{true}}"
         disabled="{{disabled}}" 
         bindtap="onClickNone"
@@ -82,7 +82,6 @@
       <button 
         type="default" 
         size="mini" 
-        loading="{{loading}}" 
         plain="{{true}}"
         disabled="{{disabled}}" 
         bindtap="onClickNone"
@@ -103,6 +102,10 @@
       wx:for-index="index" 
       class="uploader"
       style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
+
+      <label wx:if="{{(index!=0 && (index!=matchPlayers.length-1))}}" style="border: none; flex: 1; text-align: center;" > 
+        {{index+1}}
+      </label >
 
       <label style="border: none; flex: 1; text-align: center;" > 
         {{item.name}}
@@ -140,9 +143,13 @@
 
   <view style="display: flex; flex-direction: column;">  
     <view style="display: flex; flex-direction: row; margin-bottom: 20px; justify-content: center;">  
-      <input style="background-color: #EEE; width: 30%; flex: 3; height: 30px; font-size: 20px; padding-top: 5px; " value="{{games[clickIndex].score1}}" bindchange="getScore1" ></input>
+      <input 
+        style="background-color: #EEE; width: 30%; flex: 3; height: 30px; font-size: 20px; padding-top: 5px; " type="number" value="{{(tempScore1<0?'':tempScore1)}}" 
+        bindchange="inputScore1" focus="true" ></input>
       <text style="flex: 1; padding-top: 5px; ">:</text>
-      <input style="background-color: #EEE; width: 30%; flex: 3; height: 30px; font-size: 20px; padding-top: 5px; "value="{{games[clickIndex].score2}}" bindchange="getScore2" ></input>
+      <input 
+        style="background-color: #EEE; width: 30%; flex: 3; height: 30px; font-size: 20px; padding-top: 5px; " type="number" value="{{(tempScore2<0?'':tempScore2)}}" 
+        bindchange="inputScore2" ></input>
     </view>    
     <view style="display: flex; flex-direction: row; justify-content: center;">  
       <view style="flex: 4" >

@@ -6,6 +6,7 @@ Page({
    */
   data: {
     title: '比赛详情',
+    loading: false,
     
     games: [],
     matchPlayers: [],  //该次比赛参与人员
@@ -14,6 +15,8 @@ Page({
     clickIndex: 0,
     dialogShow: false,
     dialogBtns: [{ text: '取消' }, { text: '确定' }],
+    tempScore1: 0,
+    tempScore2: 0,
 
     //tabbar
     tabIndex: 0,
@@ -41,6 +44,12 @@ Page({
   onClickScore: function(event) {
     console.log(event);
     let index = event.target.dataset.index;
+    let data = this.data.games;
+    this.setData({
+      tempScore1: data[index].score1,
+      tempScore2: data[index].score2
+    });
+    
     this.openConfirm(index);
   },
 
@@ -57,31 +66,49 @@ Page({
 
   tapDialogButton(e) {
     if( e.detail.index === 1){
+      this.setData({
+        loading: true
+      });
+      this.setScoreToGameData();
       this.onSaveGame(this.data.clickIndex);
-    }
+    } 
     this.setData({
       dialogShow: false,
       // showOneButtonDialog: false
     })
   },
-  
-  getScore1: function(e) {
-    console.log(e);
-    let value = e.detail.value;
+
+  setScoreToGameData: function() {
     let data = this.data.games;
-    data[this.data.clickIndex].score1 = parseInt(value);
+    data[this.data.clickIndex].score1 = this.data.tempScore1;
+    data[this.data.clickIndex].score2 = this.data.tempScore2;
     this.setData({
       games: data
     })
   },
 
-  getScore2: function(e) {
+  // getScore1: function(index) {
+  //   console.log("getScore1: " + index);
+  //   return this.data.tempScore1;
+  // },
+  
+  inputScore1: function(e) {
     console.log(e);
     let value = e.detail.value;
-    let data = this.data.games;
-    data[this.data.clickIndex].score2 = parseInt(value);
+    // let data = this.data.games;
+    // data[this.data.clickIndex].score1 = parseInt(value);
     this.setData({
-      games: data
+      tempScore1: parseInt(value)
+    })
+  },
+
+  inputScore2: function(e) {
+    console.log(e);
+    let value = e.detail.value;
+    // let data = this.data.games;
+    // data[this.data.clickIndex].score2 = parseInt(value);
+    this.setData({
+      tempScore2: parseInt(value)
     })
   },
 
@@ -101,6 +128,9 @@ Page({
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result.data);
         this.statistic();
+        this.setData({
+          loading: false
+        });
       },
       fail: err => {
         console.error('[云函数] ' + func + ' 调用失败', err)
