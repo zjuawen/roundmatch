@@ -1,6 +1,6 @@
 <!--miniprogram/pages/players/playerList.wxml-->
 
-<mp-navigation-bar loading="{{false}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{background}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
+<mp-navigation-bar loading="{{false}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
 <button 
   class="weui-btn" type="primary" 
@@ -13,15 +13,26 @@
 <view 
   wx:for="{{players}}"
   wx:key="{{item.id}}"
-  class="uploader">
+  class="uploader"
+  style="padding-left: 0;" >
 
   <!-- <label class="userinfo-nickname" >
     <checkbox value="{{item.id}}" checked="{{item.enable}}"/>{{item.name}}
   </label> -->
-    <button class="userinfo-nickname" data-id="{{item.id}}" bindtap="onSelectPlayer">
-	<image class="checkbox" wx:if="{{!item.enable}}" src="../../images/icon-emptybox.svg" mode="aspectFit"></image>
-	<image class="checkbox" wx:if="{{item.enable}}" src="../../images/icon-checkbox.svg" mode="aspectFit"></image>
+  <button class="userinfo-nickname" 
+    data-id="{{item.id}}" bindtap="onSelectPlayer"
+    style="width: 100%; text-align: left; align-items: center; flex-direction: row; display: flex; " >
+
+  	<image class="checkbox" wx:if="{{!item.enable}}" 
+      src="../../images/icon-emptybox.svg" mode="aspectFit">
+      </image>
+  	<image class="checkbox" wx:if="{{item.enable}}" 
+      src="../../images/icon-checkbox.svg" mode="aspectFit"> 
+      </image>
+
 	  <text>{{item.name}}</text>
-	  </button>
+
+	</button>
+
 </view>
 
