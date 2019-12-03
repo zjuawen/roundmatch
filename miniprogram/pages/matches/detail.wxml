@@ -20,7 +20,7 @@
       wx:key="{item._id}"
       wx:for-index="index" 
       class="uploader"
-      style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
+      style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx; background-color: {{(item.score1>=0 && item.score2>=0)? 'lightgreen' : 'white' }}; ">
 
       <label 
         style="border: none; flex: 1; text-align: center;" > 
@@ -65,7 +65,10 @@
         size="mini" 
         plain="{{true}}"
         disabled="{{disabled}}" 
+        data-id="{{item._id}}" 
+        data-index="{{index}}" 
         bindtap="onClickNone"
+        bindlongpress="onLongPressScore"
         style="border: none; flex: 1" > 
         {{item.score1}}:{{item.score2}}
       </button>
@@ -96,6 +99,24 @@
   <!-- stats -->
   <view wx:if="{{tabIndex==1}}" >
 
+    <!-- header -->
+    <view 
+      style="display: flex; direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
+
+      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >No.</label >
+
+      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >姓名</label >
+
+      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >胜场数</label>
+
+      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >负场数</label>
+
+      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >净胜球</label>
+      
+      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >总得分</label>
+
+    </view>
+
     <view 
       wx:for="{{matchPlayers}}"
       wx:key="{item._id}"
@@ -103,9 +124,21 @@
       class="uploader"
       style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
 
-      <label wx:if="{{(index!=0 && (index!=matchPlayers.length-1))}}" style="border: none; flex: 1; text-align: center;" > 
+      <label 
+        wx:if="{{(!matchDone || (index!=0 && (index!=matchPlayers.length-1)))}}" 
+        style="border: none; flex: 1; text-align: center;" > 
         {{index+1}}
       </label >
+
+      <image wx:if="{{(matchDone && (index==0))}}" 
+        src="../../images/crown.png" mode="aspectFit"
+        style="height: 50rpx; width: 50rpx; flex: 1;" >
+      </image>
+
+      <image wx:if="{{(matchDone && (index==matchPlayers.length-1))}}" 
+        src="../../images/pighead.png" mode="aspectFit"
+        style="height: 50rpx; width: 50rpx; flex: 1;" >
+      </image>
 
       <label style="border: none; flex: 1; text-align: center;" > 
         {{item.name}}

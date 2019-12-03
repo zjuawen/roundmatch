@@ -10,6 +10,7 @@ Page({
     
     games: [],
     matchPlayers: [],  //该次比赛参与人员
+    matchDone: false,
     
     //dialog
     clickIndex: 0,
@@ -35,6 +36,12 @@ Page({
 
   },
 
+  loading: function (value) {
+    this.setData({
+      loading: value
+    });
+  },
+
   tabChange(e) {
     console.log('tab change', e);
     let index = e.detail.index;
@@ -42,6 +49,18 @@ Page({
   },
 
   onClickScore: function(event) {
+    console.log(event);
+    let index = event.target.dataset.index;
+    let data = this.data.games;
+    this.setData({
+      tempScore1: data[index].score1,
+      tempScore2: data[index].score2
+    });
+    
+    this.openConfirm(index);
+  },
+
+  onLongPressScore: function(event) {
     console.log(event);
     let index = event.target.dataset.index;
     let data = this.data.games;
@@ -66,9 +85,7 @@ Page({
 
   tapDialogButton(e) {
     if( e.detail.index === 1){
-      this.setData({
-        loading: true
-      });
+      this.loading(true);
       this.setScoreToGameData();
       this.onSaveGame(this.data.clickIndex);
     } 
@@ -128,9 +145,7 @@ Page({
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result.data);
         this.statistic();
-        this.setData({
-          loading: false
-        });
+        this.loading(false);
       },
       fail: err => {
         console.error('[云函数] ' + func + ' 调用失败', err)
@@ -166,10 +181,11 @@ Page({
       data[i].playerName3 = this.playerToName(data[i].player3);
       data[i].playerName4 = this.playerToName(data[i].player4);
     }
-    console.log(data)
+    console.log(data);
     this.setData({
       games: data
-    })
+    });
+    this.loading(false);
   },
 
   loadMatchData: function (clubid, matchid) {
@@ -217,7 +233,7 @@ Page({
           games: data
         })
         this.statistic();
-        // this.listStatsPlayers();
+        this.loading(false);
       },
       fail: err => {
         console.error('[云函数] ' + func + ' 调用失败', err)
@@ -257,9 +273,10 @@ Page({
   statistic: function () {
     
     let players = this.data.matchPlayers;
+    let done = true;
 
     //clear
-    for( let player of this.data.matchPlayers) {
+    for( let player of players) {
       player.win = 0;
       player.lost = 0;
       player.delta = 0;
@@ -271,42 +288,44 @@ Page({
       let score1 = game.score1;
       let score2 = game.score2;
       if( score1 < 0 || score2 < 0){
+        done = false;
         continue;
       }
       let delta = score1 - score2;
 
-      let index1 = this.findMatchPlayerIndex(this.data.matchPlayers, game.player1);
-      let index2 = this.findMatchPlayerIndex(this.data.matchPlayers, game.player2);
-      let index3 = this.findMatchPlayerIndex(this.data.matchPlayers, game.player3);
-      let index4 = this.findMatchPlayerIndex(this.data.matchPlayers, game.player4);
-      this.data.matchPlayers[index1].delta += delta;
-      this.data.matchPlayers[index2].delta += delta;
-      this.data.matchPlayers[index3].delta -= delta;
-      this.data.matchPlayers[index4].delta -= delta;
+      let index1 = this.findMatchPlayerIndex(players, game.player1);
+      let index2 = this.findMatchPlayerIndex(players, game.player2);
+      let index3 = this.findMatchPlayerIndex(players, game.player3);
+      let index4 = this.findMatchPlayerIndex(players, game.player4);
+      players[index1].delta += delta;
+      players[index2].delta += delta;
+      players[index3].delta -= delta;
+      players[index4].delta -= delta;
 
-      this.data.matchPlayers[index1].total += score1;
-      this.data.matchPlayers[index2].total += score1;
-      this.data.matchPlayers[index3].total += score2;
-      this.data.matchPlayers[index4].total += score2;
+      players[index1].total += score1;
+      players[index2].total += score1;
+      players[index3].total += score2;
+      players[index4].total += score2;
      
       if( delta > 0){
-        this.data.matchPlayers[index1].win++;
-        this.data.matchPlayers[index2].win++;
-        this.data.matchPlayers[index3].lost++;
-        this.data.matchPlayers[index4].lost++;
+        players[index1].win++;
+        players[index2].win++;
+        players[index3].lost++;
+        players[index4].lost++;
       } else {
-        this.data.matchPlayers[index1].lost++;
-        this.data.matchPlayers[index2].lost++;
-        this.data.matchPlayers[index3].win++;
-        this.data.matchPlayers[index4].win++;
+        players[index1].lost++;
+        players[index2].lost++;
+        players[index3].win++;
+        players[index4].win++;
       }
     }
 
     //sort
-    this.data.matchPlayers.sort( this.comparePlayer);
+    players.sort( this.comparePlayer);
 
     this.setData({
-      matchPlayers: this.data.matchPlayers
+      matchDone: done,
+      matchPlayers: players
     })
 
   },
@@ -389,6 +408,7 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
+    this.loading(true);
     let action = options.action;
     if (action == 'old') {
       this.setData({

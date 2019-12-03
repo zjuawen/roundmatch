@@ -18,12 +18,14 @@
 <view 
 	wx:for="{{matches}}"
   wx:key="{item._id}"
-	class="uploader">
+	class="uploader"
+  style="padding-left: 0px; " >
 
 	<navigator 
   url="../matches/detail?action=old&clubid={{item.clubid}}&matchid={{item._id}}" 
   open-type="navigate" 
-  class="uploader-text">
+  class="uploader-text" 
+  style="margin-left: 40rpx; ">
 	  <text>{{item.createDate}}</text>
 	</navigator>
 </view>

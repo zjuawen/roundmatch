@@ -27,12 +27,13 @@ Page({
   loadMatches: function (clubid) {
 
     let func = 'matchService';
+    let action = 'list';
     console.log('list matches');
 
     wx.cloud.callFunction({
       name: func,
       data: {
-        action: 'list',
+        action: action,
         clubid: clubid
       },
       success: res => {

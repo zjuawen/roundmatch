@@ -1,17 +1,45 @@
 <!--miniprogram/pages/clubs/clubList.wxml-->
 
-<mp-navigation-bar loading="{{false}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
+<mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
+
+<!--  
+<view class="list">
+  <button 
+    open-type="getUserInfo" 
+    bindgetuserinfo="onGetUserInfo"
+    class="userinfo-avatar"
+    style="background-image: url({{avatarUrl}})"
+    size="default"
+  /> 
+</view>
+-->
+
+<!-- <mp-searchbar bindselectresult="selectResult" search="{{search}}"></mp-searchbar> -->
 
 <view 
 	wx:for="{{clubs}}"
-  	wx:key="{item.id}"
-	class="uploader">
+  wx:key="{item.id}"
+	class="uploader" 
+  style="padding-left: 0px; "  >
 
-	<navigator url="../matches/matchList?clubid={{item.id}}" open-type="navigate" class="uploader-text">
+	<navigator url="../matches/matchList?clubid={{item.id}}" 
+    open-type="navigate" class="uploader-text"
+    style="padding-left: 40rpx; " >
+
     <view style="display: flex;">
       <text style="flex:1" >{{item.wholeName}}</text>
       <text style="flex:1; align-content: left" > ({{item.shortName}})</text>
-      <text style="flex:1" >{{item.createDate}}</text>
+      <!-- <text style="flex:1" >{{item.createDate}}</text> -->
     </view>
+
 	</navigator>
+
 </view>
+
+<button 
+  class="weui-btn" type="primary" 
+  size="default"
+  style="margin-top: 50rpx" 
+  bindtap="onNewClub">
+  创建
+</button>
