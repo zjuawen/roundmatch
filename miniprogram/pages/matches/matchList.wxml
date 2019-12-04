@@ -9,8 +9,8 @@
 <!-- <mp-searchbar bindselectresult="selectResult" search="{{search}}"></mp-searchbar> -->
 <button 
   class="weui-btn" type="primary" 
-  style="margin-top: 20rpx" 
-  bindtap="onNewGame">
+  size="mini" bindtap="onNewGame"
+  style="margin-top: 40rpx; " >
   新建
 </button>
 <!-- </view> -->

@@ -1,4 +1,46 @@
 <!--miniprogram/pages/clubs/create.wxml-->
-<text>
-	SORRY! Not implemented yet
-</text>
+<mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
+
+<view class="page-body">
+
+  <view class="page-section">
+
+    <view class="weui-cells__title">名称</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" >
+        <input class="weui-input" auto-focus placeholder="请输入俱乐部名称"
+        	bindinput="onWholdNameInput" />
+      </view>
+    </view>
+
+    <view class="weui-cells__title">缩写</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
+        <input class="weui-input" placeholder="请输入俱乐部缩写"
+        	bindinput="onShortNameInput" />
+      </view>
+    </view>
+<!-- 
+    <view class="weui-cells__title">密码</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
+        <input class="weui-input" password type="text" placeholder="设置密码"/>
+      </view>
+    </view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
+        <input class="weui-input" password type="text" placeholder="重复输入密码"/>
+      </view>
+    </view>
+ -->
+  </view>
+
+</view>
+
+<button 
+  class="weui-btn" type="primary" 
+  size="mini"
+  style="margin-top: 50rpx" 
+  bindtap="onCreateClub">
+  完成
+</button>

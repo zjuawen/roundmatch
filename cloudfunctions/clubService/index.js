@@ -19,9 +19,13 @@ exports.main = async (event, context) => {
   if (action == 'join') {
     data = await joinClub( wxContext, event.clubid);
   } else if (action == 'list') {
-    data = await listClub( wxContext );
+    let private = await listPrivateClub( wxContext );
+    let public = await listPublicClub( wxContext );
+    data = {
+      private, public
+    }
   }  else if (action == 'create') {
-
+    data = await createClub(wxContext, event.info);
   }
 
   return {
@@ -32,33 +36,46 @@ exports.main = async (event, context) => {
   }
 }
 
-//参与的俱乐部列表
-listClub = async (wxContext) => {
 
-  	return await db.collection('users_and_clubs')
-	    .where({
-	  		openid: wxContext.OPENID
-	  	})
-	  	.get()
-	  	.then(res => {
-	  		console.log(res);
-	  		return loadClubData(res.data);
-	  	})
+//公开的俱乐部列表
+listPublicClub = async (wxContext) => {
+  return await db.collection('clubs')
+    .where({
+      public: true
+    })
+    .get()
+    .then(res => {
+      console.log(res);
+      return res.data;
+    });
+}
+
+//参与的俱乐部列表
+listPrivateClub = async (wxContext) => {
+	return await db.collection('users_and_clubs')
+    .where({
+  		openid: wxContext.OPENID
+  	})
+  	.get()
+  	.then(res => {
+  		console.log(res);
+  		return loadClubData(res.data);
+  	})
 }
 
 loadClubData = async (uacs) => {
-
 	let clubids = uacs.map(a=> a.clubid);
 	return await db.collection('clubs')
 		.where({
 			_id: _.in(clubids)
 		})
 		.get()
-      	.then(res => {
-	        console.log(res);
-	        return res.data;
-      	});
+  	.then(res => {
+      console.log(res);
+      return res.data;
+  	});
 }
+
 
 //加入俱乐部
 joinClub = async (wxContext, clubid) => {
@@ -99,6 +116,36 @@ addUserToClubs = async (openid, clubid) => {
 	  		};
   		}
   	})
+}
+
+//创建俱乐部
+createClub = async (wxContext, info) => {
+  let dt = db.serverDate();
+  return await db.collection('clubs')
+    .add({
+      data: {
+        creator: wxContext.OPENID,
+        password: info.password,
+        shortName: info.shortName,
+        wholeName: info.wholeName,
+        public: info.public,
+        createDate: dt
+      }
+    })
+    .then(res => {
+      console.log(res);
+      if (res.errMsg == "collection.add:ok") {
+        return {
+          _id: res._id,
+          creator: wxContext.OPENID,
+          password: info.password,
+          shortName: info.shortName,
+          wholeName: info.wholeName,
+          public: info.public,
+          createDate: dt
+        };
+      }
+    })
 }
 
 

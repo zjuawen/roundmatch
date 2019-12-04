@@ -11,16 +11,24 @@
     style="background-image: url({{avatarUrl}})"
     size="default"
   /> 
-</view>
--->
+</view> -->
 
-<!-- <mp-searchbar bindselectresult="selectResult" search="{{search}}"></mp-searchbar> -->
+<!-- 
+<view class="page__bd">
+  <mp-searchbar 
+    bindselectresult="selectResult" 
+    search="{{search}}" 
+    bindinput="searchInput"
+    placeholder="{{'搜索俱乐部'}}" >
+    </mp-searchbar>
+</view> -->
 
+<view wx:if="{{(clubs.length>0)}}" class="weui-cells__title">加入的俱乐部</view>
 <view 
 	wx:for="{{clubs}}"
   wx:key="{item.id}"
 	class="uploader" 
-  style="padding-left: 0px; "  >
+  style="padding-left: 0px; margin-top: 0px;"  >
 
 	<navigator url="../matches/matchList?clubid={{item.id}}" 
     open-type="navigate" class="uploader-text"
@@ -36,10 +44,31 @@
 
 </view>
 
+<view wx:if="{{(publicClubs.length>0)}}" class="weui-cells__title">公开的俱乐部</view>
+<view 
+  wx:for="{{publicClubs}}"
+  wx:key="{item._id}"
+  wx:for-index="index" 
+  class="uploader" 
+  data-item="{{item}}"
+  bindtap="onClickPublicClub"
+  style="padding-left: 0px; margin-top: 0px; align-items: center;" >
+
+    <view style="display: flex; direction: row; margin: 20rpx; width: 100%;" 
+      >
+      <text style="flex:1; font-size: 14px; margin-left: 50rpx;" >{{item.wholeName}}</text>
+      <text style="flex:1; font-size: 14px;" >({{item.shortName}})</text>
+      <!-- <text style="flex:1" >{{item.createDate}}</text> -->
+    </view>
+
+</view>
+
+<!-- 
 <button 
   class="weui-btn" type="primary" 
-  size="default"
+  size="mini"
   style="margin-top: 50rpx" 
   bindtap="onNewClub">
   创建
 </button>
+-->

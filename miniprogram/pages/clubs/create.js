@@ -5,7 +5,62 @@ Page({
    * 页面的初始数据
    */
   data: {
+    title: "创建俱乐部",
+    loading: false,
+  },
 
+  loading: function (value) {
+    this.setData({
+      loading: value
+    });
+  },
+
+  onCreateClub: function() {
+    this.loading(true);
+    
+    let func = 'clubService';
+    let action = 'create';
+    console.log(func + " " + action);
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        info: {
+          wholeName: this.data.wholeName,
+          shortName: this.data.shortName,
+          public: false,
+          password: ""
+        }
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
+        let data = res.result.data;
+
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
+  },
+
+  onWholdNameInput: function(e) {
+    console.log(e);
+    let value = e.detail.value;
+    this.setData({
+      wholeName: value
+    })
+  },
+
+   onShortNameInput: function(e) {
+    console.log(e);
+    let value = e.detail.value;
+    this.setData({
+      shortName: value
+    })
   },
 
   /**

@@ -10,6 +10,8 @@ Page({
     openid: '',
     avatarUrl: '../../images/user-unlogin.png',
     loading: false,
+    // inputShowed: false,
+    // inputVal: "",
   },
   
   loading: function (value) {
@@ -84,7 +86,8 @@ Page({
         console.log('[云函数] ' + func + ' return: ', res.result.data);
         let data = res.result.data;
         this.setData({
-          clubs: data
+          clubs: data.private,
+          publicClubs: data.public
         })
         this.loading(false);
       },
@@ -123,11 +126,56 @@ Page({
     //   })
   },
 
+  search: function(value) {
+    console.log("searching: " + value);
+    if( value != "demo"){
+      return;
+    }
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        resolve([{ text: 'DEMO俱乐部', value: 1 }])
+      }, 200)
+    })
+  },
+
+  selectResult: function(e) {
+    console.log('select result', e.detail);
+    // this.loading(true);
+
+    // let func = 'clubService';
+    // let action = 'join';
+    // console.log(func + " " + action);
+
+    // wx.cloud.callFunction({
+    //   name: func,
+    //   data: {
+    //     action: action
+    //   },
+    //   success: res => {
+    //     console.log('[云函数] ' + func + ' return: ', res.result.data);
+    //     let data = res.result.data;
+    //     this.setData({
+    //       clubs: data
+    //     })
+    //     this.loading(false);
+    //   },
+    //   fail: err => {
+    //     console.error('[云函数] ' + func + ' 调用失败', err)
+    //     wx.navigateTo({
+    //       url: '../error/deployFunctions',
+    //     })
+    //   }
+  },
+
   onNewClub: function() {
-    this.onGetOpenid();
-    // wx.navigateTo({
-    //   url: './create',
-    // })
+    // this.onGetOpenid();
+    wx.navigateTo({
+      url: './create',
+    })
+  },
+
+  onClickPublicClub: function(e) {
+    console.log(e);
   },
 
   /**
@@ -137,6 +185,9 @@ Page({
     this.getOpenid();
     this.loadUserinfo();
 
+    this.setData({
+      search: this.search.bind(this)
+    })
   },
 
   /**
