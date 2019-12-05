@@ -4,7 +4,8 @@
 
 <button 
 	wx:if="{{action=='new'}}" 
-	class="weui-btn" type="primary" 
+	class="weui-btn" 
+  type="primary" size="mini"
   style="margin-top: 20rpx" 
   bindtap="onSaveMatch">
 	保存
@@ -41,7 +42,7 @@
         type="default" 
         size="mini" 
         plain="{{true}}"
-        disabled="{{disabled}}" 
+        disabled="{{vsBtnDisable}}" 
         bindtap="onClickScore"
         data-id="{{item._id}}" 
         data-index="{{index}}" 
@@ -54,7 +55,7 @@
         type="default"
         size="mini" 
         plain="{{true}}"
-        disabled="{{disabled}}" 
+        disabled="{{vsBtnDisable}}" 
         data-id="{{item._id}}" 
         data-index="{{index}}" 
         bindtap="onClickNone"

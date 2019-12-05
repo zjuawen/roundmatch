@@ -50,16 +50,31 @@
   wx:key="{item._id}"
   wx:for-index="index" 
   class="uploader" 
-  data-item="{{item}}"
-  bindtap="onClickPublicClub"
-  style="padding-left: 0px; margin-top: 0px; align-items: center;" >
+  
+  style="display: flex; flex-direction:row; padding-left: 20rpx; padding-top: 20rpx; padding-bottom: 20rpx; align-items: center;" >
 
-    <view style="display: flex; direction: row; margin: 20rpx; width: 100%;" 
-      >
-      <text style="flex:1; font-size: 14px; margin-left: 50rpx;" >{{item.wholeName}}</text>
-      <text style="flex:1; font-size: 14px;" >({{item.shortName}})</text>
-      <!-- <text style="flex:1" >{{item.createDate}}</text> -->
-    </view>
+    <view style="flex:1; font-size: 14px; margin-left: 50rpx;" >{{item.wholeName}}</view>
+    <view style="flex:1; font-size: 14px;" >({{item.shortName}})</view>
+    <!-- <text style="flex:1" >{{item.createDate}}</text> -->
+
+    <button 
+      wx:if="{{(!login)}}"
+      class="weui-btn" type="primary" size="mini"
+      data-item="{{item}}"
+      open-type="getUserInfo" 
+      bindgetuserinfo="onGetUserInfo"
+      style="flex:1; margin-right: 40rpx; font-size: 36rpx;" >
+      授权登录
+      </button>
+
+    <button 
+      wx:if="{{(login)}}"
+      class="weui-btn" type="primary" size="mini"
+      data-item="{{item}}"
+      bindtap="onClickPublicClub"
+      style="flex:1; margin-right: 40rpx; font-size: 36rpx;"  >
+      加入
+      </button>
 
 </view>
 

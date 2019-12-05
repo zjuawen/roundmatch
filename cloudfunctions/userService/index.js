@@ -77,6 +77,7 @@ listUserInClub = async (clubid) => {
     .where({
       clubid: clubid
     })
+    .orderBy('order', 'desc')
     .get()
     .then(res => {
       console.log(res);

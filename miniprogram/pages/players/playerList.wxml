@@ -2,13 +2,21 @@
 
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
-<button 
-  class="weui-btn" type="primary" 
-  size="mini"  bindtap="onPlayerSelected"
-  style="margin-top: 20rpx" >
-	下一步
-</button>
+<view style="width: 100%; align-items: center; flex-direction: row; display: flex; margin-top: 40rpx;">
 
+  <view style=" flex: 1;color: grey; display: flex; justify-content: center; " >
+    选择4～8人继续
+    </view>
+    
+  <button 
+    class="weui-btn" type="primary" 
+    disabled="{{nextDisable}}"
+    size="mini"  bindtap="onPlayerSelected"
+    style="margin-left: 40rpx;margin-right: 40rpx;" >
+  	下一步
+  </button>
+ 
+</view>
 
 <view 
   wx:for="{{players}}"
@@ -16,23 +24,31 @@
   class="uploader"
   style="padding-left: 0;" >
 
-  <!-- <label class="userinfo-nickname" >
-    <checkbox value="{{item._id}}" checked="{{item.enable}}"/>{{item.name}}
+  <!-- <label >
+    <checkbox value="{{item._id}}" checked="{{item.checked}}"/>{{item.name}}
   </label> -->
-  <button class="userinfo-nickname" 
-    data-id="{{item._id}}" bindtap="onSelectPlayer"
-    style="width: 100%; text-align: left; align-items: center; flex-direction: row; display: flex; " >
+  <view 
+    style="width: 100%; height: 100rpx; align-items: center; flex-direction: row; display: flex; padding-left: 20rpx;" >
 
-  	<image class="checkbox" wx:if="{{!item.enable}}" 
-      src="../../images/icon-emptybox.svg" mode="aspectFit">
-      </image>
-  	<image class="checkbox" wx:if="{{item.enable}}" 
-      src="../../images/icon-checkbox.svg" mode="aspectFit"> 
+  	<image class="checkbox" wx:if="{{!item.checked}}" 
+      data-id="{{item._id}}" bindtap="onSelectPlayer"
+      src="../../images/icon-emptybox.svg" mode="aspectFit"
+      style=" padding: 30rpx;" >
       </image>
 
-	  <text>{{item.name}}</text>
+  	<image class="checkbox" wx:if="{{item.checked}}" 
+      data-id="{{item._id}}" bindtap="onSelectPlayer"
+      src="../../images/icon-checkbox.svg" mode="aspectFit"
+      style=" padding: 30rpx;" >
+      </image>
 
-	</button>
+	  <view 
+      data-id="{{item._id}}" bindtap="onSelectPlayer"
+      style="flex: 1; display: flex; align-items: center; ">
+      {{item.name}}
+      </view>
+
+	</view>
 
 </view>
 

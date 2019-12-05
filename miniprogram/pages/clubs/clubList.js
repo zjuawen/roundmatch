@@ -38,6 +38,11 @@ Page({
               })
             }
           })
+        } else {
+          console.log("Unauthrorized: authSetting['scope.userInfo'] null");
+          this.setData({
+            login: false
+          })
         }
       }
     })
@@ -101,32 +106,6 @@ Page({
         })
       }
     })
-    // const db = wx.cloud.database(); //({env:'test-roundmatch'});
-    // const $ = db.command.aggregate;
-
-    // db.collection('clubs')
-    //   .aggregate()
-    //   .match({
-    //     openid: this.data.openid
-    //   })
-    //   .project({
-    //     _id: true,
-    //     shortName: true,
-    //     wholeName: true,
-    //     owner: true,
-    //     createDate: $.dateToString({
-    //       date: '$createDate',
-    //       format: '%Y-%m-%d'
-    //     })
-    //   })
-    //   .end()
-    //   .then(res => {
-    //     // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-    //     console.log(res.list)
-    //     this.setData({
-    //       clubs: res.list
-    //     })
-    //   })
   },
 
   search: function(value) {
@@ -205,7 +184,8 @@ Page({
       name: func,
       data: {
         action: action,
-        clubid: clubid
+        clubid: clubid,
+        userInfo: this.data.userInfo
       },
       success: res => {
         this.loading(false);
@@ -249,6 +229,17 @@ Page({
  
   },
 
+  onGetUserInfo: function (e) {
+    if (!this.data.login && e.detail.userInfo) {
+      this.setData({
+        login: true,
+        avatarUrl: e.detail.userInfo.avatarUrl,
+        userInfo: e.detail.userInfo
+      })
+      this.onClickPublicClub(e);
+    }
+  },
+  
   /**
    * 生命周期函数--监听页面加载
    */
@@ -265,14 +256,14 @@ Page({
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady: function () {
-
+    
   },
 
   /**
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
-
+    console.log("onShow");
   },
 
   /**
@@ -293,7 +284,7 @@ Page({
    * 页面相关事件处理函数--监听用户下拉动作
    */
   onPullDownRefresh: function () {
-
+    console.log("onPullDownRefresh");
   },
 
   /**

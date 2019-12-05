@@ -158,20 +158,34 @@ Page({
   },
 
   loadNewMatch: function (clubid, matchdata) {
-    const db = wx.cloud.database();//({env:'test-roundmatch'});
-    db.collection('players')
-      .where({
-        clubid: clubid
-      })
-      .get()
-      .then(res => {
-        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-        console.log(res.data);
+    this.loading(true);
+
+    let func = 'userService';
+    let action = 'list';
+    console.log(func + " " + action);
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        clubid: clubid,
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
+        let data = res.result.data;
         this.setData({
-          players: res.data,
+          players: data
         });
         this.renderNewMatch(matchdata);
-      })
+        this.loading(false);
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
   },
 
   renderNewMatch: function (matchdata) {
@@ -186,28 +200,42 @@ Page({
     this.setData({
       games: data
     });
-    this.loading(false);
   },
 
   loadMatchData: function (clubid, matchid) {
-    const db = wx.cloud.database();//({env:'test-roundmatch'});
-    db.collection('players')
-      .where({
-        clubid: clubid
-      })
-      .get()
-      .then(res => {
-        // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-        console.log(res.data);
+    this.loading(true);
+
+    let func = 'userService';
+    let action = 'list';
+    console.log(func + " " + action);
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        clubid: clubid,
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
+        let data = res.result.data;
         this.setData({
-          players: res.data
+          players: data
         });
         this.loadGames(matchid);
-      })
+        this.loading(false);
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
   },
 
   loadGames: function (matchid) {
-
+    this.loading(true);
+    
     let func = 'matchService';
     let action = 'read';
     console.log(func + " " + action);
@@ -402,7 +430,8 @@ Page({
   onSaveOK: function () {
     this.setData({
       action: 'old',
-      saved: true
+      saved: true,
+      vsBtnDisable: false
     });
   },
 
@@ -417,7 +446,8 @@ Page({
         action: options.action,
         clubid: options.clubid,
         matchid: options.matchid,
-        saved: true
+        saved: true,
+        vsBtnDisable: false
       });
       this.loadMatchData(this.data.clubid, this.data.matchid);
       // this.test(this.data.clubid, this.data.matchid);
@@ -427,7 +457,8 @@ Page({
         action: options.action,
         clubid: options.clubid,
         matchdata: matchdata,
-        saved: false
+        saved: false,
+        vsBtnDisable: true
       });
       this.loadNewMatch(this.data.clubid, this.data.matchdata)
     }

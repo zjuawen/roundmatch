@@ -7,6 +7,8 @@ Page({
   data: {
     title: "选择人员",
     loading: false,
+    selectedCount: 0,
+    nextDisable: true
   },
 
   loading: function (value) {
@@ -30,8 +32,12 @@ Page({
       },
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result);
+        let data = res.result.data;
+        data.forEach(function (item) {
+          item.checked = false;
+        });
         this.setData({
-          players: res.result.data
+          players: data
         });
 
         this.loading(false);
@@ -50,9 +56,20 @@ Page({
     let playerid = event.target.dataset.id;
     for( let i = 0; i<data.length; i++){
       if( data[i]._id == playerid){
-         data[i].enable = !data[i].enable;
-         this.setData({players:data});
-         return;
+        data[i].checked = !data[i].checked;
+        let count = this.data.selectedCount;
+        if( data[i].checked){
+          count++;
+        } else {
+          count--;
+        }
+        let disable = (count<4)||(count>8);
+        this.setData({ 
+          players:data,
+          selectedCount: count,
+          nextDisable: disable
+        });
+        return;
       }
     }
   },
@@ -61,7 +78,7 @@ Page({
     let data = this.data.players;
     let playerArray = [];
     for( let i = 0; i<data.length; i++){
-      if( data[i].enable){
+      if( data[i].checked){
          playerArray.push(data[i]._id)
       }
     }

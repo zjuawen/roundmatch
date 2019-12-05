@@ -16,11 +16,12 @@
   </view>
 
   <!-- 测试入口 -->
+<!--   
   <view class="uploader">
     <navigator url="../testIndex/index" open-type="navigate" class="uploader-text">
       <text>测试用</text>
     </navigator>
   </view>
-
+ -->
 
 </view>

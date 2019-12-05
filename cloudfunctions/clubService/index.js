@@ -17,7 +17,7 @@ exports.main = async (event, context) => {
   let action = event.action;
   let data;
   if (action == 'join') {
-    data = await joinClub( wxContext, event.clubid);
+    data = await joinClub( wxContext, event.clubid, event.userInfo);
   } else if (action == 'list') {
     let private = await listPrivateClub( wxContext );
     let public = await listPublicClub( wxContext );
@@ -52,7 +52,7 @@ listPublicClub = async (wxContext) => {
 
 //参与的俱乐部列表
 listPrivateClub = async (wxContext) => {
-	return await db.collection('users_and_clubs')
+	return await db.collection('players')
     .where({
   		openid: wxContext.OPENID
   	})
@@ -78,8 +78,8 @@ loadClubData = async (uacs) => {
 
 
 //加入俱乐部
-joinClub = async (wxContext, clubid) => {
-  return await db.collection('users_and_clubs')
+joinClub = async (wxContext, clubid, userInfo) => {
+  return await db.collection('players')
     .where({
   		openid: wxContext.OPENID,
   		clubid: clubid
@@ -89,32 +89,41 @@ joinClub = async (wxContext, clubid) => {
   		console.log(res);
   		if( res.data.length > 0){
   			return res.data[0];
-  		} 
+  		}
   		//add user info
-  		return addUserToClubs(wxContext.OPENID, clubid);
+  		return addUserToClubs(clubid, wxContext.OPENID, userInfo);
   	})
 }
 
-addUserToClubs = async (openid, clubid) => {
+addUserToClubs = async (clubid, openid, userInfo) => {
 	let dt = db.serverDate();
-  return await db.collection('users_and_clubs')
+  return await db.collection('players')
   	.add({
   		data: {
   			openid: openid,
   			clubid: clubid,
+        enable: true,
+        order: 1,
+        name: userInfo.nickName,
+        avatarUrl: userInfo.avatarUrl,
+        gender: userInfo.gender,
   			createDate: dt
   		}
   	})
   	.then(res => {
   		console.log(res);
-  		if( res.errMsg == "collection.add:ok"){
-  			return {
-  				_id: res._id,
-  				openid: openid,
-	  			clubid: clubid,
-	  			createDate: dt
-	  		};
-  		}
+  		if( res.errMsg != "collection.add:ok"){
+        return {
+          errMsg: res.errMsg
+        };
+      } else {
+        return {
+          _id: res._id,
+          openid: openid,
+          clubid: clubid,
+          createDate: dt
+        }
+      }
   	})
 }
 
