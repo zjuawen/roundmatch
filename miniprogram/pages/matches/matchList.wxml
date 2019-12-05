@@ -10,7 +10,7 @@
 <button 
   class="weui-btn" type="primary" 
   size="mini" bindtap="onNewGame"
-  style="margin-top: 40rpx; " >
+  style="margin-top: 40rpx; margin-bottom: 40rpx;" >
   新建
 </button>
 <!-- </view> -->
@@ -19,17 +19,16 @@
 	wx:for="{{matches}}"
   wx:key="{item._id}"
 	class="uploader"
-  style="padding-left: 0px; " >
+  style="padding-left: 0px; margin-top: 0px; margin-bottom: 20rpx;"  >
 
 	<navigator 
-  url="../matches/detail?action=old&clubid={{item.clubid}}&matchid={{item._id}}" 
-  open-type="navigate" 
-  class="uploader-text" 
-  style="margin-left: 40rpx; ">
+    url="../matches/detail?action=old&clubid={{item.clubid}}&matchid={{item._id}}" 
+    open-type="navigate" 
+    class="uploader-text" 
+    style="padding-left: 40rpx; ">
 	  <text>{{item.createDate}}</text>
 	</navigator>
 </view>
-
 
 
 

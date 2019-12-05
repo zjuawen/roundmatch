@@ -1,10 +1,10 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-const env = 'test-roundmatch';
+// const env = 'test-roundmatch';
 cloud.init({
-  // env: cloud.DYNAMIC_CURRENT_ENV
-  env: env
+  env: cloud.DYNAMIC_CURRENT_ENV
+  // env: env
 })
 const db = cloud.database();
 const $ = db.command.aggregate;

@@ -5,23 +5,43 @@ Page({
    * 页面的初始数据
    */
   data: {
-    title: "选择人员"
+    title: "选择人员",
+    loading: false,
+  },
+
+  loading: function (value) {
+    this.setData({
+      loading: value
+    });
   },
 
   loadPlayers: function(clubid) {
-    const db = wx.cloud.database();//({env:'test-roundmatch'});
+    this.loading(true);
 
-    db.collection('players')
-    .where({
-      clubid: clubid
-    })
-    .get()
-    .then(res => {
-      // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-      console.log(res.data)
-      this.setData({
-        players: res.data
-      })
+    let func = 'userService';
+    let action = 'list';
+    console.log(func + " " + action);
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        clubid: clubid
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result);
+        this.setData({
+          players: res.result.data
+        });
+
+        this.loading(false);
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
     })
   },
 
@@ -29,7 +49,7 @@ Page({
     let data = this.data.players;
     let playerid = event.target.dataset.id;
     for( let i = 0; i<data.length; i++){
-      if( data[i].id == playerid){
+      if( data[i]._id == playerid){
          data[i].enable = !data[i].enable;
          this.setData({players:data});
          return;
@@ -42,9 +62,11 @@ Page({
     let playerArray = [];
     for( let i = 0; i<data.length; i++){
       if( data[i].enable){
-         playerArray.push(data[i].id)
+         playerArray.push(data[i]._id)
       }
     }
+    console.log("getSelectedPlayers return: " + playerArray);
+    
     return playerArray;
   },
 

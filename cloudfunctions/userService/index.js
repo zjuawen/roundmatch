@@ -1,10 +1,10 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-const env = 'test-roundmatch';
+// const env = 'test-roundmatch';
 cloud.init({
-  // env: cloud.DYNAMIC_CURRENT_ENV
-  env: env
+  env: cloud.DYNAMIC_CURRENT_ENV
+  // env: env
 })
 const db = cloud.database();
 const $ = db.command.aggregate;
@@ -16,7 +16,9 @@ exports.main = async (event, context) => {
   let action = event.action;
   let data;
   if (action == 'login') {
-	data = await saveUserData(wxContext);
+	   data = await saveUserData(wxContext);
+  } else if( action == 'list') {
+     data = await listUserInClub(event.clubid);
   }
 
   return {
@@ -67,6 +69,19 @@ addUserData = async (context) => {
 	  		};
   		}
   	})
+}
+
+//列出俱乐部成员
+listUserInClub = async (clubid) => {
+  return await db.collection('players')
+    .where({
+      clubid: clubid
+    })
+    .get()
+    .then(res => {
+      console.log(res);
+      return res.data;
+    })
 }
 
 

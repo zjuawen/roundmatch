@@ -1,26 +1,26 @@
 <!--miniprogram/pages/players/playerList.wxml-->
 
-<mp-navigation-bar loading="{{false}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
+<mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
 <button 
   class="weui-btn" type="primary" 
-  style="margin-top: 20rpx" 
-  bindtap="onPlayerSelected">
+  size="mini"  bindtap="onPlayerSelected"
+  style="margin-top: 20rpx" >
 	下一步
 </button>
 
 
 <view 
   wx:for="{{players}}"
-  wx:key="{{item.id}}"
+  wx:key="{{item._id}}"
   class="uploader"
   style="padding-left: 0;" >
 
   <!-- <label class="userinfo-nickname" >
-    <checkbox value="{{item.id}}" checked="{{item.enable}}"/>{{item.name}}
+    <checkbox value="{{item._id}}" checked="{{item.enable}}"/>{{item.name}}
   </label> -->
   <button class="userinfo-nickname" 
-    data-id="{{item.id}}" bindtap="onSelectPlayer"
+    data-id="{{item._id}}" bindtap="onSelectPlayer"
     style="width: 100%; text-align: left; align-items: center; flex-direction: row; display: flex; " >
 
   	<image class="checkbox" wx:if="{{!item.enable}}" 

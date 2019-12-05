@@ -10,6 +10,8 @@ Page({
     openid: '',
     avatarUrl: '../../images/user-unlogin.png',
     loading: false,
+    buttons: [{text: '取消'}, {text: '确定'}],
+    joinDialogShow: false,
     // inputShowed: false,
     // inputVal: "",
   },
@@ -89,6 +91,7 @@ Page({
           clubs: data.private,
           publicClubs: data.public
         })
+        this.reducePublicClubs();
         this.loading(false);
       },
       fail: err => {
@@ -176,6 +179,74 @@ Page({
 
   onClickPublicClub: function(e) {
     console.log(e);
+    this.setData({
+      selected: e.currentTarget.dataset.item,
+      joinDialogShow: true,
+    })
+  },
+
+  tapDialogButton(e) {
+    let btnIndex = e.detail.index;
+    if( btnIndex === 1){
+      this.loading(true);
+      this.joinClub(this.data.selected._id);
+    } 
+    this.setData({
+        joinDialogShow: false
+    })
+  },
+
+  joinClub: function(clubid) {
+    let func = 'clubService';
+    let action = 'join';
+    console.log(func + " " + action);
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        clubid: clubid
+      },
+      success: res => {
+        this.loading(false);
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
+        let data = res.result.data;
+        if( data._id.length > 0){
+          this.data.clubs.push(this.data.selected);
+          this.reducePublicClubs();
+          this.setData({
+            clubs: this.data.clubs,
+            joinDialogShow: false
+          });
+        }
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
+  },
+
+  reducePublicClubs: function() {
+    let publicClubs = this.data.publicClubs;
+    let privateClubs = this.data.clubs;
+
+    publicClubs = publicClubs.filter(function(publicClub) {
+      let keep = true;
+      privateClubs.forEach(function(privateClub) {
+        if( publicClub._id == privateClub._id){
+          keep = false;
+        }
+      });
+      return keep;
+    });
+
+    this.setData({
+      publicClubs: publicClubs
+    })
+ 
   },
 
   /**

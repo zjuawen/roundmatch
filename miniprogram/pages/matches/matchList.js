@@ -53,7 +53,7 @@ Page({
 
   onNewGame: function() {
     wx.navigateTo({
-      url: '../players/playerList?clubid=1&action=new',
+      url: '../players/playerList?clubid=' + this.data.clubid + '&action=new',
     })
   },
 

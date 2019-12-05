@@ -8,6 +8,7 @@ Page({
     title: '比赛详情',
     loading: false,
     
+    saved: false,
     games: [],
     matchPlayers: [],  //该次比赛参与人员
     matchDone: false,
@@ -356,7 +357,7 @@ Page({
   findMatchPlayerIndex: function( players, id ) { 
     return players.findIndex(
       function(player, index, array){
-        return player.id == id;
+        return player._id == id;
       }
     ); 
   },
@@ -364,7 +365,7 @@ Page({
   playerToName: function (playerid) {
     let data = this.data.players;
     for (let i = 0; i < data.length; i++) {
-      if (data[i].id == playerid) {
+      if (data[i]._id == playerid) {
         this.addToMatchPlayers(data[i]);
         return data[i].name;
       }
@@ -400,7 +401,8 @@ Page({
 
   onSaveOK: function () {
     this.setData({
-      action:'old'
+      action: 'old',
+      saved: true
     });
   },
 
@@ -414,7 +416,8 @@ Page({
       this.setData({
         action: options.action,
         clubid: options.clubid,
-        matchid: options.matchid
+        matchid: options.matchid,
+        saved: true
       });
       this.loadMatchData(this.data.clubid, this.data.matchid);
       // this.test(this.data.clubid, this.data.matchid);
@@ -424,6 +427,7 @@ Page({
         action: options.action,
         clubid: options.clubid,
         matchdata: matchdata,
+        saved: false
       });
       this.loadNewMatch(this.data.clubid, this.data.matchdata)
     }

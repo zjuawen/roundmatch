@@ -26,11 +26,11 @@
 <view wx:if="{{(clubs.length>0)}}" class="weui-cells__title">加入的俱乐部</view>
 <view 
 	wx:for="{{clubs}}"
-  wx:key="{item.id}"
+  wx:key="{item._id}"
 	class="uploader" 
-  style="padding-left: 0px; margin-top: 0px;"  >
+  style="padding-left: 0px; margin-top: 0px; margin-bottom: 20rpx;"  >
 
-	<navigator url="../matches/matchList?clubid={{item.id}}" 
+	<navigator url="../matches/matchList?clubid={{item._id}}" 
     open-type="navigate" class="uploader-text"
     style="padding-left: 40rpx; " >
 
@@ -72,3 +72,8 @@
   创建
 </button>
 -->
+
+<mp-dialog title="加入俱乐部" show="{{joinDialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
+    <view>确定要加入"{{selected.wholeName}}"?</view>
+</mp-dialog>
+

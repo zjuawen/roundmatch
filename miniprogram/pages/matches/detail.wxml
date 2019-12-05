@@ -20,31 +20,21 @@
       wx:key="{item._id}"
       wx:for-index="index" 
       class="uploader"
-      style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx; background-color: {{(item.score1>=0 && item.score2>=0)? 'lightgreen' : 'white' }}; ">
+      style="flex-direction: row;align-items: center; padding-left: 10rpx; padding-right: 10rpx; margin-top: 20rpx; background-color: {{(item.score1>=0 && item.score2>=0)? 'lightgreen' : 'white' }}; ">
 
       <label 
         style="border: none; flex: 1; text-align: center;" > 
         {{(index+1)}}
       </label>
 
-      <button 
-        type="default" 
-        size="mini" 
-        plain="{{true}}"
-        disabled="{{disabled}}" 
-        bindtap="onClickNone"
-        style="border: none; flex: 1" > 
+      <label 
+        style="border: none; flex: 3; text-align: center; font-size: 32rpx;" > 
         {{item.playerName1}}
-      </button>
-      <button 
-        type="default" 
-        size="mini" 
-        plain="{{true}}"
-        disabled="{{disabled}}" 
-        bindtap="onClickNone"
-        style="border: none; flex: 1" > 
+      </label>
+      <label 
+        style="border: none; flex: 3; text-align: center; font-size: 32rpx;" > 
         {{item.playerName2}}
-      </button>
+      </label>
 
       <button 
         wx:if="{{(item.score1<0 || item.score2<0)}}"
@@ -55,7 +45,7 @@
         bindtap="onClickScore"
         data-id="{{item._id}}" 
         data-index="{{index}}" 
-        style="border: none; flex: 1" > 
+        style="border: none; flex: 2" > 
         vs
       </button>
 
@@ -69,28 +59,18 @@
         data-index="{{index}}" 
         bindtap="onClickNone"
         bindlongpress="onLongPressScore"
-        style="border: none; flex: 1" > 
+        style="border: none; flex: 2" > 
         {{item.score1}}:{{item.score2}}
       </button>
       
-      <button 
-        type="default" 
-        size="mini" 
-        plain="{{true}}"
-        disabled="{{disabled}}" 
-        bindtap="onClickNone"
-        style="border: none; flex: 1" > 
+      <label 
+        style="border: none; flex: 3; text-align: center; font-size: 32rpx;" > 
         {{item.playerName3}}
-      </button>
-      <button 
-        type="default" 
-        size="mini" 
-        plain="{{true}}"
-        disabled="{{disabled}}" 
-        bindtap="onClickNone"
-        style="border: none; flex: 1" > 
+      </label>
+      <label 
+        style="border: none; flex: 3; text-align: center; font-size: 32rpx;" > 
         {{item.playerName4}}
-      </button>
+      </label>
         
     </view>
 
@@ -140,7 +120,7 @@
         style="height: 50rpx; width: 50rpx; flex: 1;" >
       </image>
 
-      <label style="border: none; flex: 1; text-align: center;" > 
+      <label style="border: none; flex: 1; text-align: center; font-size: 32rpx;" > 
         {{item.name}}
       </label >
 
@@ -166,7 +146,11 @@
 
 </view>
 
-<mp-tabbar style="position:fixed;bottom:0;width:100%;left:0;right:0;" list="{{list}}" bindchange="tabChange"></mp-tabbar>
+<mp-tabbar 
+  wx:if="{{saved}}"
+  style="position:fixed;bottom:0;width:100%;left:0;right:0;" 
+  list="{{list}}"  bindchange="tabChange" >
+  </mp-tabbar>
 
 <mp-dialog 
   title="比分" 
