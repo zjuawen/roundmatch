@@ -20,130 +20,174 @@
       wx:for="{{games}}"
       wx:key="{item._id}"
       wx:for-index="index" 
-      class="uploader"
-      style="flex-direction: row;align-items: center; padding-left: 10rpx; padding-right: 10rpx; margin-top: 20rpx; background-color: {{(item.score1>=0 && item.score2>=0)? 'lightgreen' : 'white' }}; ">
+      class="detail-block"
+      style="background-color: {{(item.score1>=0 && item.score2>=0)? '#DDFFDD' : 'white' }};" >
 
-      <label 
-        style="border: none; flex: 1; text-align: center;" > 
-        {{(index+1)}}
-      </label>
+      <view class="detail-title">
+        <image class="detail-title-icon" 
+          src="../../images/clock.svg" >
+          </image>
+        <view class="detail-title-text" >2018-11-13</view>
+      </view> 
 
-      <label 
-        style="border: none; flex: 3; text-align: center; font-size: 32rpx;" > 
-        {{item.playerName1}}
-      </label>
-      <label 
-        style="border: none; flex: 3; text-align: center; font-size: 32rpx;" > 
-        {{item.playerName2}}
-      </label>
+      <!-- detail-content -->
+      <view class="detail-content">
+        
+        <!-- <label 
+          style="border: none; flex: 1; text-align: center;" > 
+          {{(index+1)}}
+        </label> -->
 
-      <button 
-        wx:if="{{(item.score1<0 || item.score2<0)}}"
-        type="default" 
-        size="mini" 
-        plain="{{true}}"
-        disabled="{{vsBtnDisable}}" 
-        bindtap="onClickScore"
-        data-id="{{item._id}}" 
-        data-index="{{index}}" 
-        style="border: none; flex: 2" > 
-        vs
-      </button>
+        <!-- column1 -->
+        <view class="detail-content-column">
+          <view class="detail-content-avatars">
+            <image 
+              class="avatar" 
+              src="{{item.playerInfo1.avatarUrl}}" >
+              </image>
+            <image class="avatar" 
+              src="{{item.playerInfo2.avatarUrl}}" >
+              </image> 
+          </view>
+          <view class="detail-content-names">
+            <view class="detail-content-name">
+              {{item.playerInfo1.name}}
+            </view>
+            <view class="detail-content-name">
+              {{item.playerInfo2.name}}
+            </view>        
+          </view>
+        </view>
 
-      <button 
-        wx:if="{{(item.score1>=0 && item.score2>=0)}}"
-        type="default"
-        size="mini" 
-        plain="{{true}}"
-        disabled="{{vsBtnDisable}}" 
-        data-id="{{item._id}}" 
-        data-index="{{index}}" 
-        bindtap="onClickNone"
-        bindlongpress="onLongPressScore"
-        style="border: none; flex: 2" > 
-        {{item.score1}}:{{item.score2}}
-      </button>
-      
-      <label 
-        style="border: none; flex: 3; text-align: center; font-size: 32rpx;" > 
-        {{item.playerName3}}
-      </label>
-      <label 
-        style="border: none; flex: 3; text-align: center; font-size: 32rpx;" > 
-        {{item.playerName4}}
-      </label>
+        <!-- column2 -->
+        <view class="detail-content-column">
+          <view 
+            wx:if="{{(item.score1<0 || item.score2<0)}}"
+            disabled="{{vsBtnDisable}}" 
+            data-id="{{item._id}}" 
+            data-index="{{index}}" 
+            bindtap="onClickScore"
+            class="detail-content-score" > 
+            vs
+          </view>
+          <view 
+            wx:else
+            disabled="{{vsBtnDisable}}" 
+            data-id="{{item._id}}" 
+            data-index="{{index}}" 
+            bindtap="onClickNone"
+            bindlongpress="onLongPressScore"
+            class="detail-content-score" > 
+            {{item.score1}}:{{item.score2}}
+          </view>
+        </view>
+        
+        <!-- column3 -->
+        <view class="detail-content-column">
+          <view class="detail-content-avatars">
+            <image 
+              class="avatar" 
+              src="{{item.playerInfo3.avatarUrl}}" >
+              </image>
+            <image class="avatar" 
+              src="{{item.playerInfo4.avatarUrl}}" >
+              </image> 
+          </view>
+          <view class="detail-content-names">
+            <view class="detail-content-name">
+              {{item.playerInfo3.name}}
+            </view>
+            <view class="detail-content-name">
+              {{item.playerInfo4.name}}
+            </view>        
+          </view>
+        </view>
+
+      </view>
+      <!-- end of detail-content -->
         
     </view>
 
   </view>
 
   <!-- stats -->
-  <view wx:if="{{tabIndex==1}}" >
+  <view class="tab-page" wx:if="{{tabIndex==1}}" >
 
-    <!-- header -->
-    <view 
-      style="display: flex; direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
+    <image class="banner" src="../../images/banner.jpg" mode="aspectFill" ></image>
 
-      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >No.</label >
+    <view class="stats-container" >
 
-      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >姓名</label >
+      <!-- header -->
+      <view 
+        style="display: flex; direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
 
-      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >胜场数</label>
+        <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >排名</label >
 
-      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >负场数</label>
+        <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >姓名</label >
 
-      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >净胜球</label>
-      
-      <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >总得分</label>
+        <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >胜场数</label>
 
-    </view>
+        <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >负场数</label>
 
-    <view 
-      wx:for="{{matchPlayers}}"
-      wx:key="{item._id}"
-      wx:for-index="index" 
-      class="uploader"
-      style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
+        <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >净胜球</label>
+        
+        <label style="border: none; flex: 1; text-align: center; font-size-adjust: 0.5; " >总得分</label>
 
-      <label 
-        wx:if="{{(!matchDone || (index!=0 && (index!=matchPlayers.length-1)))}}" 
-        style="border: none; flex: 1; text-align: center;" > 
-        {{index+1}}
-      </label >
+      </view>
 
-      <image wx:if="{{(matchDone && (index==0))}}" 
-        src="../../images/crown.png" mode="aspectFit"
-        style="height: 50rpx; width: 50rpx; flex: 1;" >
-      </image>
+      <view 
+        wx:for="{{matchPlayers}}"
+        wx:key="{item._id}"
+        wx:for-index="index" 
+        class="uploader"
+        style="flex-direction: row;align-items: center; padding-left: 0rpx; margin-top: 20rpx;" >
 
-      <image wx:if="{{(matchDone && (index==matchPlayers.length-1))}}" 
-        src="../../images/pighead.png" mode="aspectFit"
-        style="height: 50rpx; width: 50rpx; flex: 1;" >
-      </image>
+        <label 
+          wx:if="{{(!matchDone || (index!=0 && (index!=matchPlayers.length-1)))}}" 
+          style="border: none; flex: 1; text-align: center;" > 
+          {{index+1}}
+        </label >
 
-      <label style="border: none; flex: 1; text-align: center; font-size: 32rpx;" > 
-        {{item.name}}
-      </label >
+        <image wx:if="{{(matchDone && (index==0))}}" 
+          src="../../images/crown.png" mode="aspectFit"
+          style="height: 50rpx; width: 50rpx; flex: 1;" >
+        </image>
 
-      <label style="border: none; flex: 1; text-align: center;" > 
-        {{item.win}}
-      </label>
+        <image wx:if="{{(matchDone && (index==matchPlayers.length-1))}}" 
+          src="../../images/pighead.png" mode="aspectFit"
+          style="height: 50rpx; width: 50rpx; flex: 1;" >
+        </image>
 
-      <label style="border: none; flex: 1; text-align: center;" > 
-        {{item.lost}}
-      </label>
+        <!-- "{{item.avatarUrl}}"  -->
+        <image class="avatar" 
+          src="../../images/user-unlogin.png" >
+          </image>
 
-      <label style="border: none; flex: 1; text-align: center;" > 
-        {{item.delta}}
-      </label>
-      
-      <label style="border: none; flex: 1; text-align: center;" > 
-        {{item.total}}
-      </label>
+        <label style="border: none; flex: 1; text-align: center; font-size: 32rpx;" > 
+          {{item.name}}
+        </label >
 
+        <label style="border: none; flex: 1; text-align: center;" > 
+          {{item.win}}
+        </label>
+
+        <label style="border: none; flex: 1; text-align: center;" > 
+          {{item.lost}}
+        </label>
+
+        <label style="border: none; flex: 1; text-align: center;" > 
+          {{item.delta}}
+        </label>
+        
+        <label style="border: none; flex: 1; text-align: center;" > 
+          {{item.total}}
+        </label>
+
+      </view>
     </view>
 
   </view>
+  <!-- end of  stats -->
 
 </view>
 

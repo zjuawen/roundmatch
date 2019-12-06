@@ -46,7 +46,11 @@ Page({
   tabChange(e) {
     console.log('tab change', e);
     let index = e.detail.index;
-    this.setData({tabIndex:index});
+    let title = (index == 0) ? '比赛详情' : '统计';
+    this.setData({
+      title: title,
+      tabIndex:index
+    });
   },
 
   onClickScore: function(event) {
@@ -173,6 +177,11 @@ Page({
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result.data);
         let data = res.result.data;
+         data.forEach(function (item){
+          if( item.avatarUrl == null){
+            item.avatarUrl = '../../images/user-unlogin.png';
+          }
+        });
         this.setData({
           players: data
         });
@@ -191,10 +200,10 @@ Page({
   renderNewMatch: function (matchdata) {
     let data = matchdata;
     for (let i = 0; i < data.length; i++) {
-      data[i].playerName1 = this.playerToName(data[i].player1);
-      data[i].playerName2 = this.playerToName(data[i].player2);
-      data[i].playerName3 = this.playerToName(data[i].player3);
-      data[i].playerName4 = this.playerToName(data[i].player4);
+      data[i].playerInfo1 = this.getPlayerById(data[i].player1);
+      data[i].playerInfo2 = this.getPlayerById(data[i].player2);
+      data[i].playerInfo3 = this.getPlayerById(data[i].player3);
+      data[i].playerInfo4 = this.getPlayerById(data[i].player4);
     }
     console.log(data);
     this.setData({
@@ -218,6 +227,11 @@ Page({
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result.data);
         let data = res.result.data;
+        data.forEach(function (item){
+          if( item.avatarUrl == null){
+            item.avatarUrl = '../../images/user-unlogin.png';
+          }
+        });
         this.setData({
           players: data
         });
@@ -253,10 +267,10 @@ Page({
           matchPlayers:[]
         });
         for (let i = 0; i < data.length; i++) {
-          data[i].playerName1 = this.playerToName(data[i].player1);
-          data[i].playerName2 = this.playerToName(data[i].player2);
-          data[i].playerName3 = this.playerToName(data[i].player3);
-          data[i].playerName4 = this.playerToName(data[i].player4);
+          data[i].playerInfo1 = this.getPlayerById(data[i].player1);
+          data[i].playerInfo2 = this.getPlayerById(data[i].player2);
+          data[i].playerInfo3 = this.getPlayerById(data[i].player3);
+          data[i].playerInfo4 = this.getPlayerById(data[i].player4);
         }
         this.setData({
           games: data
@@ -390,12 +404,12 @@ Page({
     ); 
   },
 
-  playerToName: function (playerid) {
+  getPlayerById: function (playerid) {
     let data = this.data.players;
     for (let i = 0; i < data.length; i++) {
       if (data[i]._id == playerid) {
         this.addToMatchPlayers(data[i]);
-        return data[i].name;
+        return data[i];
       }
     }
     return "ERR!";
