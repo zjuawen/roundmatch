@@ -15,9 +15,9 @@ Page({
     wx.redirectTo({
       // url: '../players/playerList?clubid=1',
       // url: '../matches/matchList?clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv',
-      url: '../matches/detail?action=old&clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv&matchid=e8f863ba5de7cb4b006299e71e9f7d25',
-      
-      // url: '../clubs/clubList',
+      // url: '../matches/detail?action=old&clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv&matchid=e8f863ba5de7cb4b006299e71e9f7d25',
+      // url: '../players/playerList?clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv&action=new',
+      url: '../clubs/clubList',
       
     })
     return;

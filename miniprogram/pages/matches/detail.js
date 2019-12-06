@@ -377,6 +377,12 @@ Page({
     //比较胜率
     let rate1 = Math.round((player1.win/(player1.win+player1.lost))*100)*100;
     let rate2 = Math.round((player2.win/(player2.win+player2.lost))*100)*100;
+    if (isNaN(rate1) ){ 
+      rate1 = 0;
+    }
+    if (isNaN(rate2) ){ 
+      rate2 = 0;
+    }
     if( rate1 != rate2){
       return rate2 - rate1;
     }

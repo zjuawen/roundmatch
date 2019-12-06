@@ -35,7 +35,11 @@ Page({
         let data = res.result.data;
         data.forEach(function (item) {
           item.checked = false;
+          if( item.avatarUrl == null){
+            item.avatarUrl = '../../images/user-unlogin.png';
+          }
         });
+
         this.setData({
           players: data
         });
