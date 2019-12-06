@@ -1,8 +1,9 @@
 <!--miniprogram/pages/clubs/clubList.wxml-->
 
-<mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
+<mp-navigation-bar loading="{{loading}}" show="{{true}}" title="{{title}}" background="{{'white'}}" back="{{false}}" ></mp-navigation-bar>
 
 <!--  
+
 <view class="list">
   <button 
     open-type="getUserInfo" 
@@ -31,13 +32,21 @@
   style="padding-left: 0px; margin-top: 0px; margin-bottom: 20rpx;"  >
 
 	<navigator url="../matches/matchList?clubid={{item._id}}" 
-    open-type="navigate" class="uploader-text"
-    style="padding-left: 40rpx; " >
+    open-type="navigate" class="uploader-text">
 
-    <view style="display: flex;">
-      <text style="flex:1" >{{item.wholeName}}</text>
-      <text style="flex:1; align-content: left" > ({{item.shortName}})</text>
+    <view style="display: flex; align-items: center; margin-left: 20rpx;">
+      
+      <image class='avatar' style="margin: 20rpx;" 
+        src="../../images/default_club.png" mode="aspectFit">
+      </image>
+      
+      <text style="flex:5" >{{item.wholeName}}</text>
+      <text style="flex:5; align-content: left" > ({{item.shortName}})</text>
       <!-- <text style="flex:1" >{{item.createDate}}</text> -->
+
+       <!-- <image class='avatar' style="margin: 20rpx; border-radius: 0px;" 
+        src="../../images/locked.png" mode="aspectFit">
+      </image> -->
     </view>
 
 	</navigator>
@@ -50,8 +59,12 @@
   wx:key="{item._id}"
   wx:for-index="index" 
   class="uploader" 
-  
   style="display: flex; flex-direction:row; padding-left: 20rpx; padding-top: 20rpx; padding-bottom: 20rpx; align-items: center;" >
+
+    <image 
+      src="../../images/default_club.png" mode="aspectFit"
+      style="height: 50rpx; width: 50rpx; flex: 1;" >
+    </image>
 
     <view style="flex:1; font-size: 14px; margin-left: 50rpx;" >{{item.wholeName}}</view>
     <view style="flex:1; font-size: 14px;" >({{item.shortName}})</view>

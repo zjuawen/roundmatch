@@ -25,13 +25,13 @@ Page({
     list: [{
       "text": "比分",
       "iconPath": "../../images/score.svg",
-      "selectedIconPath": "../../images/score.svg",
+      "selectedIconPath": "../../images/score_selected.svg",
       dot: true
     },
     {
       "text": "统计",
       "iconPath": "../../images/stats.svg",
-      "selectedIconPath": "../../images/stats.svg",
+      "selectedIconPath": "../../images/stats_selected.svg",
       // badge: 'New'
     }],
 
@@ -235,7 +235,7 @@ Page({
 
   loadGames: function (matchid) {
     this.loading(true);
-    
+
     let func = 'matchService';
     let action = 'read';
     console.log(func + " " + action);
@@ -402,6 +402,7 @@ Page({
   },
 
   onSaveMatch: function (event) {
+    this.loading(true);
 
     let func = 'matchService';
     console.log('saving match ...');
@@ -416,7 +417,14 @@ Page({
       },
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result);
+        let matchid = res.result.data.matchid;
+        this.setData({
+          matchid: matchid
+        })
+        this.loadMatchData(this.data.clubid, matchid);
         this.onSaveOK();
+        
+        this.loading(false);
       },
       fail: err => {
         console.error('[云函数] ' + func + ' 调用失败', err)
