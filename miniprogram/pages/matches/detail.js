@@ -22,11 +22,11 @@ Page({
 
     //tabbar
     tabIndex: 0,
-    list: [{
+    tabLabelList: [{
       "text": "比分",
       "iconPath": "../../images/score.svg",
       "selectedIconPath": "../../images/score_selected.svg",
-      dot: true
+      // dot: true
     },
     {
       "text": "统计",
@@ -47,6 +47,15 @@ Page({
     console.log('tab change', e);
     let index = e.detail.index;
     let title = (index == 0) ? '比赛详情' : '统计';
+    if( index == 0 ){
+      let tabLabelList = this.data.tabLabelList;
+      if( tabLabelList[0].badge != null){
+        tabLabelList[0].badge = null;
+        this.setData({
+          tabLabelList: tabLabelList
+        })
+      }
+    }
     this.setData({
       title: title,
       tabIndex:index
@@ -492,6 +501,78 @@ Page({
     }
   },
 
+  onGamesDataChange: function() {
+    if( this.data.tabIndex == 0){
+      this.setData({
+        dialogShow: false
+      });
+    } else {
+      let tabLabelList = this.data.tabLabelList;
+      tabLabelList[0].badge = "New";
+      this.setData({
+        tabLabelList: tabLabelList
+      })
+    }
+    this.loadMatchData(this.data.clubid, this.data.matchid);
+  },
+
+  //开始监听比分更新
+  initWatch: async function() {
+    this.stopWatch();
+    this.try(() => {
+      const db = wx.cloud.database();
+      const _ = db.command
+
+      console.log(`initWatch`);
+
+      const messageListener = 
+        db.collection('games')
+          .where({
+            matchid: this.data.matchid,
+          })
+          .watch({
+            onChange: this.onGamesDataChange.bind(this),
+            onError: e => {
+              console.log("监听错误：" + e);
+              this.initWatch();
+            }
+          });
+
+      this.setData({
+        messageListener: messageListener
+      })
+    }, '初始化监听失败')
+  },
+
+  //停止监听更新
+  stopWatch: function() {
+    console.log("stopWatch");
+    if( this.data.messageListener != null){
+      this.data.messageListener.close();
+    }
+  },
+
+  try: async function(fn, title) {
+    try {
+      await fn()
+    } catch (e) {
+      this.showError(title, e)
+    }
+  },  
+
+  showError: function(title, content, confirmText, confirmCallback) {
+    console.error(title, content)
+    wx.showModal({
+      title,
+      content: content.toString(),
+      showCancel: confirmText ? true : false,
+      confirmText,
+      success: res => {
+        res.confirm && confirmCallback()
+      },
+    })
+  },
+
   /**
    * 生命周期函数--监听页面初次渲染完成
    */
@@ -503,14 +584,14 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
-
+    this.initWatch();
   },
 
   /**
    * 生命周期函数--监听页面隐藏
    */
   onHide: function () {
-
+    this.stopWatch();
   },
 
   /**
