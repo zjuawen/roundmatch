@@ -2,7 +2,8 @@
   "usingComponents": {
     "mp-actionsheet": "../../weui-miniprogram/actionsheet/actionsheet",
     "mp-searchbar": "../../weui-miniprogram/searchbar/searchbar",
-    "mp-navigation-bar": "../../weui-miniprogram/navigation-bar/navigation-bar"
+    "mp-navigation-bar": "../../weui-miniprogram/navigation-bar/navigation-bar",
+    "mp-tabbar": "../../weui-miniprogram/tabbar/tabbar"
   },
   "navigationStyle": "custom",
   "navigationBarTitleText": "比赛列表"

@@ -1,10 +1,10 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-// const env = 'test-roundmatch';
+const env = 'test-roundmatch';
 cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
-  // env: env
+  // env: cloud.DYNAMIC_CURRENT_ENV
+  env: env
 })
 const db = cloud.database();
 const _ = db.command;
@@ -26,6 +26,8 @@ exports.main = async (event, context) => {
     }
   }  else if (action == 'create') {
     data = await createClub(wxContext, event.info);
+  } else if( action == 'statis') {
+     data = await statisUserInClub(event.clubid);
   }
 
   return {
@@ -156,6 +158,59 @@ createClub = async (wxContext, info) => {
       }
     })
 }
+
+
+//统计俱乐部成员胜率
+statisUserInClub = async (clubid) => {
+  return await db.collection('players')
+    .where({
+      clubid: clubid
+    })
+    .orderBy('order', 'desc')
+    .get()
+    .then( async res =>  {
+      console.log(res);
+      let matches = await listClubMatches(clubid);
+      let data = matches;
+      return data;
+    })
+}
+
+listClubMatches = async (clubid) => {
+  return await db.collection('matches')
+    .aggregate()
+    .match({
+      clubid: clubid
+    })
+    .project({
+      _id: true
+    })
+    .end()
+    .then(res => {
+      console.log(res);
+      let data = res.list;
+      return data;
+    })
+}
+
+listClubGames = async (clubid) => {
+  return await db.collection('matches')
+    .aggregate()
+    .match({
+      clubid: clubid
+    })
+    .project({
+      _id: true
+    })
+    .end()
+    .then(res => {
+      console.log(res);
+      let data = res.list;
+      return data;
+    })
+}
+
+
 
 
 

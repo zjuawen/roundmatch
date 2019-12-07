@@ -11,7 +11,7 @@
 	保存
 </button>
 
-<view style="margin-bottom:70px" >
+<view style="margin-bottom:140rpx" >
 
   <!-- games -->
   <view wx:if="{{tabIndex==0}}" >

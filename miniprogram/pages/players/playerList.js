@@ -7,6 +7,7 @@ Page({
   data: {
     title: "选择人员",
     loading: false,
+    players: [],
     selectedCount: 0,
     nextDisable: true
   },

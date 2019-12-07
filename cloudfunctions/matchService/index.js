@@ -57,12 +57,12 @@ saveMatchData = async (clubid, matchdata, playerCount, remark="") => {
       console.log(res)
       let matchid = res._id;
       console.log("added new match: " + matchid);
-      return  savaGames(matchid, matchdata);
+      return savaGames(clubid, matchid, matchdata);
     })
 }
 
 //保存对阵数据
-savaGames = async (matchid, matchdata) => {
+savaGames = async (clubid, matchid, matchdata) => {
   let data = matchdata;
 
   let count = 0;
@@ -72,6 +72,7 @@ savaGames = async (matchid, matchdata) => {
         // data 字段表示需新增的 JSON 数据
         data: {
           // id: db.command.inc(1).toString(),
+          clubid: clubid,
           matchid: matchid,
           player1: data[i].player1.toString(),
           player2: data[i].player2.toString(),
