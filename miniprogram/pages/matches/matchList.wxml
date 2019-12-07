@@ -38,7 +38,7 @@
           参赛人数
         </view>
         <view class="match-info-content">
-          6人
+          {{item.playerCount}}人
         </view>
       </view>
 
@@ -49,7 +49,7 @@
         </view>
         <view class="match-info-content"
           style="color: blue">
-          6场
+          {{item.finish}}场
         </view>
       </view>
 
@@ -59,7 +59,7 @@
         </view>
         <view class="match-info-content"
           style="color: orange">
-          10场
+          {{item.total}}场
         </view>
       </view>
 

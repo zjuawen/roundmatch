@@ -111,6 +111,18 @@ Page({
 
   setScoreToGameData: function() {
     let data = this.data.games;
+    let oldscore1 = data[this.data.clickIndex].score1;
+    let oldscore2 = data[this.data.clickIndex].score2;
+    if( (oldscore1 == this.data.tempScore1)
+      && (oldscore2 == this.data.tempScore2) ){
+      console.log("score not modified")
+      return;
+    }
+    if( (this.data.tempScore1 < 0)
+      || (this.data.tempScore2 < 0) ){
+      console.log("invalid scores: " + this.data.tempScore1 + "," + this.data.tempScore2);
+      return;
+    }
     data[this.data.clickIndex].score1 = this.data.tempScore1;
     data[this.data.clickIndex].score2 = this.data.tempScore2;
     this.setData({
@@ -434,13 +446,18 @@ Page({
     this.loading(true);
 
     let func = 'matchService';
+    let action = 'save';
     console.log('saving match ...');
+
+    let playerCount = this.data.matchPlayers.length;
+    console.log('total ' + playerCount + " players");
 
     wx.cloud.callFunction({
       name: func,
       data: {
-        action: 'save',
+        action: action,
         matchdata: this.data.matchdata,
+        playerCount: playerCount,
         clubid: this.data.clubid,
         // remark: "test"
       },
@@ -470,6 +487,7 @@ Page({
       saved: true,
       vsBtnDisable: false
     });
+    this.initWatch();
   },
 
   /**
@@ -584,7 +602,9 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
-    this.initWatch();
+    if( this.data.saved){
+      this.initWatch();
+    }
   },
 
   /**

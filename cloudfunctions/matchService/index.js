@@ -20,7 +20,8 @@ exports.main = async (event, context) => {
   } else if (action == 'list') {
     data = await getMatchList(event.clubid);
   } else if (action == 'save') {
-    data = await saveMatchData(event.clubid, event.matchdata);
+    data = await saveMatchData(event.clubid, 
+      event.matchdata, event.playerCount);
   } else if (action == 'read') {
     data = await readMatch(event.matchid);
   }
@@ -38,7 +39,7 @@ exports.main = async (event, context) => {
 }
 
 //保存新增的比赛数据
-saveMatchData = async (clubid, matchdata, remark="") => {
+saveMatchData = async (clubid, matchdata, playerCount, remark="") => {
   return await db.collection('matches')
     .add({
       // data 字段表示需新增的 JSON 数据
@@ -46,6 +47,9 @@ saveMatchData = async (clubid, matchdata, remark="") => {
         // id: _.inc(1),
         clubid: clubid,
         createDate: db.serverDate(),
+        total: matchdata.length,
+        finish: 0,
+        playerCount: playerCount,
         remark: remark,
       }
     })
@@ -154,6 +158,9 @@ getMatchList = async (clubid) => {
       _id: true,
       // id: true,
       clubid: true,
+      total: true,
+      finish: true,
+      playerCount: true,
       createDate: $.dateToString({
         date: '$createDate',
         format: '%Y-%m-%d'
