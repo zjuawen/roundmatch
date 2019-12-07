@@ -246,17 +246,12 @@ Page({
   onLoad: function (options) {
     this.getOpenid();
     this.loadUserinfo();
-
-    this.setData({
-      search: this.search.bind(this)
-    })
   },
 
   /**
    * 生命周期函数--监听页面初次渲染完成
    */
   onReady: function () {
-    
   },
 
   /**
@@ -264,6 +259,7 @@ Page({
    */
   onShow: function () {
     console.log("onShow");
+    this.loadClubs();
   },
 
   /**

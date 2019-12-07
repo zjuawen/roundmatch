@@ -61,9 +61,8 @@
   class="uploader" 
   style="display: flex; flex-direction:row; padding-left: 20rpx; padding-top: 20rpx; padding-bottom: 20rpx; align-items: center;" >
 
-    <image 
-      src="../../images/default_club.png" mode="aspectFit"
-      style="height: 50rpx; width: 50rpx; flex: 1;" >
+    <image class='avatar-small' 
+      src="../../images/default_club.png" mode="aspectFit">
     </image>
 
     <view style="flex:1; font-size: 14px; margin-left: 50rpx;" >{{item.wholeName}}</view>

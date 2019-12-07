@@ -1,7 +1,17 @@
 /* miniprogram/pages/clubs/clubList.wxss */
 
-.avatar{   
+.avatar {   
 	height: 40px;    
 	width: 40px;    
 	border-radius: 50%;
+	margin: 10rpx;
+	box-shadow: 1px 1px 3px #CCCCCC;
+}
+
+.avatar-small {   
+	height: 30px;    
+	width: 30px;    
+	border-radius: 50%;
+	margin: 10rpx;
+	box-shadow: 1px 1px 3px #CCCCCC;
 }

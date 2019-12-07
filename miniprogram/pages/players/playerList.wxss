@@ -27,6 +27,7 @@
 	width: 40px;    
 	border-radius: 50%;
 	margin: 10rpx;
+	box-shadow: 1px 1px 3px #CCCCCC;
 }
 
 .player-item-name {
