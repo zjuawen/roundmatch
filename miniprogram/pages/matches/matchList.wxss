@@ -39,12 +39,40 @@
 	width: 90%;
 }
 
-.match-progress {
-	height: 20rpx;
+.match-progress-block {
+	display: flex;
+	flex-direction: row;
 	width: 90%;
+	height: 20rpx;
 	margin-left: 5%;
 	margin-bottom: 40rpx;
+}
+
+.match-progress-finish {
+	height: 100%;
+	background-color: blue;
+	border-top-left-radius: 20rpx;
+	border-bottom-left-radius: 20rpx;
+}
+
+.match-progress {
+	height: 100%;
 	background-color: orange;
+	border-top-right-radius: 20rpx;
+	border-bottom-right-radius: 20rpx;
+}
+
+.match-progress-progress-full {
+	height: 100%;
+	flex: 1;
+	background-color: orange;
+	border-radius: 20rpx;
+}
+
+.match-progress-finish-full {
+	height: 100%;
+	flex: 1;
+	background-color: blue;
 	border-radius: 20rpx;
 }
 

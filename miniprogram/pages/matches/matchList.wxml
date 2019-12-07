@@ -17,7 +17,7 @@
 
 <view 
 	wx:for="{{matches}}"
-  wx:key="{item._id}" 
+  wx:key="{{item._id}}" 
   class="match-list-block" >
 
 	<navigator 
@@ -29,7 +29,18 @@
       {{item.createDate}}
       </view>
 
-    <view class="match-progress"></view>
+    <view class="match-progress-block">
+      <view wx:if="{{(item.finish==0)}}" 
+        class="match-progress-progress-full"></view>
+      <view wx:elif="{{(item.finish==item.total)}}" 
+        class="match-progress-finish-full"></view>
+      <block wx:else >
+        <view class="match-progress-finish"
+          style="flex:{{item.finish}}"></view>  
+        <view class="match-progress"
+          style="flex:{{item.total-item.finish}}"></view>
+      </block>
+    </view>
     
     <view class="match-info-block"> 
 
