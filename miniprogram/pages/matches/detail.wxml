@@ -178,13 +178,13 @@
 
   <view style="display: flex; flex-direction: column;">  
     <view style="display: flex; flex-direction: row; margin-bottom: 20px; justify-content: center;">  
-      <input 
-        style="background-color: #EEE; width: 30%; flex: 3; height: 30px; font-size: 20px; padding-top: 5px; " type="number" value="{{(tempScore1<0?'':tempScore1)}}" 
-        bindchange="inputScore1" focus="true" ></input>
+      <input class="score_input"
+        type="number" value="{{(tempScore1<0?'':tempScore1)}}" 
+        bindinput="inputScore1" bindchange="inputScore1" focus="true" ></input>
       <text style="flex: 1; padding-top: 5px; ">:</text>
-      <input 
-        style="background-color: #EEE; width: 30%; flex: 3; height: 30px; font-size: 20px; padding-top: 5px; " type="number" value="{{(tempScore2<0?'':tempScore2)}}" 
-        bindchange="inputScore2" ></input>
+      <input class="score_input"
+        type="number" value="{{(tempScore2<0?'':tempScore2)}}" 
+        bindinput="inputScore2" bindchange="inputScore2"></input>
     </view>    
     <view style="display: flex; flex-direction: row; justify-content: center;">  
       <view style="flex: 4" >

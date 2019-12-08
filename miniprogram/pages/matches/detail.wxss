@@ -160,3 +160,27 @@ view.disabled {
 	margin: 10rpx;
 	box-shadow: 1px 1px 3px #CCCCCC;
 }
+
+.score_input {
+	flex: 3; 
+	background-color: #EEE;
+	width: 30%; 
+	height: 30px; 
+	font-size: 20px; 
+	padding-top: 5px;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -100,8 +100,12 @@ Page({
   tapDialogButton(e) {
     if( e.detail.index === 1){
       this.loading(true);
-      this.setScoreToGameData();
-      this.onSaveGame(this.data.clickIndex);
+      let validat = this.setScoreToGameData();
+      if( validat){
+        this.onSaveGame(this.data.clickIndex);
+      }else {
+        this.loading(false);
+      }
     } 
     this.setData({
       dialogShow: false,
@@ -116,18 +120,19 @@ Page({
     if( (oldscore1 == this.data.tempScore1)
       && (oldscore2 == this.data.tempScore2) ){
       console.log("score not modified")
-      return;
+      return false;
     }
     if( (this.data.tempScore1 < 0)
       || (this.data.tempScore2 < 0) ){
       console.log("invalid scores: " + this.data.tempScore1 + "," + this.data.tempScore2);
-      return;
+      return false;
     }
     data[this.data.clickIndex].score1 = this.data.tempScore1;
     data[this.data.clickIndex].score2 = this.data.tempScore2;
     this.setData({
       games: data
     })
+    return true;
   },
 
   // getScore1: function(index) {

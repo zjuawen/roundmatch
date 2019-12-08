@@ -13,6 +13,7 @@ const $ = db.command.aggregate;
 // 云函数入口函数
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
+  // console.log(event);
 
   let action = event.action;
   let data;
@@ -35,6 +36,18 @@ exports.main = async (event, context) => {
 saveGameData = async (gamedata) => {
 
   let old = await readGameData(gamedata);
+  // console.log("new: " + gamedata.score1 + " & " + gamedata.score2);
+
+  if( old.data == null){
+    console.log('no gamedata found: ' + gamedata._id)
+    return ({ 
+      stats: { 
+        updated: 0 
+      }, 
+      errMsg: 'no record found!'
+    });
+  }
+
   let needInc = false;
   if( old.data.score1<0 && old.data.score2 <0 
     && gamedata.score1>=0 && gamedata.score2>=0){
@@ -50,10 +63,10 @@ saveGameData = async (gamedata) => {
         score2: gamedata.score2,
       }
     })
-    .then(res => {
+    .then( async res => {
       console.log(res);
       if( needInc){
-        updateMatchData(gamedata.matchid);
+        await updateMatchData(gamedata.matchid);
       }
       return res;
     })

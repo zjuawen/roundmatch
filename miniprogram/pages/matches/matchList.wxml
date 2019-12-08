@@ -23,7 +23,8 @@
     <view 
     	wx:for="{{matches}}"
       wx:key="{{item._id}}" 
-      class="match-list-block" >
+      class="match-list-block" 
+      style="background-color: {{(item.finish >= item.total)? '#DDFFDD' : 'white' }};" >
 
     	<navigator 
         class="match-list-navigator" 
