@@ -42,7 +42,8 @@ Page({
         });
 
         this.setData({
-          players: data
+          players: data,
+          selectedCount: 0,
         });
 
         this.loading(false);
