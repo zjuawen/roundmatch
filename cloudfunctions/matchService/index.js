@@ -164,7 +164,8 @@ getMatchList = async (clubid) => {
       playerCount: true,
       createDate: $.dateToString({
         date: '$createDate',
-        format: '%Y-%m-%d'
+        format: '%Y-%m-%d',
+        timezone: 'Asia/Shanghai'
       })
     })
     .end()
