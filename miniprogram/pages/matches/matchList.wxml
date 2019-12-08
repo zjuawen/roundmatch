@@ -93,7 +93,7 @@
 
     <!-- header -->
     <view class="statistic-header-container" >
-      <view class="statistic-header-label" style="flex:2;">姓名</view >
+      <view class="statistic-header-label" style="flex:3;">姓名</view >
       <view class="statistic-header-label">猪</view>
       <view class="statistic-header-label">冠</view>
       <view class="statistic-header-label">胜</view>
@@ -109,7 +109,7 @@
         src="{{item.avatarUrl}}">
         </image>
 
-      <view class="statistic-line-column">{{item.name}}</view>
+      <view class="statistic-line-column" style="flex:2;">{{item.name}}</view>
       <view class="statistic-line-column">{{item.pigCount}}</view>
       <view class="statistic-line-column" >{{item.crownCount}}</view>
       <view class="statistic-line-column">{{item.winCount}}</view>

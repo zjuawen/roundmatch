@@ -1,10 +1,10 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-const env = 'test-roundmatch';
+// const env = 'test-roundmatch';
 cloud.init({
-  // env: cloud.DYNAMIC_CURRENT_ENV
-  env: env
+  env: cloud.DYNAMIC_CURRENT_ENV
+  // env: env
 })
 const db = cloud.database();
 const _ = db.command;
@@ -170,44 +170,203 @@ statisUserInClub = async (clubid) => {
     .get()
     .then( async res =>  {
       console.log(res);
+      let players = res.data;
       let matches = await listClubMatches(clubid);
-      let data = matches;
+      let games = await listClubGames(clubid);
+      let result = startStatisticPlayers(players, matches, games);
+      let data = players;
       return data;
     })
 }
 
+//获取该俱乐部所有比赛
 listClubMatches = async (clubid) => {
   return await db.collection('matches')
-    .aggregate()
-    .match({
+    .where({
       clubid: clubid
     })
-    .project({
-      _id: true
-    })
-    .end()
+    .get()
     .then(res => {
       console.log(res);
-      let data = res.list;
+      let data = res.data;
       return data;
     })
 }
 
+//获取该俱乐部所有场次
 listClubGames = async (clubid) => {
-  return await db.collection('matches')
-    .aggregate()
-    .match({
+  return await db.collection('games')
+    .where({
       clubid: clubid
     })
-    .project({
-      _id: true
-    })
-    .end()
+    .get()
     .then(res => {
       console.log(res);
-      let data = res.list;
+      let data = res.data;
       return data;
     })
+}
+
+//开始统计
+startStatisticPlayers = (players, matches, games) => {
+  //start for each game
+  statisticWinAndLost(players, games);
+  statisticPigAndCrown(players, matches, games);
+}
+
+//统计胜场数和负场数
+statisticWinAndLost = (players, games) => {
+  //clear
+  players.forEach(function (player){
+    player.winCount = 0;
+    player.lostCount = 0;
+    player.pigCount = 0;
+    player.crownCount = 0;
+    player.total = 0;
+    player.delta = 0;
+  });
+
+  games.forEach(function (game) {
+ 
+    let score1 = game.score1;
+    let score2 = game.score2;
+    if( score1 < 0 || score2 < 0){
+      return;
+    }
+
+    let delta = score1 - score2;
+
+    let player1 = findPlayerById(players, game.player1);
+    let player2 = findPlayerById(players, game.player2);
+    let player3 = findPlayerById(players, game.player3);
+    let player4 = findPlayerById(players, game.player4);
+    
+    player1.delta += delta;
+    player2.delta += delta;
+    player3.delta -= delta;
+    player4.delta -= delta;
+
+    player1.total += score1;
+    player2.total += score1;
+    player3.total += score2;
+    player4.total += score2;
+
+    if( delta > 0){
+      player1.winCount++;
+      player2.winCount++;
+      player3.lostCount++;
+      player4.lostCount++;
+    } else if( delta < 0){ 
+      player1.lostCount++;
+      player2.lostCount++;
+      player3.winCount++;
+      player4.winCount++;
+    }
+  });
+}
+
+//统计猪头和皇冠
+statisticPigAndCrown = (players, matches, games) => {
+  matches.forEach(function (match){
+
+    let gameArray = getGamesInMatch(match, games);
+    if( gameArray.length == 0){
+      return;
+    }
+    if( !isAllGamesDone(gameArray)){
+      return;
+    }
+    let playersClone = JSON.parse(JSON.stringify(players));
+    let playerArray = getPlayersInMatch(gameArray, playersClone);
+    statisticWinAndLost(playerArray, gameArray);
+    
+    //sort
+    playerArray.sort(comparePlayer);
+    let first = playerArray[0];
+    let last = playerArray[playerArray.length-1];
+    let realFirst = findPlayerById(players, first._id);
+    let realLast = findPlayerById(players,last._id);
+    realFirst.crownCount++;
+    realLast.pigCount++;
+  });
+}
+
+isAllGamesDone = (games) => {
+  let done = true;
+  games.forEach(function (game) {
+    if( done == false)
+      return false;
+    if((game.score1<0) || (games.score2<0)){
+      done = false;
+    }
+  })
+  return done;
+}
+
+//获取该比赛所有场次
+getGamesInMatch = (match, games) =>{
+  let gameArray = [];
+  games.forEach(function (game) {
+    if( game.matchid == match._id){
+      gameArray.push(game);
+    }
+  });
+  return gameArray;
+}
+
+//获取该比赛所有人员
+getPlayersInMatch = (games, players) =>{
+  let playerArray = [];
+  games.forEach(function (game) {
+    let fourPlayersId = [game.player1, game.player2, game.player3, game.player4]
+    fourPlayersId.forEach(function (id){
+      let already = findPlayerById(playerArray, id);
+      if( already == null){
+        let player = findPlayerById(players, id);
+        playerArray.push(player);
+      }
+    });
+  });
+  return playerArray;
+}
+
+//根据玩家id查找
+findPlayerById = ( players, id ) => { 
+  return players.find(
+    function( player, index){
+      return player._id == id;
+    }
+  ); 
+}
+
+//按比分排序
+comparePlayer = (player1, player2) => {
+  //比较胜率
+  let rate1 = Math.round((player1.winCount/(player1.winCount+player1.lostCount))*100)*100;
+  let rate2 = Math.round((player2.winCount/(player2.winCount+player2.lostCount))*100)*100;
+  if (isNaN(rate1) ){ 
+    rate1 = 0;
+  }
+  if (isNaN(rate2) ){ 
+    rate2 = 0;
+  }
+  if( rate1 != rate2){
+    return rate2 - rate1;
+  }
+
+  //比较净胜分
+  let delta1 = player1.delta;
+  let delta2 = player2.delta;
+  if( delta1 != delta2){
+    return delta2 - delta1;
+  }
+
+  //比较总得分
+  let total1 = player1.total;
+  let total2 = player2.total;
+  if( total1 != total2){
+    return total2 - total1;
+  }
 }
 
 
