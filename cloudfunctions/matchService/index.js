@@ -18,7 +18,9 @@ exports.main = async (event, context) => {
   if( action == 'create'){
     data = createMatchData(event.players);
   } else if (action == 'list') {
-    data = await getMatchList(event.clubid);
+    let pageNum = (event.pageNum==null)? 1: event.pageNum;
+    let pageSize = (event.pageSize==null)? 10: event.pageSize;
+    data = await listMatch(event.clubid, pageNum, pageSize);
   } else if (action == 'save') {
     data = await saveMatchData(event.clubid, 
       event.matchdata, event.playerCount);
@@ -145,7 +147,7 @@ readMatch = async (matchid) => {
 }
 
 //获取比赛列表
-getMatchList = async (clubid) => {
+listMatch = async (clubid, pageNum, pageSize) => {
 
   return await db.collection('matches')
     .aggregate()
@@ -162,12 +164,15 @@ getMatchList = async (clubid) => {
       total: true,
       finish: true,
       playerCount: true,
+      remark: true,
       createDate: $.dateToString({
         date: '$createDate',
         format: '%Y-%m-%d',
         timezone: 'Asia/Shanghai'
       })
     })
+    .skip(pageSize*(pageNum-1))
+    .limit(pageSize)
     .end()
     .then(res => {
       // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条

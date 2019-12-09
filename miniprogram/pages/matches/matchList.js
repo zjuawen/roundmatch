@@ -9,6 +9,10 @@ Page({
     loading: false,
 
     players: [],
+    matches: [],
+    pageNum: 1, //初始页默认值为1
+    pageSize: 10,
+    noMore: false,
     // showActionsheet: false,
     // actions: [
     //   { text: '示例菜单', value: 1 },
@@ -50,12 +54,19 @@ Page({
       name: func,
       data: {
         action: action,
-        clubid: clubid
+        clubid: clubid,
+        pageNum: this.data.pageNum, 
+        pageSize: this.data.pageSize,
       },
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result.data);
+        let newData = res.result.data;
         this.setData({
-          matches: res.result.data
+          noMore: (newData.length < this.data.pageSize)
+        });
+        newData = this.data.matches.concat(newData);
+        this.setData({
+          matches: newData
         })
         this.loading(false);
       },
@@ -147,7 +158,9 @@ Page({
  * 生命周期函数--监听页面加载
  */
   onLoad: function (options) {
-    this.setData({ clubid: options.clubid });
+    this.setData({ 
+      clubid: options.clubid 
+    });
     // this.loadMatches(this.data.clubid);
     // this.loadPlayers(this.data.clubid);
   },
@@ -163,6 +176,10 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
+    this.setData({
+      matches: [],
+      pageNum: 1
+    });
     this.loadMatches(this.data.clubid);
     if( this.data.tabIndex == 1){
       this.loadPlayersStatistic(this.data.clubid);
@@ -187,14 +204,24 @@ Page({
    * 页面相关事件处理函数--监听用户下拉动作
    */
   onPullDownRefresh: function () {
-    console.log("onPullDownRefresh");
+    
   },
 
   /**
    * 页面上拉触底事件的处理函数
    */
   onReachBottom: function () {
-
+    console.log("load more");
+    if( this.data.noMore){
+      console.log("No more data");
+      return;
+    } else {
+      this.setData({
+        pageNum: this.data.pageNum+1
+      });
+      console.log("Load more, page: " + this.data.pageNum);
+    }
+    this.loadMatches(this.data.clubid);
   },
 
   /**

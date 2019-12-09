@@ -148,5 +148,14 @@
 	word-break: break-all;
 }
 
+.footer {
+	display: flex;
+	flex-direction: row;
+	color: grey;
+	text-align: center;
+	align-items: center;
+	justify-content: center;
+}
+
 
 
