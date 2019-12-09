@@ -334,6 +334,13 @@ statisticPigAndCrown = (players, matches, games) => {
     if( gameArray.length == 0){
       return;
     }
+    //debug
+    // if( gameArray.length != match.total){
+    //   console.log("match: " + match.createDate);
+    //   console.log("match.total: " + match.total);
+    //   console.log("game array: " + gameArray.length);
+    // }
+
     if( !isAllGamesDone(gameArray)){
       return;
     }

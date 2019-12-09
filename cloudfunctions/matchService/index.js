@@ -41,7 +41,7 @@ exports.main = async (event, context) => {
 }
 
 //保存新增的比赛数据
-saveMatchData = async (clubid, matchdata, playerCount, remark="") => {
+saveMatchData = async (clubid, games, playerCount, remark="") => {
   return await db.collection('matches')
     .add({
       // data 字段表示需新增的 JSON 数据
@@ -49,7 +49,7 @@ saveMatchData = async (clubid, matchdata, playerCount, remark="") => {
         // id: _.inc(1),
         clubid: clubid,
         createDate: db.serverDate(),
-        total: matchdata.length,
+        total: games.length,
         finish: 0,
         playerCount: playerCount,
         remark: remark,
@@ -59,13 +59,13 @@ saveMatchData = async (clubid, matchdata, playerCount, remark="") => {
       console.log(res)
       let matchid = res._id;
       console.log("added new match: " + matchid);
-      return savaGames(clubid, matchid, matchdata);
+      return savaGames(clubid, matchid, games);
     })
 }
 
 //保存对阵数据
-savaGames = async (clubid, matchid, matchdata) => {
-  let data = matchdata;
+savaGames = async (clubid, matchid, games) => {
+  let data = games;
 
   let count = 0;
   for (let i = 0; i < data.length; i++) {
@@ -76,6 +76,7 @@ savaGames = async (clubid, matchid, matchdata) => {
           // id: db.command.inc(1).toString(),
           clubid: clubid,
           matchid: matchid,
+          order: data[i].order,
           player1: data[i].player1.toString(),
           player2: data[i].player2.toString(),
           player3: data[i].player3.toString(),
@@ -108,6 +109,7 @@ createMatchData = (playerArray) => {
   let games = [];
   for (let i = 0; i < orderArray.length; i++) {
     let game = {
+      order: i+1,
       player1: playerArray[orderArray[i][0][0]],
       player2: playerArray[orderArray[i][0][1]],
       player3: playerArray[orderArray[i][1][0]],
@@ -124,25 +126,14 @@ createMatchData = (playerArray) => {
 readMatch = async (matchid) => {
 
   return await db.collection('games')
-    .aggregate()
-    .match({
+    .where({
       matchid: matchid,
     })
-    // .project({
-    //   _id: false,
-    //   matchid: true,
-    //   player1: true,
-    //   player2: true,
-    //   player3: true,
-    //   player4: true,
-    //   score1: true,
-    //   score2: true,
-    //   createDate: true,
-    // })
-    .end()
+    .orderBy('order', 'asc')
+    .get()
     .then(res => {
-      console.log(res.list)
-      return res.list;
+      console.log(res.data)
+      return res.data;
     })
 }
 
