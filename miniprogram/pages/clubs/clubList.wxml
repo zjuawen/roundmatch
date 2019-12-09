@@ -65,9 +65,13 @@
       src="../../images/default_club.png" mode="aspectFit">
     </image>
 
-    <view style="flex:1; font-size: 14px; margin-left: 50rpx;" >{{item.wholeName}}</view>
-    <view style="flex:1; font-size: 14px;" >({{item.shortName}})</view>
+    <view style="flex:2; font-size: 14px; margin-left: 50rpx;" >{{item.wholeName}}</view>
+    <!-- <view style="flex:1; font-size: 14px;" >({{item.shortName}})</view> -->
     <!-- <text style="flex:1" >{{item.createDate}}</text> -->
+
+    <image wx:if="{{item.locked}}" class='club-status' 
+      src="../../images/locked.png" mode="aspectFit">
+    </image>
 
     <button 
       wx:if="{{(!login)}}"
@@ -75,8 +79,8 @@
       data-item="{{item}}"
       open-type="getUserInfo" 
       bindgetuserinfo="onGetUserInfo"
-      style="flex:1; margin-right: 40rpx; font-size: 36rpx;" >
-      授权登录
+      style="flex:1; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;" >
+      加入
       </button>
 
     <button 
@@ -84,7 +88,7 @@
       class="weui-btn" type="primary" size="mini"
       data-item="{{item}}"
       bindtap="onClickPublicClub"
-      style="flex:1; margin-right: 40rpx; font-size: 36rpx;"  >
+      style="flex:1; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
       加入
       </button>
 
@@ -101,6 +105,15 @@
 -->
 
 <mp-dialog title="加入俱乐部" show="{{joinDialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
+  <block wx:if="{{!selected.locked}}">
     <view>确定要加入"{{selected.wholeName}}"?</view>
+  </block>
+  <block wx:else >
+    <view class="dialog-content-container">
+      <view>请输入"{{selected.wholeName}}"密码：</view>
+      <input class="password-input" type="password" 
+        bindinput="onInputPassword" bindchange="onInputPassword"></input>
+    </view>
+  </block>
 </mp-dialog>
 

@@ -15,3 +15,23 @@
 	margin: 10rpx;
 	box-shadow: 1px 1px 3px #CCCCCC;
 }
+
+.club-status {   
+	height: 40rpx;    
+	width: 40rpx;    
+	margin: 10rpx;
+}
+
+
+.password-input {
+	background-color: lightgrey;
+	margin-top: 20rpx;
+	height: 60rpx;
+	width: 300rpx;
+}
+
+.dialog-content-container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+}

@@ -19,7 +19,7 @@ exports.main = async (event, context) => {
   let action = event.action;
   let data;
   if (action == 'join') {
-    data = await joinClub( wxContext, event.clubid, event.userInfo);
+    data = await joinClub( wxContext, event);
   } else if (action == 'list') {
     let private = await listPrivateClub( wxContext );
     let public = await listPublicClub( wxContext );
@@ -49,6 +49,16 @@ listPublicClub = async (wxContext) => {
     })
     .get()
     .then(res => {
+      console.log(res);
+      res.data.forEach(function (club){
+        let password = club.password;
+        if( password != null && password.length > 0){
+          club.locked = true;
+        } else {
+          club.locked = false;
+        }
+        club.password = null;
+      })
       console.log(res);
       return res.data;
     });
@@ -81,21 +91,58 @@ loadClubData = async (uacs) => {
 }
 
 //加入俱乐部
-joinClub = async (wxContext, clubid, userInfo) => {
+joinClub = async (wxContext, event) => {
+  let clubid = event.clubid;
+  let userInfo = event.userInfo;
+  let password = event.password;
+
   return await db.collection('players')
     .where({
   		openid: wxContext.OPENID,
   		clubid: clubid
   	})
   	.get()
-  	.then(res => {
+  	.then( async res => {
   		console.log(res);
   		if( res.data.length > 0){
   			return res.data[0];
   		}
+
+      let passwordCheck = await checkPassword(clubid, password);
+      if(passwordCheck == false) {
+        return ({ 
+          stats: "fail", 
+          errMsg: 'Incorrect password!'
+        });
+      }
+
   		//add user info
   		return addUserToClubs(clubid, wxContext.OPENID, userInfo);
   	})
+}
+
+//密码校验
+checkPassword = async (clubid, password) => {
+
+  return await db.collection('clubs')
+    .doc(clubid)
+    // .where({
+    //   _id: clubid
+    // })
+    .get()
+    .then( res => {
+      console.log(res);
+      let result = false;
+      if( res.data != null){
+        let club = res.data;
+        if( club.password == null || club.password.length == 0){
+          result = true;
+        } else if( club.password == password){
+          result = true;
+        } 
+      }
+      return result;
+    })
 }
 
 addUserToClubs = async (clubid, openid, userInfo) => {
@@ -199,7 +246,7 @@ listClubMatches = async (clubid) => {
 listClubGames = async (clubid, page = 1) => {
   // let page = 1;
   let page_size = RECORD_MAX_COUNT;
-  
+
   return await db.collection('games')
     .where({
       clubid: clubid

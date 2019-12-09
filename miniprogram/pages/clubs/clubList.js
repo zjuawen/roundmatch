@@ -164,6 +164,14 @@ Page({
     })
   },
 
+  onInputPassword: function(e) {
+    console.log(e);
+    let data = e.detail.value;
+    this.setData({
+      password: data
+    });
+  },
+
   tapDialogButton(e) {
     let btnIndex = e.detail.index;
     if( btnIndex === 1){
@@ -185,20 +193,31 @@ Page({
       data: {
         action: action,
         clubid: clubid,
-        userInfo: this.data.userInfo
+        userInfo: this.data.userInfo,
+        password: this.data.password
       },
       success: res => {
         this.loading(false);
         console.log('[云函数] ' + func + ' return: ', res.result.data);
         let data = res.result.data;
-        if( data._id.length > 0){
+        if( data.stats == 'fail'){
+          wx.showToast({
+            title: data.errMsg,
+            icon: 'none',
+          });
+        } else if( data._id.length > 0){
+          wx.showToast({
+            icon: 'success'
+          });
           this.data.clubs.push(this.data.selected);
           this.reducePublicClubs();
           this.setData({
-            clubs: this.data.clubs,
-            joinDialogShow: false
+            clubs: this.data.clubs
           });
         }
+        this.setData({
+          joinDialogShow: false
+        });
       },
       fail: err => {
         console.error('[云函数] ' + func + ' 调用失败', err)
