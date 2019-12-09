@@ -7,17 +7,24 @@
 
 <view style="margin-bottom: 140rpx;">
 
-  <block wx:if="{{tabIndex==0}}" >
+  <block wx:if="{{tabIndex==0}}">
     <!-- <view style="flex-direction:row;"> -->
     <!-- <mp-searchbar bindselectresult="selectResult" search="{{search}}"></mp-searchbar> -->
-    <view style="display: flex;" >
+ <!--    <view style="display: flex;" >
       <button 
         class="weui-btn" type="primary" 
         size="mini" bindtap="onNewGame"
         style="margin-top: 40rpx; margin-bottom: 40rpx;" >
         新建
       </button>
+    </view> -->
+
+    <view> 
+      <image src="../../images/add.png" class="img-add"
+        bindtap="onNewGame" ></image> 
     </view>
+
+    <view style="margin-top: 40rpx;"></view>
 
     <!-- match-list -->
     <view 
