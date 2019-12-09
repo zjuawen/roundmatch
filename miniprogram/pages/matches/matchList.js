@@ -178,7 +178,8 @@ Page({
   onShow: function () {
     this.setData({
       matches: [],
-      pageNum: 1
+      pageNum: 1,
+      noMore: false
     });
     this.loadMatches(this.data.clubid);
     if( this.data.tabIndex == 1){

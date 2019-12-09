@@ -10,6 +10,8 @@ const db = cloud.database();
 const _ = db.command;
 const $ = db.command.aggregate;
 
+const RECORD_MAX_COUNT = 100;
+
 // 云函数入口函数
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
@@ -77,7 +79,6 @@ loadClubData = async (uacs) => {
       return res.data;
   	});
 }
-
 
 //加入俱乐部
 joinClub = async (wxContext, clubid, userInfo) => {
@@ -187,6 +188,7 @@ listClubMatches = async (clubid) => {
     })
     .get()
     .then(res => {
+      console.log("listClubMatches: ");
       console.log(res);
       let data = res.data;
       return data;
@@ -194,16 +196,28 @@ listClubMatches = async (clubid) => {
 }
 
 //获取该俱乐部所有场次
-listClubGames = async (clubid) => {
+listClubGames = async (clubid, page = 1) => {
+  // let page = 1;
+  let page_size = RECORD_MAX_COUNT;
+  
   return await db.collection('games')
     .where({
       clubid: clubid
     })
+    .skip((page-1)*page_size)
     .get()
-    .then(res => {
+    .then(async res => {
+      console.log("listClubGames: page" + page);
       console.log(res);
+
       let data = res.data;
-      return data;
+      if( data.length < page_size){
+        return data;
+      } else {
+        let dataMore = await listClubGames(clubid, page+1);
+        return data.concat(dataMore);
+      }
+      
     })
 }
 

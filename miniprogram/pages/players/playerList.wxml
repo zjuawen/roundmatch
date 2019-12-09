@@ -46,3 +46,12 @@
 
 </view>
 
+<view wx:if="{{noMore}}" class="footer" >
+  -------- 已经到底了 --------
+</view>
+<view wx:else class="footer" >
+  <button style="background: transparent; width: 0rpx; margin: 0;" 
+    loading="true" disabled="true" ></button>
+  加载中......
+</view>
+

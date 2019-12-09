@@ -34,3 +34,16 @@
 	flex: 5; 
 	margin-left: 20rpx;
 }
+
+
+.footer {
+	display: flex;
+	flex-direction: row;
+	color: grey;
+	text-align: center;
+	align-items: center;
+	justify-content: center;
+}
+
+
+

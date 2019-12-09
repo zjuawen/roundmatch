@@ -8,8 +8,13 @@ Page({
     title: "选择人员",
     loading: false,
     players: [],
+
     selectedCount: 0,
-    nextDisable: true
+    nextDisable: true,
+
+    pageNum: 1, //初始页默认值为1
+    pageSize: 10,
+    noMore: false,
   },
 
   loading: function (value) {
@@ -29,7 +34,9 @@ Page({
       name: func,
       data: {
         action: action,
-        clubid: clubid
+        clubid: clubid,
+        pageNum: this.data.pageNum, 
+        pageSize: this.data.pageSize,
       },
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result);
@@ -41,10 +48,15 @@ Page({
           }
         });
 
+        let newData = res.result.data;
         this.setData({
-          players: data,
-          selectedCount: 0,
+          noMore: (newData.length < this.data.pageSize)
         });
+        newData = this.data.players.concat(newData);
+
+        this.setData({
+          players: newData
+        })
 
         this.loading(false);
       },
@@ -132,8 +144,7 @@ Page({
       clubid: options.clubid,
       action: options.action,
     });
-    this.loadPlayers(this.data.clubid);
-    
+    // this.loadPlayers(this.data.clubid);
   },
 
   /**
@@ -147,6 +158,12 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
+    this.setData({
+      players: [],
+      selectedCount: 0,
+      pageNum: 1,
+      noMore: false
+    });
     this.loadPlayers(this.data.clubid);
   },
 
@@ -175,7 +192,17 @@ Page({
    * 页面上拉触底事件的处理函数
    */
   onReachBottom: function () {
-
+    console.log("load more");
+    if( this.data.noMore){
+      console.log("No more data");
+      return;
+    } else {
+      this.setData({
+        pageNum: this.data.pageNum+1
+      });
+      console.log("Load more, page: " + this.data.pageNum);
+    }
+    this.loadPlayers(this.data.clubid);
   },
 
   /**

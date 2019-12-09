@@ -9,6 +9,8 @@ cloud.init({
 const db = cloud.database();
 const $ = db.command.aggregate;
 
+const RECORD_MAX_COUNT = 100;
+
 // 云函数入口函数
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
@@ -16,9 +18,11 @@ exports.main = async (event, context) => {
   let action = event.action;
   let data;
   if (action == 'login') {
-	   data = await saveUserData(wxContext);
+    data = await saveUserData(wxContext);
   } else if( action == 'list') {
-     data = await listUserInClub(event.clubid);
+    let pageNum = (event.pageNum==null)? 1: event.pageNum;
+    let pageSize = (event.pageSize==null)? 10: event.pageSize;
+    data = await listUserInClub(event.clubid, pageNum, pageSize);
   }
 
   return {
@@ -72,16 +76,21 @@ addUserData = async (context) => {
 }
 
 //列出俱乐部成员
-listUserInClub = async (clubid) => {
-  return await db.collection('players')
+listUserInClub = async (clubid, pageNum, pageSize) => {
+
+   return await db.collection('players')
     .where({
       clubid: clubid
     })
     .orderBy('order', 'desc')
+    .skip(pageSize*(pageNum-1))
+    .limit(pageSize)
     .get()
     .then(res => {
       console.log(res);
-      return res.data;
+      // return res.data;
+      let data = res.data;
+      return data;
     })
 }
 
