@@ -13,6 +13,9 @@ Page({
     matchPlayers: [],  //该次比赛参与人员
     matchDone: false,
     
+    //高亮
+    highlight: "",
+    
     //dialog
     clickIndex: 0,
     dialogShow: false,
@@ -84,6 +87,17 @@ Page({
     });
     
     this.openConfirm(index);
+  },
+
+  onTapPlayer: function(e) {
+    console.log(e);
+    let id = e.target.dataset.id;
+    if( id == this.data.highlight){
+      id = "";
+    }
+    this.setData({
+      highlight: id
+    });
   },
 
   onClickNone: function (event) {
@@ -610,6 +624,9 @@ Page({
     if( this.data.saved){
       this.initWatch();
     }
+    this.setData({
+      highlight: ''
+    })
   },
 
   /**

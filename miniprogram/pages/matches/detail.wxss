@@ -88,6 +88,20 @@
 	width: 60px;
 }
 
+.detail-content-name-highlight {
+	flex: 1;
+	white-space:nowrap; 
+	text-overflow: ellipsis;
+	overflow: hidden;
+	margin: 5rpx;
+	text-align: center;
+	font-size: 16px;
+	width: 60px;
+	color: white;
+	font-weight: bold;
+	background-color: red;
+}
+
 .detail-content-score {
 	display: flex;
 	align-items: center;
