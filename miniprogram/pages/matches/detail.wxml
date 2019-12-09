@@ -70,7 +70,7 @@
             data-id="{{item._id}}" 
             data-index="{{index}}" 
             bindtap="onClickScore"
-            class="{{ vsBtnDisable ? 'disabled' : 'detail-content-score' }}"> 
+            class="{{ vsBtnDisable ? 'detail-content-score-disabled' : 'detail-content-score' }}"> 
             vs
           </view>
           <view 
@@ -79,7 +79,7 @@
             data-index="{{index}}" 
             bindtap="onClickNone"
             bindlongpress="onLongPressScore"
-            class="detail-content-score" > 
+            class="{{ matchDone ? 'detail-content-score-disabled' : 'detail-content-score' }}"> 
             {{item.score1}}:{{item.score2}}
           </view>
         </view>

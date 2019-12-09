@@ -23,6 +23,10 @@ exports.main = async (event, context) => {
     let pageNum = (event.pageNum==null)? 1: event.pageNum;
     let pageSize = (event.pageSize==null)? 10: event.pageSize;
     data = await listUserInClub(event.clubid, pageNum, pageSize);
+  } else if( action == 'listAll') {
+    let pageNum = 1;
+    let pageSize = RECORD_MAX_COUNT;
+    data = await listUserInClub(event.clubid, pageNum, pageSize);
   }
 
   return {

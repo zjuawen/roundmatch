@@ -191,7 +191,7 @@ Page({
     this.loading(true);
 
     let func = 'userService';
-    let action = 'list';
+    let action = 'listAll';
     console.log(func + " " + action);
 
     wx.cloud.callFunction({
@@ -241,7 +241,7 @@ Page({
     this.loading(true);
 
     let func = 'userService';
-    let action = 'list';
+    let action = 'listAll';
     console.log(func + " " + action);
 
     wx.cloud.callFunction({

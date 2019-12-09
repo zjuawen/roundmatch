@@ -96,8 +96,13 @@
 	font-size: 22px;
 }
 
-view.disabled {
-    pointer-events: none;
+.detail-content-score-disabled {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #0478F3;
+	font-size: 22px;
+	pointer-events: none;
 }
 
 .banner {
