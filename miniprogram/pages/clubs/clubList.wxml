@@ -104,6 +104,17 @@
 </button>
 -->
 
+
+<mp-dialog title="获取授权" show="{{authDialogShow}}" bindbuttontap="onCancelAuthDialog" buttons="{{[{text: '取消'}]}}">
+  <view style="margin: 40rpx;" >加入俱乐部需要用户昵称，头像等信息</view>
+  <button 
+    class="weui-btn" type="primary" size="default"
+    open-type="getUserInfo" 
+    bindgetuserinfo="onGetUserInfo">
+    点击授权
+    </button>
+</mp-dialog>
+
 <mp-dialog title="加入俱乐部" show="{{joinDialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
   <block wx:if="{{!selected.locked}}">
     <view>确定要加入"{{selected.wholeName}}"?</view>

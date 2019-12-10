@@ -1,4 +1,6 @@
 // miniprogram/pages/clubs/clubList.js
+// var app = getApp();
+
 Page({
 
   /**
@@ -12,6 +14,8 @@ Page({
     loading: false,
     buttons: [{text: '取消'}, {text: '确定'}],
     joinDialogShow: false,
+    sharejoin: false,
+    authDialogShow: false,
     // inputShowed: false,
     // inputVal: "",
   },
@@ -31,11 +35,16 @@ Page({
           wx.getUserInfo({
             success: res => {
               console.log(res.userInfo);
+              getApp().globalData.userInfo = res.userInfo;
               this.setData({
                 avatarUrl: res.userInfo.avatarUrl,
                 userInfo: res.userInfo,
                 login: true
               })
+              if( this.data.sharejoin){
+                wx.hideLoading();
+                this.onShardJoin(this.data.sharedclubid);
+              }
             }
           })
         } else {
@@ -43,6 +52,10 @@ Page({
           this.setData({
             login: false
           })
+          if( this.data.sharejoin){
+            wx.hideLoading();
+            this.showAuthDialog(true);
+          }
         }
       }
     })
@@ -158,8 +171,9 @@ Page({
 
   onClickPublicClub: function(e) {
     console.log(e);
+    let data = e.currentTarget.dataset.item;
     this.setData({
-      selected: e.currentTarget.dataset.item,
+      selected: data,
       joinDialogShow: true,
     })
   },
@@ -183,6 +197,13 @@ Page({
     })
   },
 
+  onCancelAuthDialog: function(e) {
+    // console.log(e);
+    this.setData({
+      authDialogShow: false
+    })
+  },
+
   joinClub: function(clubid) {
     let func = 'clubService';
     let action = 'join';
@@ -200,7 +221,7 @@ Page({
         this.loading(false);
         console.log('[云函数] ' + func + ' return: ', res.result.data);
         let data = res.result.data;
-        if( data.stats == 'fail'){
+        if( data.status == 'fail'){
           wx.showToast({
             title: data.errMsg,
             icon: 'none',
@@ -249,14 +270,79 @@ Page({
   },
 
   onGetUserInfo: function (e) {
-    if (!this.data.login && e.detail.userInfo) {
+    console.log(e);
+    
+    if ( e.detail.userInfo != null) {
       this.setData({
         login: true,
         avatarUrl: e.detail.userInfo.avatarUrl,
         userInfo: e.detail.userInfo
       })
+    }
+
+    if( this.data.sharejoin){
+      this.showAuthDialog(false);
+      this.onShardJoin(this.data.sharedclubid);
+    } else {
       this.onClickPublicClub(e);
     }
+  },
+
+  showAuthDialog: function(show) {
+    this.setData({
+      authDialogShow: show,
+    })
+  },
+
+  onShardJoin: function(clubid) {
+    wx.showLoading({
+      title: '获取俱乐部信息',
+      mask: true
+    })
+
+    this.loading(true);
+
+    let func = 'clubService';
+    let action = 'info';
+    console.log(func + " " + action);
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        clubid: clubid,
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
+        this.loading(false);
+        wx.hideLoading();
+
+        let data = res.result.data;
+        let e = {
+          currentTarget: {
+            dataset: {
+              item: data
+            }
+          }
+        };
+
+
+        if( data != null){
+          this.onClickPublicClub(e);
+        } else {
+          wx.showToast({
+            title: '错误：俱乐部信息不存在'
+          })
+        }
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.hideLoading();
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    });
   },
   
   /**
@@ -265,6 +351,25 @@ Page({
   onLoad: function (options) {
     this.getOpenid();
     this.loadUserinfo();
+
+    let action = options.action;
+    if( action == 'sharejoin'){
+      let clubid = options.clubid;
+      console.log("share invited to clubid: " + clubid);
+    
+      this.setData({
+        sharejoin: true,
+        sharedclubid: clubid
+      })
+      if( !this.data.login){
+        wx.showLoading({
+          title: '检查授权信息',
+          mask: true
+        })
+      } else {
+        this.onShardJoin(clubid);
+      }
+    }
   },
 
   /**

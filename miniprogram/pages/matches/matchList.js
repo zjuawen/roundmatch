@@ -1,4 +1,6 @@
 // miniprogram/pages/matchList/matchList.js
+// var app = getApp();
+
 Page({
 
   /**
@@ -48,7 +50,7 @@ Page({
 
     let func = 'matchService';
     let action = 'list';
-    console.log('list matches');
+    console.log(func + " " + action);
 
     wx.cloud.callFunction({
       name: func,
@@ -69,6 +71,39 @@ Page({
           matches: newData
         })
         this.loading(false);
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
+  },
+
+  getClubInfo: function (clubid) {
+    this.loading(true);
+
+    let func = 'clubService';
+    let action = 'info';
+    console.log(func + " " + action);
+
+    return wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        clubid: clubid
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
+        let clubinfo = res.result.data;
+        this.setData({
+          clubinfo: clubinfo
+        });
+        getApp().globalData.clubinfo = clubinfo;
+        wx.showShareMenu({});
+        this.loading(false);
+        return clubinfo;
       },
       fail: err => {
         console.error('[云函数] ' + func + ' 调用失败', err)
@@ -161,6 +196,9 @@ Page({
     this.setData({ 
       clubid: options.clubid 
     });
+    getApp().globalData.clubid = this.data.clubid;
+    this.getClubInfo(this.data.clubid);
+    wx.hideShareMenu({});
     // this.loadMatches(this.data.clubid);
     // this.loadPlayers(this.data.clubid);
   },
@@ -229,9 +267,13 @@ Page({
    * 用户点击右上角分享
    */
   onShareAppMessage: function () {
+    let player = getApp().globalData.userInfo;
+    let clubinfo = getApp().globalData.clubinfo;
+   
     return ({
-      title: "邀请你来加入我们",
-      imageUrl: '../../images/background.jpg'
+      title: player.nickName + "邀请你加入" + clubinfo.wholeName,
+      imageUrl: '../../images/background.jpg',
+      path: '../clubs/clubList?action=join&clubid=' + this.data.clubid,
     })
   },
 })

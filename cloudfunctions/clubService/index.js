@@ -30,7 +30,9 @@ exports.main = async (event, context) => {
     data = await createClub(wxContext, event.info);
   } else if( action == 'statis') {
      data = await statisUserInClub(event.clubid);
-  }
+  } else if ( action == 'info') {
+    data = await getClubInfo(event.clubid);
+  } 
 
   return {
     data,
@@ -40,6 +42,26 @@ exports.main = async (event, context) => {
   }
 }
 
+//读取俱乐部信息
+getClubInfo = async (clubid) => {
+  return await db.collection('clubs')
+    .doc(clubid)
+    .get()
+    .then(res => {
+      console.log(res);
+      let club = res.data;
+      if( club != null){
+        let password = club.password;
+        if( password != null && password.length > 0){
+          club.locked = true;
+        } else {
+          club.locked = false;
+        }
+        club.password = null;
+      }
+      return club;
+    });
+}
 
 //公开的俱乐部列表
 listPublicClub = async (wxContext) => {
@@ -105,13 +127,16 @@ joinClub = async (wxContext, event) => {
   	.then( async res => {
   		console.log(res);
   		if( res.data.length > 0){
-  			return res.data[0];
+  			return ({ 
+          status: "fail", 
+          errMsg: 'Already join Club!'
+        });
   		}
 
       let passwordCheck = await checkPassword(clubid, password);
       if(passwordCheck == false) {
         return ({ 
-          stats: "fail", 
+          status: "fail", 
           errMsg: 'Incorrect password!'
         });
       }

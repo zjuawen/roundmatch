@@ -661,30 +661,7 @@ Page({
    * 用户点击右上角分享
    */
   onShareAppMessage: function () {
-
+    
   },
 
-  // test: function(clubid, matchid) {
-  //   const db = wx.cloud.database();//({env:'test-roundmatch'});
-
-  //   db.collection('games')
-  //     .aggregate()
-  //     .match({
-  //       matchid: matchid,
-  //     })
-  //     .lookup({
-  //       from: 'players',    //<要连接的集合名>,
-  //       localField: 'player1',     //<输入记录的要进行相等匹配的字段>,
-  //       foreignField: 'id',   //<被连接集合的要进行相等匹配的字段>,
-  //       as: 'playerid1'              //<输出的数组字段名>
-  //     })
-  //     .end()
-  //     .then(res => {
-  //       // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-  //       console.log(res.list)
-  //       this.setData({
-  //         games: res.list
-  //       })
-  //     })
-  // },
 })
