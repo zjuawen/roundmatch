@@ -7,6 +7,7 @@ cloud.init({
   // env: env
 })
 const db = cloud.database();
+const _ = db.command;
 const $ = db.command.aggregate;
 
 // 云函数入口函数
@@ -67,6 +68,8 @@ saveMatchData = async (clubid, games, playerCount, remark="") => {
 savaGames = async (clubid, matchid, games) => {
   let data = games;
 
+  let playerWeight = [];
+
   let count = 0;
   for (let i = 0; i < data.length; i++) {
     await db.collection('games')
@@ -89,13 +92,63 @@ savaGames = async (clubid, matchid, games) => {
       .then(res => {
         console.log(res)
         count += 1;
+        collectPlayerWeight(playerWeight, data[i]);
         return count;
       })
   }
+
+  console.log(playerWeight);
+
+  //增加参与人员权重
+  playerWeight.forEach(async function (pWeight){
+      await justifyPlayerOrder(pWeight);
+  });
+
   return {
     gamecount: count,
     matchid: matchid
   };
+}
+
+//收集权重信息
+collectPlayerWeight = (playerWeight, data) => {
+  let players = [data.player1, data.player2, data.player3, data.player4];
+
+  players.forEach(function (playerid){
+    let found = false;
+
+    for( let i = 0; i<playerWeight.length; i++) {
+      let weightObj = playerWeight[i];
+      if( weightObj.playerid == playerid){
+        found = true;
+        weightObj.weight++;
+        break;
+      }
+    }
+
+    if( !found){
+      playerWeight.push({
+        playerid: playerid,
+        weight: 1
+      })
+    }
+  })
+}
+
+//调整用户权重
+justifyPlayerOrder = async (weightObj) => {
+   return await db.collection('players')
+    .doc(weightObj.playerid)
+    // .get()
+    .update({
+      data:{
+        order: _.inc(weightObj.weight)
+      }
+    })
+    .then(res => {
+      console.log(res);
+      return res;
+    })
 }
 
 //创建比赛数据（排阵，未保存）

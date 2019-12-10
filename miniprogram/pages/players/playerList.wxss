@@ -43,6 +43,8 @@
 	text-align: center;
 	align-items: center;
 	justify-content: center;
+	margin-top: 20rpx;
+	margin-bottom: 20rpx;
 }
 
 
