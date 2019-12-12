@@ -273,7 +273,7 @@ Page({
     return ({
       title: player.nickName + "邀请你加入" + clubinfo.wholeName,
       imageUrl: '../../images/background.jpg',
-      path: '../clubs/clubList?action=sharejoin&clubid=' + this.data.clubid,
+      path: '/pages/clubs/clubList?action=sharejoin&clubid=' + this.data.clubid,
     })
   },
 })
