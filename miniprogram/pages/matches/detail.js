@@ -46,6 +46,7 @@ Page({
     });
   },
 
+  //切换比分详情和统计tab
   tabChange(e) {
     console.log('tab change', e);
     let index = e.detail.index;
@@ -65,6 +66,7 @@ Page({
     });
   },
 
+  //点击vs输入比分
   onClickScore: function(event) {
     console.log(event);
     let index = event.target.dataset.index;
@@ -77,6 +79,7 @@ Page({
     this.openConfirm(index);
   },
 
+  //长按比分修改
   onLongPressScore: function(event) {
     console.log(event);
     let index = event.target.dataset.index;
@@ -89,6 +92,7 @@ Page({
     this.openConfirm(index);
   },
 
+  //点击队员高亮显示
   onTapPlayer: function(e) {
     console.log(e);
     let id = e.target.dataset.id;
@@ -100,10 +104,12 @@ Page({
     });
   },
 
+
   onClickNone: function (event) {
     console.log("onClickNone");
   },
 
+  //弹出比分输入框
   openConfirm: function (index) {
     this.setData({
       dialogShow: true,
@@ -111,6 +117,7 @@ Page({
     })
   },
 
+  //比分输入框按钮
   tapDialogButton(e) {
     if( e.detail.index === 1){
       this.loading(true);
@@ -127,6 +134,7 @@ Page({
     })
   },
 
+  //修改比分
   setScoreToGameData: function() {
     let data = this.data.games;
     let oldscore1 = data[this.data.clickIndex].score1;
@@ -154,6 +162,7 @@ Page({
   //   return this.data.tempScore1;
   // },
   
+  //输入比分1
   inputScore1: function(e) {
     console.log(e);
     let value = e.detail.value;
@@ -164,6 +173,7 @@ Page({
     })
   },
 
+  //输入比分2
   inputScore2: function(e) {
     console.log(e);
     let value = e.detail.value;
@@ -174,6 +184,7 @@ Page({
     })
   },
 
+  //保存单局比分
   onSaveGame: function(gameIndex) {
     let func = 'gameService';
     let action = 'save';
@@ -201,6 +212,7 @@ Page({
     })
   },
 
+  //开始读取新建的比赛
   loadNewMatch: function (clubid, matchdata) {
     this.loading(true);
 
@@ -237,6 +249,7 @@ Page({
     })
   },
 
+  //显示新建的比赛数据
   renderNewMatch: function (matchdata) {
     let data = matchdata;
     for (let i = 0; i < data.length; i++) {
@@ -251,6 +264,7 @@ Page({
     });
   },
 
+  //加载比赛数据
   loadMatchData: function (clubid, matchid) {
     this.loading(true);
 
@@ -287,6 +301,7 @@ Page({
     })
   },
 
+  //读取单局比赛数据
   loadGames: function (matchid) {
     this.loading(true);
 
@@ -327,6 +342,7 @@ Page({
     })
   },
 
+  //
   addToMatchPlayers: function (player) {
     let data = this.data.matchPlayers;
     
@@ -353,6 +369,7 @@ Page({
     });
   },
 
+  //统计
   statistic: function () {
     
     let players = this.data.matchPlayers;
@@ -395,11 +412,13 @@ Page({
         players[index2].win++;
         players[index3].lost++;
         players[index4].lost++;
-      } else {
+      } else if( delta > 0){{
         players[index1].lost++;
         players[index2].lost++;
         players[index3].win++;
         players[index4].win++;
+      } else {
+        //draw game
       }
     }
 
