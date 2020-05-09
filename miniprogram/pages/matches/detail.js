@@ -412,7 +412,7 @@ Page({
         players[index2].win++;
         players[index3].lost++;
         players[index4].lost++;
-      } else if( delta < 0){{
+      } else if( delta < 0){
         players[index1].lost++;
         players[index2].lost++;
         players[index3].win++;

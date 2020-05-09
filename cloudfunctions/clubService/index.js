@@ -348,7 +348,7 @@ statisticWinAndLost = (players, games) => {
       player3.winCount++;
       player4.winCount++;
     } else {
-      // draw game
+      //draw game
     }
   });
 }

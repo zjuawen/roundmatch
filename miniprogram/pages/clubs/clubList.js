@@ -41,9 +41,10 @@ Page({
                 userInfo: res.userInfo,
                 login: true
               })
+              this.updateUserInfo(res.userInfo);
               if( this.data.sharejoin){
                 wx.hideLoading();
-                this.onShardJoin(this.data.sharedclubid);
+                this.onSharedJoin(this.data.sharedclubid);
               }
             }
           })
@@ -57,6 +58,33 @@ Page({
             this.showAuthDialog(true);
           }
         }
+      }
+    })
+  },
+
+  //更新用户信息
+  updateUserInfo: function(userInfo) {
+    this.loading(true);
+
+    let func = 'userService';
+    let action = 'update';
+    console.log(func + " " + action);
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        userInfo: userInfo,
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
+        this.loading(false);
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
       }
     })
   },
@@ -282,7 +310,7 @@ Page({
 
     if( this.data.sharejoin){
       this.showAuthDialog(false);
-      this.onShardJoin(this.data.sharedclubid);
+      this.onSharedJoin(this.data.sharedclubid);
     } else {
       this.onClickPublicClub(e);
     }
@@ -294,7 +322,7 @@ Page({
     })
   },
 
-  onShardJoin: function(clubid) {
+  onSharedJoin: function(clubid) {
     wx.showLoading({
       title: '获取俱乐部信息',
       mask: true
@@ -367,7 +395,7 @@ Page({
           mask: true
         })
       } else {
-        this.onShardJoin(clubid);
+        this.onSharedJoin(clubid);
       }
     }
   },

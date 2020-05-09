@@ -27,6 +27,9 @@ exports.main = async (event, context) => {
     let pageNum = 1;
     let pageSize = RECORD_MAX_COUNT;
     data = await listUserInClub(event.clubid, pageNum, pageSize);
+  } else if( action == 'update') {
+    let userInfo = event.userInfo;
+    data = await updateUserInfo(wxContext.OPENID, userInfo);
   }
 
   return {
@@ -54,6 +57,8 @@ saveUserData = async (context) => {
   	})
 }
 
+
+//添加用户信息
 addUserData = async (context) => {
 	let dt = db.serverDate();
   return await db.collection('users')
@@ -90,6 +95,24 @@ listUserInClub = async (clubid, pageNum, pageSize) => {
     .skip(pageSize*(pageNum-1))
     .limit(pageSize)
     .get()
+    .then(res => {
+      console.log(res);
+      // return res.data;
+      let data = res.data;
+      return data;
+    })
+}
+
+
+//更新用户微信信息
+updateUserInfo = async (openid, userInfo) => {
+   return await db.collection('players')
+    .where({
+      openid: openid
+    })
+    .update({
+      avatarUrl: userInfo.avatarUrl,
+    })
     .then(res => {
       console.log(res);
       // return res.data;
