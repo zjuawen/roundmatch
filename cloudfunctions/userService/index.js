@@ -111,12 +111,14 @@ updateUserInfo = async (openid, userInfo) => {
       openid: openid
     })
     .update({
-      avatarUrl: userInfo.avatarUrl,
+      data:{
+        avatarUrl: userInfo.avatarUrl,
+      }
     })
     .then(res => {
       console.log(res);
       // return res.data;
-      let data = res.data;
+      let data = res.errMsg;
       return data;
     })
 }
