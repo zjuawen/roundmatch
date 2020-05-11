@@ -2,8 +2,7 @@
 
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
-<view style="width: 100%; align-items: center; flex-direction: row; display: flex; margin-top: 40rpx; margin-bottom: 40rpx;">
-
+<view class="player-header" >
   <view style=" flex: 1;color: grey; display: flex; justify-content: center; " >
     选择4～8人继续:（{{selectedCount}}）
     </view>
@@ -15,8 +14,9 @@
     style="margin-left: 40rpx;margin-right: 40rpx;" >
   	下一步
   </button>
- 
 </view>
+
+<view style="height: 110rpx" />
 
 <view class="player-list-item"
   wx:for="{{players}}" wx:key="{{item._id}}"
