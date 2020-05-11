@@ -20,7 +20,7 @@
       wx:for="{{games}}"
       wx:key="{item._id}"
       wx:for-index="index" 
-      class="detail-block"
+      class="{{ expand? 'detail-block' : 'detail-block-shrink' }}"
       style="background-color: {{(item.score1>=0 && item.score2>=0)? '#DDFFDD' : 'white' }};" >
 
       <view class="detail-title">
@@ -31,11 +31,16 @@
         <image wx:else class="detail-title-icon" 
           src="../../images/clock.svg" >
           </image>
-        <view class="detail-title-text" >第{{index+1}}场</view>
+        <view class="detail-title-text" >第{{index+1}}场</view> 
+        <image 
+          class="detail-shrink-icon" 
+          src="{{expand? '../../images/shrink.svg' : '../../images/expand.svg'}}" 
+          bindtap="onTapShrink" >
+          </image>
       </view> 
 
       <!-- detail-content -->
-      <view class="detail-content">
+      <view class="{{expand? 'detail-content': 'detail-content-shrink'}}">
         
         <!-- <label 
           style="border: none; flex: 1; text-align: center;" > 
@@ -44,7 +49,7 @@
 
         <!-- column1 -->
         <view class="detail-content-column">
-          <view class="detail-content-avatars">
+          <view wx:if="{{expand}}" class="detail-content-avatars">
             <image class="avatar" src="{{item.playerInfo1.avatarUrl}}" 
               data-id="{{item.player1}}" bindtap="onTapPlayer" >
               </image>
@@ -87,7 +92,7 @@
         
         <!-- column3 -->
         <view class="detail-content-column">
-          <view class="detail-content-avatars">
+          <view wx:if="{{expand}}" class="detail-content-avatars">
             <image class="avatar" src="{{item.playerInfo3.avatarUrl}}" 
               data-id="{{item.player3}}" bindtap="onTapPlayer" >
               </image>

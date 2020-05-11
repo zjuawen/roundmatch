@@ -38,6 +38,8 @@ Page({
       // badge: 'New'
     }],
 
+    expand: true,
+
   },
 
   loading: function (value) {
@@ -555,6 +557,7 @@ Page({
       });
       this.loadNewMatch(this.data.clubid, this.data.matchdata)
     }
+    this.readUserConfig()
   },
 
   onGamesDataChange: function() {
@@ -626,6 +629,70 @@ Page({
       success: res => {
         res.confirm && confirmCallback()
       },
+    })
+  },
+
+  readUserConfig: function(){
+    this.loading(true);
+
+    let func = 'userService';
+    let action = 'readconfig';
+    console.log('reading user config ...');
+
+    let key = 'expand';
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        key: key,
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result);
+        let value = res.result.data;
+        if( value != null){
+          this.setData({
+            expand: value
+          })
+        }
+        this.loading(false);
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        this.loading(false);
+      }
+    })
+  },
+
+  onTapShrink: function (){
+    this.setData({
+      expand: !this.data.expand,
+    })
+
+    this.loading(true);
+
+    let func = 'userService';
+    let action = 'saveconfig';
+    console.log('saving user config ...');
+
+    let key = 'expand';
+    let value = this.data.expand;
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        key: key,
+        value: value,
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result);
+        this.loading(false);
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        this.loading(false);
+      }
     })
   },
 

@@ -1,11 +1,16 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
+//debug
 // const env = 'test-roundmatch';
+// cloud.init({
+//   env: env
+// })
+
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
-  // env: env
 })
+
 const db = cloud.database();
 const $ = db.command.aggregate;
 
@@ -30,6 +35,13 @@ exports.main = async (event, context) => {
   } else if( action == 'update') {
     let userInfo = event.userInfo;
     data = await updateUserInfo(wxContext.OPENID, userInfo);
+  } else if( action == 'saveconfig') {
+    let key = event.key;
+    let value = event.value;
+    data = await updateUserConfig(wxContext.OPENID, key, value);
+  } else if( action == 'readconfig') {
+    let key = event.key;
+    data = await readUserConfig(wxContext.OPENID, key);
   }
 
   return {
@@ -122,6 +134,70 @@ updateUserInfo = async (openid, userInfo) => {
       return data;
     })
 }
+
+//读取用户配置
+readUserConfig = async (openid, key) => {
+  let doc = await db.collection('userconfig')
+    .where({
+      openid: openid,
+      key: key,
+    })
+    .get()
+    .then(res => {
+      return res.data
+    })
+
+  if( doc != null && doc.length > 0) {
+    return doc[0].value;
+  } 
+  return null;
+}
+
+//更新用户配置
+updateUserConfig = async (openid, key, value) => {
+  let doc = await db.collection('userconfig')
+    .where({
+      openid: openid,
+      key: key,
+    })
+    .get()
+    .then(res => {
+      return res.data
+    })
+
+  if( doc != null && doc.length > 0) {
+    return await db.collection('userconfig')
+      .doc(doc[0]._id)
+      .update({
+        data:{
+          value: value,
+        }
+      })
+      .then(res => {
+        console.log(res);
+        // return res.data;
+        let data = res.errMsg;
+        return data;
+      })
+  } else {
+    return await db.collection('userconfig')
+      .add({
+        data:{
+          openid: openid,
+          key: key,
+          value: value,
+        }
+      })
+      .then(res => {
+        console.log(res);
+        // return res.data;
+        let data = res.errMsg;
+        return data;
+      })
+  }
+}
+
+
 
 
 
