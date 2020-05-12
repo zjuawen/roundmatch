@@ -2,15 +2,6 @@
 
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
-<button 
-	wx:if="{{action=='new'}}" 
-	class="weui-btn" 
-  type="primary" size="mini"
-  style="margin-top: 20rpx" 
-  bindtap="onSaveMatch">
-	保存
-</button>
-
 <view style="margin-bottom:140rpx" >
 
   <!-- games -->
@@ -171,6 +162,24 @@
 
 </view>
 
+<view class="match-detail-footer" >
+  <view 
+    wx:if="{{action=='new'}}" 
+    class="match-name-text" 
+    bindtap="onSelectMatch">
+    {{matchNameList[matchIndex].text}}{{(matchNameList.length>1)?' >>':''}}
+  </view>
+
+  <button 
+    wx:if="{{action=='new'}}" 
+    class="weui-btn" 
+    type="primary" size="default"
+    style="margin-top: 20rpx; margin-bottom: 20rpx" 
+    bindtap="onSaveMatch">
+    保存
+  </button>
+</view>
+
 <mp-tabbar 
   wx:if="{{saved}}"
   style="position:fixed;bottom:0;width:100%;left:0;right:0;" 
@@ -204,3 +213,12 @@
     </view>
   </view>
 </mp-dialog>
+
+<mp-actionSheet
+  bindactiontap="onAsClick" 
+  show="{{showActionsheet}}" 
+  actions="{{matchNameList}}" 
+  title="选择不同的对阵">
+</mp-actionSheet>
+
+

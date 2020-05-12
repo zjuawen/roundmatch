@@ -1,11 +1,17 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
+
+//debug
 // const env = 'test-roundmatch';
+// cloud.init({
+//   env: env
+// })
+
 cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
-  // env: env
 })
+
 const db = cloud.database();
 const _ = db.command;
 const $ = db.command.aggregate;
@@ -17,7 +23,7 @@ exports.main = async (event, context) => {
   let action = event.action;
   let data;
   if( action == 'create'){
-    data = createMatchData(event.players);
+    data = await createMatchData(event.players);
   } else if (action == 'list') {
     let pageNum = (event.pageNum==null)? 1: event.pageNum;
     let pageSize = (event.pageSize==null)? 10: event.pageSize;
@@ -152,27 +158,51 @@ justifyPlayerOrder = async (weightObj) => {
 }
 
 //创建比赛数据（排阵，未保存）
-createMatchData = (playerArray) => {
+createMatchData = async (playerArray) => {
   // let playerArray = event.data;
 
   playerArray = shuffleArray(playerArray);
   console.log('after shuffle: ' + playerArray);
-  let orderArray = ORDERS[playerArray.length];
+  let count = playerArray.length;
+  let orderArraies = await loadOrders(count);
 
-  let games = [];
-  for (let i = 0; i < orderArray.length; i++) {
-    let game = {
-      order: i+1,
-      player1: playerArray[orderArray[i][0][0]],
-      player2: playerArray[orderArray[i][0][1]],
-      player3: playerArray[orderArray[i][1][0]],
-      player4: playerArray[orderArray[i][1][1]],
-      score1: -1,
-      score2: -1,
-    };
-    games.push(game);
+  let allgames = [];
+  for( let n = 0; n < orderArraies.length; n++){
+    let games = [];
+    let value = orderArraies[n].value;
+    let orderArray = JSON.parse(value);
+    for (let i = 0; i < orderArray.length; i++) {
+      let game = {
+        order: i+1,
+        player1: playerArray[orderArray[i][0][0]],
+        player2: playerArray[orderArray[i][0][1]],
+        player3: playerArray[orderArray[i][1][0]],
+        player4: playerArray[orderArray[i][1][1]],
+        score1: -1,
+        score2: -1,
+      };
+      games.push(game);
+    }
+    
+    allgames.push({
+      name : orderArraies[n].name,
+      data : games,
+    });
   }
-  return games;
+  return allgames;
+}
+
+loadOrders = async (playerNum) => {
+  let key = 'ORDERS_' + playerNum;
+  return await db.collection('systemconfig')
+    .where({
+      key: key,
+    })
+    .get()
+    .then(res => {
+      console.log(res);
+      return res.data;
+    })
 }
 
 //读取比赛对阵数据
@@ -232,63 +262,6 @@ shuffleArray = (array) => {
   }
   return array;
 }
-
-const ORDERS_4 = [
-  [[0, 1], [2, 3]],
-  [[0, 2], [1, 3]],
-  [[0, 3], [1, 2]]
-];
-
-const ORDERS_5 = [
-  [[0, 1], [2, 3]],
-  [[1, 2], [3, 4]],
-  [[2, 4], [0, 3]],
-  [[1, 3], [0, 4]],
-  [[1, 4], [0, 2]]
-];
-
-const ORDERS_6 = [
-  [[1, 5], [2, 4]], [[0, 1], [2, 3]],
-  [[0, 2], [4, 5]], [[0, 4], [1, 3]],
-  [[1, 2], [3, 5]], [[0, 3], [2, 5]],
-  [[0, 5], [1, 4]], [[3, 4], [1, 2]]
-];
-
-const ORDERS_7 = [
-  [[2, 5], [0, 6]], [[0, 1], [3, 4]],
-  [[2, 3], [4, 6]], [[0, 5], [1, 3]],
-  [[1, 4], [5, 6]], [[0, 3], [2, 6]],
-  [[0, 2], [4, 5]], [[3, 6], [1, 5]],
-  [[1, 6], [0, 4]], [[3, 5], [2, 4]],
-  [[1, 2], [0, 5]], [[3, 4], [2, 5]],
-  [[1, 4], [2, 6]], [[1, 3], [0, 6]]
-];
-
-const ORDERS_8 = [
-  [[0, 1], [2, 3]], [[4, 5], [6, 7]],
-  [[0, 2], [4, 6]], [[1, 3], [5, 7]],
-  [[2, 4], [3, 5]], [[1, 7], [0, 6]],
-  [[0, 4], [3, 7]], [[2, 6], [1, 5]],
-  [[0, 7], [2, 5]], [[3, 4], [1, 6]],
-  [[1, 2], [4, 7]], [[5, 6], [0, 3]],
-  [[0, 5], [1, 4]], [[3, 6], [2, 7]]
-];
-
-//     private final static int[][][] ORDERS_9 = new int[][][]{
-//   //            { {0,1},{2,3} },
-//   //            { {0,2},{1,3} },
-//   //            { {0,3},{1,2} }
-// };
-
-const ORDERS = [
-  [], [], [], [],
-  ORDERS_4, 
-  ORDERS_5,
-  ORDERS_6,
-  ORDERS_7,
-  ORDERS_8,
-  []
-];
 
 //清除matches和games数据
 // debug = () => {

@@ -13,8 +13,8 @@ Page({
   onLoad: function() {
     //debug
     wx.redirectTo({
-      // url: '../clubs/clubList',
-      url: '../players/playerList?clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0',
+      url: '../clubs/clubList',
+      // url: '../players/playerList?clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0',
       // url: '../matches/matchList?clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv',
       // url: '../matches/detail?action=old&clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv&matchid=72527ac65dec9753015b68886ea75a49',
       // url: '../players/playerList?clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv&action=new',
@@ -23,7 +23,7 @@ Page({
     })
     return;
     //end of debug
-
+  
     if (!wx.cloud) {
       wx.redirectTo({
         url: '../chooseLib/chooseLib',

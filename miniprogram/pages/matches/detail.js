@@ -9,6 +9,7 @@ Page({
     loading: false,
     
     saved: false,
+    matches: [],
     games: [],
     matchPlayers: [],  //该次比赛参与人员
     matchDone: false,
@@ -22,6 +23,12 @@ Page({
     dialogBtns: [{ text: '取消' }, { text: '确定' }],
     tempScore1: 0,
     tempScore2: 0,
+
+    //select match
+    matchIndex: 0,
+    matchNameList: [
+    ],
+    showActionsheet: false,
 
     //tabbar
     tabIndex: 0,
@@ -37,6 +44,7 @@ Page({
       "selectedIconPath": "../../images/stats_selected.svg",
       // badge: 'New'
     }],
+
 
     expand: true,
 
@@ -215,7 +223,7 @@ Page({
   },
 
   //开始读取新建的比赛
-  loadNewMatch: function (clubid, matchdata) {
+  loadNewMatch: function (clubid, matchArray) {
     this.loading(true);
 
     let func = 'userService';
@@ -239,7 +247,7 @@ Page({
         this.setData({
           players: data
         });
-        this.renderNewMatch(matchdata);
+        this.renderNewMatch(matchArray);
         this.loading(false);
       },
       fail: err => {
@@ -252,17 +260,33 @@ Page({
   },
 
   //显示新建的比赛数据
-  renderNewMatch: function (matchdata) {
-    let data = matchdata;
-    for (let i = 0; i < data.length; i++) {
-      data[i].playerInfo1 = this.getPlayerById(data[i].player1);
-      data[i].playerInfo2 = this.getPlayerById(data[i].player2);
-      data[i].playerInfo3 = this.getPlayerById(data[i].player3);
-      data[i].playerInfo4 = this.getPlayerById(data[i].player4);
+  renderNewMatch: function (matchArray) {
+    let gameTitles = [];
+    for( let n = 0; n<matchArray.length; n++){
+      let data = matchArray[n].data;
+      for (let i = 0; i < data.length; i++) {
+        data[i].playerInfo1 = this.getPlayerById(data[i].player1);
+        data[i].playerInfo2 = this.getPlayerById(data[i].player2);
+        data[i].playerInfo3 = this.getPlayerById(data[i].player3);
+        data[i].playerInfo4 = this.getPlayerById(data[i].player4);
+      }
+      let type = 'default';
+      if( n == 0){
+        type = 'warn';
+      }
+      gameTitles.push({
+        text: matchArray[n].name,
+        type: type,
+        value: n
+      });
+      console.log(data);
     }
-    console.log(data);
     this.setData({
-      games: data
+      matches: matchArray,
+      games: matchArray[0].data,
+      gamename: matchArray[0].name,
+      matchIndex: 0,
+      matchNameList: gameTitles,
     });
   },
 
@@ -496,7 +520,7 @@ Page({
       name: func,
       data: {
         action: action,
-        matchdata: this.data.matchdata,
+        matchdata: this.data.games,
         playerCount: playerCount,
         clubid: this.data.clubid,
         // remark: "test"
@@ -530,6 +554,41 @@ Page({
     this.initWatch();
   },
 
+  onSelectMatch: function(e) {
+    if( this.data.matchNameList.length<2){
+      console.log('无其他可选赛制');
+      return;
+    }
+    this.setData({
+      showActionsheet: true
+    });
+  },
+
+  onAsClick: function(e) {
+    console.log(e);
+    let value = e.detail.value;
+    let matchArray = this.data.matches;
+    let gameTitles = [];
+    for( let n = 0; n<matchArray.length; n++){
+      let type = 'default';
+      if( n == value){
+        type = 'warn';
+      }
+      gameTitles.push({
+        text: matchArray[n].name,
+        type: type,
+        value: n
+      });
+    }
+    this.setData({
+      matchIndex: value,
+      games: matchArray[value].data,
+      gamename: matchArray[value].name,
+      matchNameList: gameTitles,
+      showActionsheet: false
+    });
+  },
+
   /**
    * 生命周期函数--监听页面加载
    */
@@ -547,15 +606,16 @@ Page({
       this.loadMatchData(this.data.clubid, this.data.matchid);
       // this.test(this.data.clubid, this.data.matchid);
     } else if (action == 'new') {
-      var matchdata = JSON.parse(options.data);
+      var matchArray = JSON.parse(options.data);
+      // var matchdata = JSON.parse(options.data);
       this.setData({
         action: options.action,
         clubid: options.clubid,
-        matchdata: matchdata,
+        matchArray: matchArray,
         saved: false,
         vsBtnDisable: true
       });
-      this.loadNewMatch(this.data.clubid, this.data.matchdata)
+      this.loadNewMatch(this.data.clubid, this.data.matchArray)
     }
     this.readUserConfig()
   },
