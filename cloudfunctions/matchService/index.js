@@ -198,6 +198,7 @@ loadOrders = async (playerNum) => {
     .where({
       key: key,
     })
+    .orderBy('order', 'desc')
     .get()
     .then(res => {
       console.log(res);
