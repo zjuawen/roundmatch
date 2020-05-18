@@ -111,11 +111,21 @@
     <!-- header -->
     <view class="statistic-header-container" >
       <view class="statistic-header-label" style="flex:3;">姓名</view >
-      <view class="statistic-header-label">猪</view>
-      <view class="statistic-header-label">冠</view>
-      <view class="statistic-header-label">胜</view>
-      <view class="statistic-header-label">负</view>
-      <view class="statistic-header-label" style="flex:2;">总胜率</view>
+      <view class="statistic-header-label" bindtap="onTapOrder" data-id="pigCount">猪</view>
+      <image wx:if="{{orderField=='pigCount'}}"
+          class="sort-order-icon" src="{{orderDesc? '../../images/asc.svg' : '../../images/desc.svg' }}"></image>
+      <view class="statistic-header-label" bindtap="onTapOrder" data-id="crownCount">冠</view>
+      <image wx:if="{{orderField=='crownCount'}}"
+          class="sort-order-icon" src="{{orderDesc? '../../images/asc.svg' : '../../images/desc.svg' }}"></image>
+      <view class="statistic-header-label" bindtap="onTapOrder" data-id="winCount">胜</view>
+      <image wx:if="{{orderField=='winCount'}}"
+          class="sort-order-icon" src="{{orderDesc? '../../images/asc.svg' : '../../images/desc.svg' }}"></image>
+      <view class="statistic-header-label" bindtap="onTapOrder" data-id="lostCount">负</view>
+      <image wx:if="{{orderField=='lostCount'}}"
+          class="sort-order-icon" src="{{orderDesc? '../../images/asc.svg' : '../../images/desc.svg' }}"></image>
+      <view class="statistic-header-label" bindtap="onTapOrder" data-id="winrate" style="flex:2;">总胜率</view>
+      <image wx:if="{{orderField=='winrate'}}"
+          class="sort-order-icon" src="{{orderDesc? '../../images/asc.svg' : '../../images/desc.svg' }}"></image>
     </view>
 
     <view class="statistic-line" 
@@ -125,13 +135,13 @@
         data-id="{{item._id}}" catchtap="onSelectPlayer"
         src="{{item.avatarUrl}}">
         </image>
-
+  
       <view class="statistic-line-column" style="flex:2;">{{item.name}}</view>
       <view class="statistic-line-column">{{item.pigCount}}</view>
       <view class="statistic-line-column" >{{item.crownCount}}</view>
       <view class="statistic-line-column">{{item.winCount}}</view>
       <view class="statistic-line-column">{{item.lostCount}}</view>
-      <view class="statistic-line-column" style="flex:2;">{{item.winrate}}</view>
+      <view class="statistic-line-column" style="flex:2;">{{item.rateStr}}</view>
 
     </view>
 

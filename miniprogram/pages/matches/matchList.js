@@ -22,6 +22,9 @@ Page({
     //   { text: '负向菜单', type: 'warn', value: 3 }
     // ]
 
+    orderField: 'notSet',
+    orderDesc: 'notSet',
+
     //tabbar
     tabIndex: 0,
     tabLabelList: [{
@@ -166,16 +169,21 @@ Page({
           // item.winCount = 1;
           // item.lostCount = 2;
           let winrate = item.winCount/(item.lostCount+item.winCount);
+          let rateStr = '0%';
           if( isNaN(winrate)){
-            winrate = '0%';
+             winrate = 0;
+             rateStr = '0%';
           } else {
-            winrate = (winrate*100).toFixed(2) + '%';
+            rateStr = (winrate*100).toFixed(2) + '%';
           }
           item.winrate = winrate;
+          item.rateStr = rateStr;
         });
 
         this.setData({
-          players: data
+          players: data,
+          orderField: 'notSet',
+          orderDesc: 'notSet',
         });
 
         this.loading(false);
@@ -185,6 +193,34 @@ Page({
         wx.navigateTo({
           url: '../error/deployFunctions',
         })
+      }
+    })
+  },
+
+  onTapOrder: function(e){
+    console.log('onTapOrder', e);
+    let field = e.currentTarget.dataset.id;
+    let players = this.data.players;
+    let desc = this.data.orderDesc;
+    if( desc == 'notSet'){
+      desc = true;
+    }
+    this.reorderPlayers(players, field, desc);
+    this.setData({
+      orderField: field,
+      players: players,
+      orderDesc: !desc,
+    });
+  },
+
+  reorderPlayers: function(data, field, desc){
+    data.sort(function (player1, player2){
+      let value1 = player1[field];
+      let value2 = player2[field];
+      if( desc){
+        return value2 - value1;
+      } else {
+        return value1 - value2;
       }
     })
   },

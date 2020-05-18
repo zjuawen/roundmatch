@@ -167,3 +167,10 @@
 	right: 50rpx; 
 	opacity: 0.8;
 } 
+
+.sort-order-icon {
+	height: 30rpx;
+	width: 30rpx;
+	margin: 10rpx;
+	margin-left: -20rpx;
+}
