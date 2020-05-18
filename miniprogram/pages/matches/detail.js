@@ -358,6 +358,7 @@ Page({
         })
         this.statistic();
         this.loading(false);
+        this.scrollToFirstUnfinish();
       },
       fail: err => {
         console.error('[云函数] ' + func + ' 调用失败', err)
@@ -366,6 +367,35 @@ Page({
         })
       }
     })
+  },
+
+  scrollToFirstUnfinish: function(){
+    let firstid = null;
+    let data = this.data.games;
+    for (let i = 0; i < data.length; i++) {
+      let game = data[i];
+      if( (game.score1==-1) || (game.score2==-1)){
+        if( i == 0){
+          firstid = null;
+        } else {
+          firstid = 'game:' + game._id;
+        }
+        break;
+      }
+    }
+    if( firstid == null){
+      return;
+    }
+    const query = wx.createSelectorQuery();
+    query.select('#'+firstid).boundingClientRect();
+    query.selectViewport().scrollOffset();
+    query.exec((res) => {
+        wx.pageScrollTo({
+          scrollTop: res[0].top + res[1].scrollTop - 100,
+          duration: 300,
+        });
+      }
+    );
   },
 
   //

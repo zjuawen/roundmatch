@@ -26,8 +26,8 @@
 
 <view wx:if="{{(clubs.length>0)}}" class="weui-cells__title">加入的俱乐部</view>
 <view 
-	wx:for="{{clubs}}"
-  wx:key="{item._id}"
+	wx:for="{{ clubs }}"
+  wx:key="{{ item._id }}"
 	class="uploader" 
   style="padding-left: 0px; margin-top: 0px; margin-bottom: 20rpx;"  >
 
@@ -55,8 +55,8 @@
 
 <view wx:if="{{(publicClubs.length>0)}}" class="weui-cells__title">公开的俱乐部</view>
 <view 
-  wx:for="{{publicClubs}}"
-  wx:key="{item._id}"
+  wx:for="{{ publicClubs }}"
+  wx:key="{{ item._id }}"
   wx:for-index="index" 
   class="uploader" 
   style="display: flex; flex-direction:row; padding-left: 20rpx; padding-top: 20rpx; padding-bottom: 20rpx; align-items: center;" >

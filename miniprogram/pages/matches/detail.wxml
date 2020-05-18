@@ -8,9 +8,10 @@
   <view wx:if="{{tabIndex==0}}" >
 
     <view 
-      wx:for="{{games}}"
-      wx:key="{item._id}"
+      wx:for="{{ games }}"
+      wx:key="{{ item._id }}"
       wx:for-index="index" 
+      id="game:{{ item._id }}"
       class="{{ expand? 'detail-block' : 'detail-block-shrink' }}"
       style="background-color: {{(item.score1>=0 && item.score2>=0)? '#DDFFDD' : 'white' }};" >
 
@@ -128,8 +129,8 @@
       </view>
 
       <view 
-        wx:for="{{matchPlayers}}"
-        wx:key="{item._id}"
+        wx:for="{{ matchPlayers }}"
+        wx:key="{{ item._id }}"
         wx:for-index="index" 
         class="statistic-line">
 
