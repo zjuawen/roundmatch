@@ -373,6 +373,41 @@ Page({
     });
   },
   
+  onClickDownloadManual: function (e) {
+    // if (typeof __wxConfig =="object"){
+    //   let version = __wxConfig.envVersion;
+    //   console.log(__wxConfig)
+    //   console.log("当前环境:" + version)
+    //   if (version =="develop"){
+    //     //工具或者真机 开发环境
+     
+    //   }else if (version =="trial"){
+    //     //测试环境(体验版)
+     
+    //   }else if (version =="release"){
+    //     //正式环境
+     
+    //   }
+    // }
+    // let url = 'cloud://roundmatch.726f-roundmatch-1300750420/documents/羽毛球双打轮转小程序使用手册.pdf';
+    let url = 'cloud://test-roundmatch.7465-test-roundmatch-1300750420/documents/羽毛球双打轮转小程序使用手册.pdf';
+    wx.cloud.downloadFile({
+        fileID: url
+      }).then(res => {
+        // get temp file path
+        console.log(res.tempFilePath)
+        let filePath = res.tempFilePath;
+        wx.openDocument({
+          filePath: filePath,
+          success: function(res) {
+            console.log('打开文档成功');
+          }
+        })
+      }).catch(error => {
+        // handle error
+      })
+  },
+
   /**
    * 生命周期函数--监听页面加载
    */

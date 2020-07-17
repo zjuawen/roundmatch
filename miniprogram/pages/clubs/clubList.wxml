@@ -91,6 +91,16 @@
       style="flex:1; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
       加入
       </button>
+</view>
+
+<view 
+  style="display: flex; flex-direction:row; position:fixed; bottom:0; padding-bottom: 20rpx; align-items: center;" >
+  
+  <view 
+      class="hyperlink-text" 
+      bindtap="onClickDownloadManual" >
+      查看用户手册
+    </view>
 
 </view>
 
