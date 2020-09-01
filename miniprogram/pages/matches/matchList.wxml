@@ -33,15 +33,19 @@
       class="match-list-block" 
       style="background-color: {{(item.finish >= item.total)? '#DDFFDD' : 'white' }};" >
 
+      <view class="match-date">
+        {{item.createDate}}
+        <image src="../../images/edit.svg" class="img-edit"
+          bindtap="onEditGameTitle" ></image> 
+        <image src="../../images/delete.svg" class="img-del"
+          bindtap="oDeleteGame" ></image>   
+        </view>
+
     	<navigator 
         class="match-list-navigator" 
         url="../matches/detail?action=old&clubid={{item.clubid}}&matchid={{item._id}}" 
         open-type="navigate" >
     	  
-        <view class="match-date">
-          {{item.createDate}}
-          </view>
-
         <view class="match-progress-block">
           <view wx:if="{{(item.finish==0)}}" 
             class="match-progress-progress-full"></view>

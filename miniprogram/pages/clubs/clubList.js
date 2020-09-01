@@ -18,6 +18,7 @@ Page({
     authDialogShow: false,
     // inputShowed: false,
     // inputVal: "",
+    debug: true,
   },
   
   loading: function (value) {
@@ -373,6 +374,37 @@ Page({
     });
   },
   
+  onCreateClub: function(e) {
+    console.log("onCreateClub");
+    this.createClub();
+  },
+
+  createClub: function(){
+    let func = 'clubService';
+    let action = 'create';
+    console.log(func + " " + action);
+
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        info: {
+          password: 'test',
+          shortName: 'test',
+          wholeName: 'ceshi',
+          public: true,
+        }
+      },
+      success: res => {
+        this.loading(false);
+        console.log('[云函数] ' + func + ' return: ', res.result.data);
+        // let data = res.result.data;
+        // if( data.status == 'fail'){
+        // }
+      }
+    });
+  },
+
   onClickDownloadManual: function (e) {
     // if (typeof __wxConfig =="object"){
     //   let version = __wxConfig.envVersion;
@@ -485,4 +517,7 @@ Page({
   // },
 
 
+  onClickDebug: function(e) {
+    console.log("onClickDebug");
+  },
 })

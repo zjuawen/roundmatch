@@ -18,7 +18,7 @@ exports.main = async (event, context) => {
   let action = event.action;
   let data;
   if (action == 'save') {
-    data = await saveGameData( event.gamedata);
+    data = await saveGameData( event.clubid, event.gamedata);
   } else if (action == 'read') {
     // data = await readGameData(event.gameid);
   }
@@ -33,7 +33,7 @@ exports.main = async (event, context) => {
 }
 
 //保存比赛数据
-saveGameData = async (gamedata) => {
+saveGameData = async (clubid, gamedata) => {
 
   let old = await readGameData(gamedata);
   // console.log("new: " + gamedata.score1 + " & " + gamedata.score2);
@@ -53,7 +53,7 @@ saveGameData = async (gamedata) => {
     && gamedata.score1>=0 && gamedata.score2>=0){
     needInc = true;
   }
-  return await db.collection('games')
+  return await db.collection('games_' + clubid)
     .doc(gamedata._id)
     .update({
       // data 字段表示需新增的 JSON 数据
@@ -72,9 +72,9 @@ saveGameData = async (gamedata) => {
     })
 }
 
-readGameData = async (gamedata) => {
+readGameData = async (clubid, gamedata) => {
 
-  return await db.collection('games')
+  return await db.collection('games_' + clubid)
     .doc(gamedata._id)
     .get()
     .then(res => {

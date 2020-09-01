@@ -93,6 +93,22 @@
       </button>
 </view>
 
+<button 
+      wx:if="{{(login)}}"
+      class="weui-btn" type="primary" size="mini"
+      bindtap="onCreateClub"
+      style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
+      创建自己的俱乐部
+</button>
+
+<button 
+      wx:if="{{(debug)}}"
+      class="weui-btn" type="primary" size="mini"
+      bindtap="onClickDebug"
+      style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
+      测试
+</button>
+
 <view 
   style="display: flex; flex-direction:row; position:fixed; bottom:0; padding-bottom: 20rpx; align-items: center;" >
   

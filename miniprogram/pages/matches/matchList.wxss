@@ -168,6 +168,26 @@
 	opacity: 0.8;
 } 
 
+.img-edit {
+	height: 40rpx; 
+	width: 40rpx;
+	margin-left: 20rpx;
+	margin-bottom: -5rpx;
+	/*border: 1px;*/
+}
+
+.img-del {
+	height: 40rpx; 
+	width: 40rpx;
+	/*margin-right: 0rpx;*/
+	/*margin-bottom: -20rpx;*/
+	margin-top: 5rpx;
+	float: right;
+	/*position: relative;*/
+	/*right: 50rpx; */
+	/*border: 1px;*/
+}
+
 .sort-order-icon {
 	height: 30rpx;
 	width: 30rpx;

@@ -45,7 +45,6 @@ Page({
       // badge: 'New'
     }],
 
-
     expand: true,
 
   },
@@ -315,7 +314,7 @@ Page({
         this.setData({
           players: data
         });
-        this.loadGames(matchid);
+        this.loadGames(clubid, matchid);
         this.loading(false);
       },
       fail: err => {
@@ -328,7 +327,7 @@ Page({
   },
 
   //读取单局比赛数据
-  loadGames: function (matchid) {
+  loadGames: function (clubid, matchid) {
     this.loading(true);
 
     let func = 'matchService';
@@ -339,6 +338,7 @@ Page({
       name: func,
       data: {
         action: action,
+        clubid: clubid,
         matchid: matchid
       },
       success: res => {

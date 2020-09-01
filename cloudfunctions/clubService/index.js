@@ -6,6 +6,7 @@ cloud.init({
   env: cloud.DYNAMIC_CURRENT_ENV
   // env: env
 })
+
 const db = cloud.database();
 const _ = db.command;
 const $ = db.command.aggregate;
@@ -205,6 +206,24 @@ addUserToClubs = async (clubid, openid, userInfo) => {
 //创建俱乐部
 createClub = async (wxContext, info) => {
   let dt = db.serverDate();
+  let exist = await db.collection('clubs')
+  .where({
+    creator: wxContext.OPENID,
+  })
+  .get()
+  .then( async res => {
+    console.log(res);
+    return (res.data.length > 0);
+    // if( res.data && res.data.)
+  });
+  if( exist){
+    return {
+      errCode: 1,
+      errMsg: "每个用户仅可以创建一个俱乐部"
+    }
+  }
+
+
   return await db.collection('clubs')
     .add({
       data: {
@@ -216,9 +235,11 @@ createClub = async (wxContext, info) => {
         createDate: dt
       }
     })
-    .then(res => {
+    .then(async res =>  {
       console.log(res);
       if (res.errMsg == "collection.add:ok") {
+        let clubid = res._id;
+        let dataTableRes = await createClubGameDataTable(clubid, info);
         return {
           _id: res._id,
           creator: wxContext.OPENID,
@@ -226,12 +247,26 @@ createClub = async (wxContext, info) => {
           shortName: info.shortName,
           wholeName: info.wholeName,
           public: info.public,
-          createDate: dt
+          createDate: dt,
+          dataTableRes: dataTableRes
         };
       }
     })
 }
 
+
+createClubGameDataTable = async (clubid) => {
+  let gameDataTableName = 'games_' + clubid;
+  return await db.createCollection(gameDataTableName)
+  .then(res => {
+      console.log(res);
+      return {
+        dataTable: gameDataTableName,
+        msg: res.errMsg,
+      }
+    }
+  );
+}
 
 //统计俱乐部成员胜率
 statisUserInClub = async (clubid) => {

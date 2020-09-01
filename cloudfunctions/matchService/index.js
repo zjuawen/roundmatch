@@ -32,7 +32,7 @@ exports.main = async (event, context) => {
     data = await saveMatchData(event.clubid, 
       event.matchdata, event.playerCount);
   } else if (action == 'read') {
-    data = await readMatch(event.matchid);
+    data = await readMatch(event.clubid, event.matchid);
   }
   // else if (action == 'debug') {
   //   debug();
@@ -78,7 +78,7 @@ savaGames = async (clubid, matchid, games) => {
 
   let count = 0;
   for (let i = 0; i < data.length; i++) {
-    await db.collection('games')
+    await db.collection('games_' + clubid )
       .add({
         // data 字段表示需新增的 JSON 数据
         data: {
@@ -207,9 +207,9 @@ loadOrders = async (playerNum) => {
 }
 
 //读取比赛对阵数据
-readMatch = async (matchid) => {
+readMatch = async (clubid, matchid) => {
 
-  return await db.collection('games')
+  return await db.collection('games_' + clubid)
     .where({
       matchid: matchid,
     })
