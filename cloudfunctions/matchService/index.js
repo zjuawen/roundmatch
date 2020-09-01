@@ -17,7 +17,7 @@ exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
 
   console.log("current env: " + env);
-  
+
   let action = event.action;
   let data;
   if( action == 'create'){
@@ -31,6 +31,8 @@ exports.main = async (event, context) => {
       event.matchdata, event.playerCount);
   } else if (action == 'read') {
     data = await readMatch(event.clubid, event.matchid);
+  } else if (action == 'delete') {
+    data = await deleteMatch(event.clubid, event.matchid);
   }
   // else if (action == 'debug') {
   //   debug();
@@ -58,6 +60,7 @@ saveMatchData = async (clubid, games, playerCount, remark="") => {
         finish: 0,
         playerCount: playerCount,
         remark: remark,
+        delete: false,
       }
     })
     .then(res => {
@@ -219,6 +222,42 @@ readMatch = async (clubid, matchid) => {
     })
 }
 
+//删除比赛数据
+deleteMatch = async (clubid, matchid) => {
+  return await db.collection('matches')
+    .doc(matchid)
+    .update({
+      data: {
+        delete: true
+      },
+    })
+    .then(async res => {
+      console.log("delete match...");
+      console.log(res);
+      let matchUpdated = res.stats.updated;
+      if( matchUpdated > 0){
+        return await db.collection('games_' + clubid)
+          .where({
+            matchid: matchid,
+          })
+          .update({
+            data: {
+              delete: true
+            },
+          })
+          .then(async res => {
+            console.log("delete games...");
+            console.log(res);
+            let gameUpdated = res.stats.updated;
+            return {
+              matchUpdated: matchUpdated,
+              gameUpdated: gameUpdated,
+            };
+          })
+      }
+    });
+}
+
 //获取比赛列表
 listMatch = async (clubid, pageNum, pageSize) => {
 
@@ -226,6 +265,7 @@ listMatch = async (clubid, pageNum, pageSize) => {
     .aggregate()
     .match({
       clubid: clubid,
+      delete: !true,
     })
     .sort({
       createDate: -1

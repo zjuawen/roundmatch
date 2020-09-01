@@ -213,6 +213,58 @@ Page({
     });
   },
 
+  oDeleteGame: function (e) {
+    console.log('onDeleteGame');
+
+    let clubid = this.data.clubid;
+    let matchid = e.target.dataset.id;  
+    var that = this;
+    
+    wx.showModal({
+      title: '提示',
+      content: '确定要删除吗？',
+      success: function (sm) {
+        if (sm.confirm) {
+          console.log('确定删除');
+          that.deleteGame(clubid, matchid);
+        } else if (sm.cancel) {
+          console.log('取消删除');
+        }
+      }
+    });
+  },
+
+  deleteGame: function (clubid, matchid) {
+    let func = 'matchService';
+    let action = 'delete';
+
+    console.log(func + " " + action);
+
+    return wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        clubid: clubid,
+        matchid: matchid
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result);
+        this.setData({
+          matches: [],
+          pageNum: 1,
+          noMore: false
+        }); 
+        this.loadMatches(this.data.clubid);
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
+  },
+
   reorderPlayers: function(data, field, desc){
     data.sort(function (player1, player2){
       let value1 = player1[field];

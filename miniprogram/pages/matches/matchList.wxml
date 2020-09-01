@@ -38,7 +38,7 @@
         <image src="../../images/edit.svg" class="img-edit"
           bindtap="onEditGameTitle" ></image> 
         <image src="../../images/delete.svg" class="img-del"
-          bindtap="oDeleteGame" ></image>   
+          data-id="{{item._id}}" bindtap="oDeleteGame" ></image>   
         </view>
 
     	<navigator 
