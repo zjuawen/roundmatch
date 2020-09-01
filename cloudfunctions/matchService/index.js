@@ -1,15 +1,11 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
+var config = require('../config.js');
 
-//debug
-// const env = 'test-roundmatch';
-// cloud.init({
-//   env: env
-// })
-
+const env = config.debug ? 'test-roundmatch' : cloud.DYNAMIC_CURRENT_ENV;
 cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
+  env: env
 })
 
 const db = cloud.database();
@@ -20,6 +16,8 @@ const $ = db.command.aggregate;
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
 
+  console.log("current env: " + env);
+  
   let action = event.action;
   let data;
   if( action == 'create'){

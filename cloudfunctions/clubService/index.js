@@ -1,10 +1,11 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-// const env = 'test-roundmatch';
+var config = require('../config.js');
+
+const env = config.debug ? 'test-roundmatch' : cloud.DYNAMIC_CURRENT_ENV;
 cloud.init({
-  env: cloud.DYNAMIC_CURRENT_ENV
-  // env: env
+  env: env
 })
 
 const db = cloud.database();
@@ -16,6 +17,8 @@ const RECORD_MAX_COUNT = 100;
 // 云函数入口函数
 exports.main = async (event, context) => {
   const wxContext = cloud.getWXContext()
+
+  console.log("current env: " + env);
 
   let action = event.action;
   let data;
