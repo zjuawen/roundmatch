@@ -257,7 +257,6 @@ createClub = async (wxContext, info) => {
     })
 }
 
-
 createClubGameDataTable = async (clubid) => {
   let gameDataTableName = 'games_' + clubid;
   return await db.createCollection(gameDataTableName)
@@ -294,7 +293,8 @@ statisUserInClub = async (clubid) => {
 listClubMatches = async (clubid) => {
   return await db.collection('matches')
     .where({
-      clubid: clubid
+      clubid: clubid,
+      delete: !true,
     })
     .get()
     .then(res => {
@@ -310,9 +310,10 @@ listClubGames = async (clubid, page = 1) => {
   // let page = 1;
   let page_size = RECORD_MAX_COUNT;
 
-  return await db.collection('games')
+  return await db.collection('games_' + clubid)
     .where({
-      clubid: clubid
+      clubid: clubid,
+      delete: !true,
     })
     .skip((page-1)*page_size)
     .get()
