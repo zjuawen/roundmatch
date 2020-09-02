@@ -40,6 +40,12 @@ Page({
       // badge: 'New'
     }],
 
+    //dialog
+    clickIndex: 0,
+    dialogShow: false,
+    dialogBtns: [{ text: '取消' }, { text: '确定' }],
+    tempName: '',
+
   },
 
   loading: function (value) {
@@ -66,6 +72,11 @@ Page({
       success: res => {
         console.log('[云函数] ' + func + ' return: ', res.result.data);
         let newData = res.result.data;
+        newData.forEach((item) => {
+          if( !item.name){
+            item.name = item.createDate;
+          }
+        });
         this.setData({
           noMore: (newData.length < this.data.pageSize)
         });
@@ -213,7 +224,101 @@ Page({
     });
   },
 
-  oDeleteGame: function (e) {
+  onEditMatchTitle: function(event){
+    console.log(event);
+    let index = event.target.dataset.index;
+    let data = this.data.matches;
+    this.setData({
+      tempName: data[index].name
+    });
+    
+    this.openDialog(index);
+  },
+
+  //输入比分1
+  inputNewName: function(e) {
+    console.log(e);
+    let value = e.detail.value;
+    // let data = this.data.games;
+    // data[this.data.clickIndex].score1 = parseInt(value);
+    this.setData({
+      tempName: value
+    })
+  },
+
+  //比分输入框按钮
+  tapDialogButton(e) {
+    if( e.detail.index === 1){
+      this.loading(true);
+      let validat = this.setNewMatchName();
+      if( validat ){
+        this.onUpdateMatch(this.data.clickIndex);
+      } else {
+        this.loading(false);
+      }
+    } 
+    this.setData({
+      dialogShow: false,
+      // showOneButtonDialog: false
+    })
+  },
+
+  onUpdateMatch: function (index) {
+    this.loading(true);
+
+    let func = 'matchService';
+    let action = 'update';
+    console.log('update match ...');
+
+    let data = this.data.matches;
+    wx.cloud.callFunction({
+      name: func,
+      data: {
+        action: action,
+        match: {
+          matchid: data[index]._id,
+          name: data[index].name,
+        }
+      },
+      success: res => {
+        console.log('[云函数] ' + func + ' return: ', res.result);
+        let updated = res.result.data.updated;
+        this.loading(false);
+      },
+      fail: err => {
+        console.error('[云函数] ' + func + ' 调用失败', err)
+        wx.navigateTo({
+          url: '../error/deployFunctions',
+        })
+      }
+    })
+  },
+
+
+  //修改比赛标题
+  setNewMatchName: function() {
+    let data = this.data.matches;
+    let name = data[this.data.clickIndex].name;
+    if( name == this.data.tempName){
+      console.log("title not modified")
+      return false;
+    }
+    data[this.data.clickIndex].name = this.data.tempName;
+    this.setData({
+      matches: data
+    })
+    return true;
+  },
+
+  //弹出输入框
+  openDialog: function (index) {
+    this.setData({
+      dialogShow: true,
+      clickIndex: index,
+    })
+  },
+
+  oDeleteMatch: function (e) {
     console.log('onDeleteGame');
 
     let clubid = this.data.clubid;
@@ -226,7 +331,7 @@ Page({
       success: function (sm) {
         if (sm.confirm) {
           console.log('确定删除');
-          that.deleteGame(clubid, matchid);
+          that.deleteMatch(clubid, matchid);
         } else if (sm.cancel) {
           console.log('取消删除');
         }
@@ -234,7 +339,7 @@ Page({
     });
   },
 
-  deleteGame: function (clubid, matchid) {
+  deleteMatch: function (clubid, matchid) {
     let func = 'matchService';
     let action = 'delete';
 

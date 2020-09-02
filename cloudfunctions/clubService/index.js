@@ -71,7 +71,8 @@ getClubInfo = async (clubid) => {
 listPublicClub = async (wxContext) => {
   return await db.collection('clubs')
     .where({
-      public: true
+      public: true,
+      delete: _.neq(true),
     })
     .get()
     .then(res => {
@@ -107,7 +108,8 @@ loadClubData = async (uacs) => {
 	let clubids = uacs.map(a=> a.clubid);
 	return await db.collection('clubs')
 		.where({
-			_id: _.in(clubids)
+			_id: _.in(clubids),
+      delete: _.neq(true),
 		})
 		.get()
   	.then(res => {
@@ -212,6 +214,7 @@ createClub = async (wxContext, info) => {
   let exist = await db.collection('clubs')
   .where({
     creator: wxContext.OPENID,
+    delete: _.neq(true),
   })
   .get()
   .then( async res => {
@@ -235,6 +238,7 @@ createClub = async (wxContext, info) => {
         shortName: info.shortName,
         wholeName: info.wholeName,
         public: info.public,
+        delete: false,
         createDate: dt
       }
     })
@@ -294,7 +298,7 @@ listClubMatches = async (clubid) => {
   return await db.collection('matches')
     .where({
       clubid: clubid,
-      delete: !true,
+      delete: _.neq(true),
     })
     .get()
     .then(res => {
@@ -313,7 +317,7 @@ listClubGames = async (clubid, page = 1) => {
   return await db.collection('games_' + clubid)
     .where({
       clubid: clubid,
-      delete: !true,
+      delete: _.neq(true),
     })
     .skip((page-1)*page_size)
     .get()

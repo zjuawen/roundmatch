@@ -34,11 +34,11 @@
       style="background-color: {{(item.finish >= item.total)? '#DDFFDD' : 'white' }};" >
 
       <view class="match-date">
-        {{item.createDate}}
-        <image src="../../images/edit.svg" class="img-edit"
-          bindtap="onEditGameTitle" ></image> 
-        <image src="../../images/delete.svg" class="img-del"
-          data-id="{{item._id}}" bindtap="oDeleteGame" ></image>   
+        {{item.name}}
+          <image wx:if="{{(item.owner)}}" src="../../images/edit.svg" class="img-edit"
+            data-index="{{index}}" bindtap="onEditMatchTitle" ></image> 
+          <image wx:if="{{(item.owner)}}" src="../../images/delete.svg" class="img-del"
+            data-id="{{item._id}}" bindtap="oDeleteMatch" ></image>   
         </view>
 
     	<navigator 
@@ -159,5 +159,18 @@
   list="{{tabLabelList}}"  bindchange="tabChange" >
 </mp-tabbar>
 
+<mp-dialog 
+  title="修改比赛名称" 
+  show="{{dialogShow}}" 
+  bindbuttontap="tapDialogButton" 
+  buttons="{{dialogBtns}}">
 
+  <view style="display: flex; flex-direction: column;">  
+    <view style="display: flex; flex-direction: row; margin-top: 20px; justify-content: center;">  
+      <input class="name_input"
+        type="text" value="{{(tempName<0?'':tempName)}}" 
+        bindinput="inputNewName" bindchange="inputNewName" focus="true" ></input>
+    </view>    
+  </view>
+</mp-dialog>
 

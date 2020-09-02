@@ -25,14 +25,16 @@ exports.main = async (event, context) => {
   } else if (action == 'list') {
     let pageNum = (event.pageNum==null)? 1: event.pageNum;
     let pageSize = (event.pageSize==null)? 10: event.pageSize;
-    data = await listMatch(event.clubid, pageNum, pageSize);
+    data = await listMatch(wxContext.OPENID, event.clubid, pageNum, pageSize);
   } else if (action == 'save') {
-    data = await saveMatchData(event.clubid, 
+    data = await saveMatchData(wxContext.OPENID, event.clubid, 
       event.matchdata, event.playerCount);
   } else if (action == 'read') {
     data = await readMatch(event.clubid, event.matchid);
   } else if (action == 'delete') {
     data = await deleteMatch(event.clubid, event.matchid);
+  }  else if (action == 'update') {
+    data = await updateMatch(event.match);
   }
   // else if (action == 'debug') {
   //   debug();
@@ -47,8 +49,27 @@ exports.main = async (event, context) => {
   }
 }
 
+//更新比赛信息
+updateMatch = async (match) => {
+  return await db.collection('matches')
+    .doc(match.matchid)
+    .update({
+      data: {
+        name: match.name,
+      }
+    })
+    .then(res => {
+      console.log("update match: ");
+      console.log(res)
+      let updated = res.stats.updated;
+      return {
+        updated: updated
+      }
+    })
+}
+
 //保存新增的比赛数据
-saveMatchData = async (clubid, games, playerCount, remark="") => {
+saveMatchData = async (owner, clubid, games, playerCount, remark="") => {
   return await db.collection('matches')
     .add({
       // data 字段表示需新增的 JSON 数据
@@ -59,8 +80,9 @@ saveMatchData = async (clubid, games, playerCount, remark="") => {
         total: games.length,
         finish: 0,
         playerCount: playerCount,
-        remark: remark,
         delete: false,
+        owner: owner,
+        remark: remark,
       }
     })
     .then(res => {
@@ -259,13 +281,13 @@ deleteMatch = async (clubid, matchid) => {
 }
 
 //获取比赛列表
-listMatch = async (clubid, pageNum, pageSize) => {
+listMatch = async (owner, clubid, pageNum, pageSize) => {
 
   return await db.collection('matches')
     .aggregate()
     .match({
       clubid: clubid,
-      delete: !true,
+      delete: _.neq(true),
     })
     .sort({
       createDate: -1
@@ -274,9 +296,11 @@ listMatch = async (clubid, pageNum, pageSize) => {
       _id: true,
       // id: true,
       clubid: true,
+      name: true,
       total: true,
       finish: true,
       playerCount: true,
+      owner: $.eq(['$owner', owner]),
       remark: true,
       createDate: $.dateToString({
         date: '$createDate',
