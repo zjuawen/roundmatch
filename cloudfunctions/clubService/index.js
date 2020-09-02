@@ -246,7 +246,7 @@ createClub = async (wxContext, info) => {
       console.log(res);
       if (res.errMsg == "collection.add:ok") {
         let clubid = res._id;
-        let dataTableRes = await createClubGameDataTable(clubid, info);
+        // let dataTableRes = await createClubGameDataTable(clubid, info);
         return {
           _id: res._id,
           creator: wxContext.OPENID,
@@ -255,24 +255,12 @@ createClub = async (wxContext, info) => {
           wholeName: info.wholeName,
           public: info.public,
           createDate: dt,
-          dataTableRes: dataTableRes
+          // dataTableRes: dataTableRes
         };
       }
-    })
+    });
 }
 
-createClubGameDataTable = async (clubid) => {
-  let gameDataTableName = 'games_' + clubid;
-  return await db.createCollection(gameDataTableName)
-  .then(res => {
-      console.log(res);
-      return {
-        dataTable: gameDataTableName,
-        msg: res.errMsg,
-      }
-    }
-  );
-}
 
 //统计俱乐部成员胜率
 statisUserInClub = async (clubid) => {

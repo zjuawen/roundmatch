@@ -93,8 +93,44 @@ saveMatchData = async (owner, clubid, games, playerCount, remark="") => {
     })
 }
 
+createClubGameDataTable = async (clubid) => {
+  let gameDataTableName = 'games_' + clubid;
+
+  const table = db.collection(gameDataTableName);
+  var exist = true;
+  try{
+    await table
+    .count()
+    .then( async res=>{
+      console.log(res);
+    });
+  } catch (e) {
+    console.log(e);
+    exist = false;
+  }
+  if( exist){
+    console.log('game data table already created');
+    return;
+  }
+
+  return await db.createCollection(gameDataTableName)
+  .then(res => {
+      console.log('create game data table...');
+      console.log(res);
+      return {
+        dataTable: gameDataTableName,
+        msg: res.errMsg,
+      }
+    }
+  );
+}
+
+
 //保存对阵数据
 savaGames = async (clubid, matchid, games) => {
+
+  await createClubGameDataTable(clubid);
+
   let data = games;
 
   let playerWeight = [];

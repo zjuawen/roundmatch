@@ -397,7 +397,16 @@ Page({
       },
       success: res => {
         this.loading(false);
+        let data = res.result.data;
         console.log('[云函数] ' + func + ' return: ', res.result.data);
+        if( data.errCode == 1){
+           wx.showToast({
+            icon: "none",
+            title: data.errMsg,
+            duration: 1000
+          })
+        }
+
         // let data = res.result.data;
         // if( data.status == 'fail'){
         // }
