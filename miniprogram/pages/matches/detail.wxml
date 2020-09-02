@@ -1,6 +1,6 @@
 <!--miniprogram/pages/matches/detail.wxml-->
 
-<mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
+<mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}" delta="{{navBackDelta}}"></mp-navigation-bar>
 
 <view style="margin-bottom:140rpx" >
 

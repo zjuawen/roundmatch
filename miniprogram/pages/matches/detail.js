@@ -7,7 +7,9 @@ Page({
   data: {
     title: '比赛详情',
     loading: false,
-    
+
+    navBackDelta: 1,
+
     saved: false,
     matches: [],
     games: [],
@@ -579,6 +581,7 @@ Page({
     this.setData({
       action: 'old',
       saved: true,
+      navBackDelta: 2,
       vsBtnDisable: false
     });
     this.initWatch();
@@ -618,6 +621,10 @@ Page({
       showActionsheet: false
     });
   },
+
+  // onNavBack: function(e) {
+  //   console.log(e);
+  // },
 
   /**
    * 生命周期函数--监听页面加载
