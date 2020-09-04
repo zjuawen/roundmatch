@@ -3,7 +3,7 @@ const cloud = require('wx-server-sdk')
 
 var config = require('../config.js');
 
-const env = config.debug ? 'test-roundmatch' : cloud.DYNAMIC_CURRENT_ENV;
+const env = config.debug ? 'test-roundmatch' : "roundmatch";
 cloud.init({
   env: env
 })

@@ -136,10 +136,12 @@ Page({
    */
   onLoad: function (options) {
     console.log(options);
-    var userInfoObject = JSON.parse(decodeURIComponent(options.userInfo));
-    this.setData({
-      userInfo: userInfoObject
-    })
+    if( options.userInfo ){
+      var userInfoObject = JSON.parse(decodeURIComponent(options.userInfo));
+      this.setData({
+        userInfo: userInfoObject
+      })
+    }
   },
 
   /**

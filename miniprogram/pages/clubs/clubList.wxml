@@ -24,102 +24,106 @@
     </mp-searchbar>
 </view> -->
 
-<view wx:if="{{(clubs.length>0)}}" class="weui-cells__title">加入的俱乐部</view>
-<view 
-	wx:for="{{ clubs }}"
-  wx:key="{{ item._id }}"
-	class="uploader" 
-  style="padding-left: 0px; margin-top: 0px; margin-bottom: 20rpx;"  >
+<View class="container" >
 
-	<navigator url="../matches/matchList?clubid={{item._id}}" 
-    open-type="navigate" class="uploader-text">
+  <view wx:if="{{(clubs.length>0)}}" class="weui-cells__title">加入的俱乐部</view>
+  <view 
+  	wx:for="{{ clubs }}"
+    wx:key="{{ item._id }}"
+  	class="uploader" 
+    style="padding-left: 0px; margin-top: 0px; margin-bottom: 20rpx;"  >
 
-    <view style="display: flex; align-items: center; margin-left: 20rpx;">
-      
-      <image class='avatar' style="margin: 20rpx;" 
+  	<navigator url="../matches/matchList?clubid={{item._id}}" 
+      open-type="navigate" class="uploader-text">
+
+      <view style="display: flex; align-items: center; margin-left: 20rpx;">
+        
+        <image class='avatar' style="margin: 20rpx;" 
+          src="../../images/default_club.png" mode="aspectFit">
+        </image>
+        
+        <text style="flex:5" >{{item.wholeName}}</text>
+        <text style="flex:5; align-content: left" > ({{item.shortName}})</text>
+        <!-- <text style="flex:1" >{{item.createDate}}</text> -->
+
+         <!-- <image class='avatar' style="margin: 20rpx; border-radius: 0px;" 
+          src="../../images/locked.png" mode="aspectFit">
+        </image> -->
+      </view>
+
+  	</navigator>
+
+  </view>
+
+  <!-- 
+  <view wx:if="{{(publicClubs.length>0)}}" class="weui-cells__title">公开的俱乐部</view>
+  <view 
+    wx:for="{{ publicClubs }}"
+    wx:key="{{ item._id }}"
+    wx:for-index="index" 
+    class="uploader" 
+    style="display: flex; flex-direction:row; padding-left: 20rpx; padding-top: 20rpx; padding-bottom: 20rpx; align-items: center;" >
+
+      <image class='avatar-small' 
         src="../../images/default_club.png" mode="aspectFit">
       </image>
-      
-      <text style="flex:5" >{{item.wholeName}}</text>
-      <text style="flex:5; align-content: left" > ({{item.shortName}})</text>
-      <!-- <text style="flex:1" >{{item.createDate}}</text> -->
 
-       <!-- <image class='avatar' style="margin: 20rpx; border-radius: 0px;" 
+      <view style="flex:2; font-size: 14px; margin-left: 50rpx;" >{{item.wholeName}}</view>
+
+      <image wx:if="{{item.locked}}" class='club-status' 
         src="../../images/locked.png" mode="aspectFit">
-      </image> -->
-    </view>
+      </image>
 
-	</navigator>
+      <button 
+        wx:if="{{(!login)}}"
+        class="weui-btn" type="primary" size="mini"
+        data-item="{{item}}"
+        open-type="getUserInfo" 
+        bindgetuserinfo="onGetUserInfo"
+        style="flex:1; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;" >
+        加入
+        </button>
 
-</view>
+      <button 
+        wx:if="{{(login)}}"
+        class="weui-btn" type="primary" size="mini"
+        data-item="{{item}}"
+        bindtap="onClickPublicClub"
+        style="flex:1; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
+        加入
+        </button>
+  </view>
+   -->
+  <!-- disabled="{{!createClubEnable}}" -->
+  <!--  {{createClubEnable? "创建自己的俱乐部" : "仅可以创建一个俱乐部"}} -->     
+  <button 
+        wx:if="{{(login && createClubEnable)}}"
+        class="weui-btn" type="default" size="default"
+        bindtap="onCreateClub"
+        style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
+          创建俱乐部
+  </button>
 
-<!-- 
-<view wx:if="{{(publicClubs.length>0)}}" class="weui-cells__title">公开的俱乐部</view>
-<view 
-  wx:for="{{ publicClubs }}"
-  wx:key="{{ item._id }}"
-  wx:for-index="index" 
-  class="uploader" 
-  style="display: flex; flex-direction:row; padding-left: 20rpx; padding-top: 20rpx; padding-bottom: 20rpx; align-items: center;" >
+<!--   <button 
+        wx:if="{{(debug)}}"
+        class="weui-btn" type="primary" 
+        bindtap="onClickDebug"
+        style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
+        测试
+  </button> -->
 
-    <image class='avatar-small' 
-      src="../../images/default_club.png" mode="aspectFit">
-    </image>
-
-    <view style="flex:2; font-size: 14px; margin-left: 50rpx;" >{{item.wholeName}}</view>
-
-    <image wx:if="{{item.locked}}" class='club-status' 
-      src="../../images/locked.png" mode="aspectFit">
-    </image>
-
-    <button 
-      wx:if="{{(!login)}}"
-      class="weui-btn" type="primary" size="mini"
-      data-item="{{item}}"
-      open-type="getUserInfo" 
-      bindgetuserinfo="onGetUserInfo"
-      style="flex:1; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;" >
-      加入
-      </button>
-
-    <button 
-      wx:if="{{(login)}}"
-      class="weui-btn" type="primary" size="mini"
-      data-item="{{item}}"
-      bindtap="onClickPublicClub"
-      style="flex:1; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
-      加入
-      </button>
-</view>
- -->
-<!-- disabled="{{!createClubEnable}}" -->
-<!--  {{createClubEnable? "创建自己的俱乐部" : "仅可以创建一个俱乐部"}} -->     
-<button 
-      wx:if="{{(login && createClubEnable)}}"
-      class="weui-btn" type="primary" size="mini"
-      bindtap="onCreateClub"
-      style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
-        创建自己的俱乐部
-</button>
-
-<button 
-      wx:if="{{(debug)}}"
-      class="weui-btn" type="primary" size="mini"
-      bindtap="onClickDebug"
-      style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
-      测试
-</button>
-
-<view 
-  style="display: flex; flex-direction:row; position:fixed; bottom:0; padding-bottom: 20rpx; align-items: center;" >
-  
   <view 
-      class="hyperlink-text" 
-      bindtap="onClickDownloadManual" >
-      查看用户手册
-    </view>
+    style="position: fixed;bottom: 0;margin: 10px; right: 25px;" >
+    
+    <view 
+        class="hyperlink-text" 
+        bindtap="onClickDownloadManual" >
+        查看用户手册
+      </view>
 
-</view>
+  </view>
+
+</View>
 
 <!-- 
 <button 

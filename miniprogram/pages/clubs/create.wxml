@@ -5,7 +5,12 @@
 
   <view class="page-section">
 
-    <view class="weui-cells__title">名称</view>
+    <view class="weui-cells__title">
+      <Span style="color: red;font-size: 20px;vertical-align: middle;padding: 10rpx;">*</Span>
+      每个用户仅可以创建一个俱乐部，请谨慎填写
+    </view>
+
+    <view class="weui-cells__title">名称<Span style="color: red;font-size: 20px;vertical-align: middle;padding: 10rpx;">*</Span></view>
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
         <input class="weui-input" auto-focus placeholder="请输入俱乐部名称"
@@ -13,7 +18,7 @@
       </view>
     </view>
 
-    <view class="weui-cells__title">缩写</view>
+    <view class="weui-cells__title">缩写<Span style="color: red;font-size: 20px;vertical-align: middle;padding: 10rpx;">*</Span></view>
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
         <input class="weui-input" placeholder="请输入俱乐部缩写"
