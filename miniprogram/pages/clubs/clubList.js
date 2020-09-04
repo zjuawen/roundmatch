@@ -16,7 +16,7 @@ Page({
     joinDialogShow: false,
     sharejoin: false,
     authDialogShow: false,
-    authDialogShow: '',
+    authDialogMessage: '',
     createClubEnable: false,
     // inputShowed: false,
     // inputVal: "",
@@ -328,15 +328,16 @@ Page({
     }
   },
 
-  showAuthDialog: function(show, msg = '') {
+  showAuthDialog: function(show, msg) {
     if( show ){
       this.setData({
         authDialogShow: show,
+        authDialogMessage: msg,
       })
+      console.log(this.data.authDialogMessage)
     } else {
       this.setData({
         authDialogShow: show,
-        authDialogShow: msg,
       })
     }
   },

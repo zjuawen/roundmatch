@@ -139,7 +139,7 @@
 
 
 <mp-dialog title="获取授权" show="{{authDialogShow}}" bindbuttontap="onCancelAuthDialog" buttons="{{[{text: '取消'}]}}">
-  <view style="margin: 40rpx;" >{{authonMessage}}</view>
+  <view style="margin: 40rpx;" >{{authDialogMessage}}</view>
   <button 
     class="weui-btn" type="primary" size="default"
     open-type="getUserInfo" 
