@@ -137,7 +137,7 @@ Page({
         let data = res.result.data;
         this.setData({
           clubs: data.private,
-          publicClubs: data.public
+          publicClubs: [],//data.public
         })
         this.reducePublicClubs();
         this.loading(false);
@@ -513,8 +513,8 @@ Page({
 
   onClickDebug: function(e) {
     console.log("onClickDebug");
-    wx.navigateTo({
-      url: './create',
-    })
+    // wx.navigateTo({
+    //   url: './create',
+    // })
   },
 })
