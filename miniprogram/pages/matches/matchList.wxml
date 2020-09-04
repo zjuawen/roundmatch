@@ -37,7 +37,7 @@
         {{item.name}}
           <image wx:if="{{(item.owner)}}" src="../../images/edit.svg" class="img-edit"
             data-index="{{index}}" bindtap="onEditMatchTitle" ></image> 
-          <image wx:if="{{(item.owner)}}" src="../../images/delete.svg" class="img-del"
+          <image wx:if="{{(item.owner && (item.finish < item.total))}}" src="../../images/delete.svg" class="img-del"
             data-id="{{item._id}}" bindtap="oDeleteMatch" ></image>   
         </view>
 

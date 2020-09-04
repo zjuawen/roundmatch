@@ -24,7 +24,7 @@ exports.main = async (event, context) => {
   if (action == 'save') {
     data = await saveGameData( event.clubid, event.gamedata);
   } else if (action == 'read') {
-    // data = await readGameData(event.gameid);
+    // data = await readGameData(event.clubid, event.gameid);
   }
 
   return {
@@ -39,7 +39,7 @@ exports.main = async (event, context) => {
 //保存比赛数据
 saveGameData = async (clubid, gamedata) => {
 
-  let old = await readGameData(gamedata);
+  let old = await readGameData(clubid, gamedata);
   // console.log("new: " + gamedata.score1 + " & " + gamedata.score2);
 
   if( old.data == null){

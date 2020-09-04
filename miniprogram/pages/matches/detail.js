@@ -207,6 +207,7 @@ Page({
       name: func,
       data: {
         action: action,
+        clubid: gamedata.clubid,
         gamedata: gamedata,
       },
       success: res => {
