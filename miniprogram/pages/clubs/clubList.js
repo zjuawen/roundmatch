@@ -16,6 +16,7 @@ Page({
     joinDialogShow: false,
     sharejoin: false,
     authDialogShow: false,
+    createClubEnable: false,
     // inputShowed: false,
     // inputVal: "",
     debug: true,
@@ -376,60 +377,42 @@ Page({
   
   onCreateClub: function(e) {
     console.log("onCreateClub");
-    this.createClub();
+    var userInfo= encodeURIComponent(JSON.stringify(this.data.userInfo));
+    wx.navigateTo({
+      url: '../clubs/create?userInfo=' + userInfo,
+    })
   },
 
-  createClub: function(){
+  checkCreateClubEnable: function () {
     let func = 'clubService';
-    let action = 'create';
+    let action = 'listByOwner';
     console.log(func + " " + action);
 
     wx.cloud.callFunction({
       name: func,
       data: {
         action: action,
-        info: {
-          password: 'test',
-          shortName: 'test',
-          wholeName: 'ceshi',
-          public: true,
-        }
       },
       success: res => {
         this.loading(false);
         let data = res.result.data;
         console.log('[云函数] ' + func + ' return: ', res.result.data);
-        if( data.errCode == 1){
-           wx.showToast({
-            icon: "none",
-            title: data.errMsg,
-            duration: 1000
-          })
-        }
-
-        // let data = res.result.data;
-        // if( data.status == 'fail'){
+        // if( data.list.size){
+        //    wx.showToast({
+        //     icon: "none",
+        //     title: data.errMsg,
+        //     duration: 1000
+        //   })
         // }
+
+        this.setData({
+          createClubEnable: (data.length <= 0),
+        })
       }
     });
   },
 
   onClickDownloadManual: function (e) {
-    // if (typeof __wxConfig =="object"){
-    //   let version = __wxConfig.envVersion;
-    //   console.log(__wxConfig)
-    //   console.log("当前环境:" + version)
-    //   if (version =="develop"){
-    //     //工具或者真机 开发环境
-     
-    //   }else if (version =="trial"){
-    //     //测试环境(体验版)
-     
-    //   }else if (version =="release"){
-    //     //正式环境
-     
-    //   }
-    // }
     // let url = 'cloud://roundmatch.726f-roundmatch-1300750420/documents/羽毛球双打轮转小程序使用手册.pdf';
     let url = 'cloud://test-roundmatch.7465-test-roundmatch-1300750420/documents/羽毛球双打轮转小程序使用手册.pdf';
     wx.cloud.downloadFile({
@@ -474,6 +457,8 @@ Page({
         this.onSharedJoin(clubid);
       }
     }
+
+    this.checkCreateClubEnable();
   },
 
   /**
@@ -528,5 +513,8 @@ Page({
 
   onClickDebug: function(e) {
     console.log("onClickDebug");
+    wx.navigateTo({
+      url: './create',
+    })
   },
 })

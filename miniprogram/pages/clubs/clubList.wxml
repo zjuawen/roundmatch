@@ -97,8 +97,9 @@
       wx:if="{{(login)}}"
       class="weui-btn" type="primary" size="mini"
       bindtap="onCreateClub"
+      disabled="{{!createClubEnable}}"
       style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
-      创建自己的俱乐部
+      {{createClubEnable? "创建自己的俱乐部" : "仅可以创建一个俱乐部"}}
 </button>
 
 <button 

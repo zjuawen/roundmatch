@@ -1,1 +1,6 @@
 /* miniprogram/pages/clubs/create.wxss */
+
+.switch-button {
+	position: fixed;
+	right: 20rpx;
+}

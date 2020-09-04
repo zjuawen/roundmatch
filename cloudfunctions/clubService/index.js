@@ -30,12 +30,14 @@ exports.main = async (event, context) => {
     data = {
       private, public
     }
-  }  else if (action == 'create') {
-    data = await createClub(wxContext, event.info);
+  } else if (action == 'create') {
+    data = await createClub(wxContext, event.info, event.userInfo);
   } else if( action == 'statis') {
      data = await statisUserInClub(event.clubid);
   } else if ( action == 'info') {
     data = await getClubInfo(event.clubid);
+  } else if ( action == 'listByOwner') {
+    data = await listOwnClub(wxContext);
   } 
 
   return {
@@ -64,6 +66,20 @@ getClubInfo = async (clubid) => {
         club.password = null;
       }
       return club;
+    });
+}
+
+//查找所有已创建的俱乐部
+listOwnClub = async (wxContext) => {
+  return await db.collection('clubs')
+    .where({
+      creator: wxContext.OPENID,
+      delete: _.neq(true),
+    })
+    .get()
+    .then(async res => {
+      console.log(res);
+      return res.data;
     });
 }
 
@@ -148,7 +164,7 @@ joinClub = async (wxContext, event) => {
       }
 
   		//add user info
-  		return addUserToClubs(clubid, wxContext.OPENID, userInfo);
+  		return addUserToClub(clubid, wxContext.OPENID, userInfo);
   	})
 }
 
@@ -176,7 +192,7 @@ checkPassword = async (clubid, password) => {
     })
 }
 
-addUserToClubs = async (clubid, openid, userInfo) => {
+addUserToClub = async (clubid, openid, userInfo) => {
 	let dt = db.serverDate();
   return await db.collection('players')
   	.add({
@@ -209,7 +225,7 @@ addUserToClubs = async (clubid, openid, userInfo) => {
 }
 
 //创建俱乐部
-createClub = async (wxContext, info) => {
+createClub = async (wxContext, info, userInfo) => {
   let dt = db.serverDate();
   let exist = await db.collection('clubs')
   .where({
@@ -229,7 +245,6 @@ createClub = async (wxContext, info) => {
     }
   }
 
-
   return await db.collection('clubs')
     .add({
       data: {
@@ -247,6 +262,7 @@ createClub = async (wxContext, info) => {
       if (res.errMsg == "collection.add:ok") {
         let clubid = res._id;
         // let dataTableRes = await createClubGameDataTable(clubid, info);
+        await addUserToClub(clubid, wxContext.OPENID, userInfo);
         return {
           _id: res._id,
           creator: wxContext.OPENID,

@@ -7,9 +7,9 @@
 
     <view class="weui-cells__title">名称</view>
     <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell weui-cell_input" >
+      <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
         <input class="weui-input" auto-focus placeholder="请输入俱乐部名称"
-        	bindinput="onWholdNameInput" />
+        	bindinput="onInputWholdName" />
       </view>
     </view>
 
@@ -17,29 +17,42 @@
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
         <input class="weui-input" placeholder="请输入俱乐部缩写"
-        	bindinput="onShortNameInput" />
+        	bindinput="onInputShortName" />
       </view>
     </view>
-<!-- 
-    <view class="weui-cells__title">密码</view>
+
+    <view class="weui-cells__title">是否公开</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" style="height: 100rpx; color: grey" >
+        允许被其他人搜索到
+        <switch class="weui-switch switch-button" type="switch" 
+          bindchange="onSwitchPublic"/>
+      </view>
+    </view>
+
+    <view class="weui-cells__title">密码（可选填）</view>
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
-        <input class="weui-input" password type="text" placeholder="设置密码"/>
+        <input class="weui-input" password type="text" placeholder="设置密码" 
+          bindinput="onInputPassword" />
       </view>
     </view>
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
-        <input class="weui-input" password type="text" placeholder="重复输入密码"/>
+        <input class="weui-input" password type="text" placeholder="重复输入密码"
+          bindinput="onReinputPassword" />
       </view>
     </view>
- -->
+
   </view>
+
 
 </view>
 
 <button 
   class="weui-btn" type="primary" 
-  size="mini"
+  size="normal"
+  loading="{{loading}}"
   style="margin-top: 50rpx" 
   bindtap="onCreateClub">
   完成
