@@ -24,9 +24,9 @@
     </mp-searchbar>
 </view> -->
 
-<View class="container" >
+<View class="page-body" >
 
-  <view wx:if="{{(clubs.length>0)}}" class="weui-cells__title">加入的俱乐部</view>
+  <view wx:if="{{(clubs.length>0)}}" class="weui-cells__title">已加入的俱乐部</view>
   <view 
   	wx:for="{{ clubs }}"
     wx:key="{{ item._id }}"
@@ -42,8 +42,8 @@
           src="../../images/default_club.png" mode="aspectFit">
         </image>
         
-        <text style="flex:5" >{{item.wholeName}}</text>
-        <text style="flex:5; align-content: left" > ({{item.shortName}})</text>
+        <text style="flex:7" >{{item.wholeName}}</text>
+        <text style="flex:3; align-content: left" > ({{item.shortName}})</text>
         <!-- <text style="flex:1" >{{item.createDate}}</text> -->
 
          <!-- <image class='avatar' style="margin: 20rpx; border-radius: 0px;" 
@@ -96,13 +96,7 @@
    -->
   <!-- disabled="{{!createClubEnable}}" -->
   <!--  {{createClubEnable? "创建自己的俱乐部" : "仅可以创建一个俱乐部"}} -->     
-  <button 
-        wx:if="{{(login && createClubEnable)}}"
-        class="weui-btn" type="default" size="default" plain="false"
-        bindtap="onCreateClub"
-        style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
-          创建俱乐部
-  </button>
+
 
 <!--   <button 
         wx:if="{{(debug)}}"
@@ -125,6 +119,14 @@
 
 </View>
 
+  <button 
+        wx:if="{{(createClubEnable)}}"
+        class="weui-btn" type="default" size="default" plain="false"
+        bindtap="onCreateClub"
+        style="margin-Top: 40rpx; margin-bottom: 40rpx; font-size: 36rpx;">
+          创建俱乐部
+  </button>
+
 <!-- 
 <button 
   class="weui-btn" type="primary" 
@@ -137,7 +139,7 @@
 
 
 <mp-dialog title="获取授权" show="{{authDialogShow}}" bindbuttontap="onCancelAuthDialog" buttons="{{[{text: '取消'}]}}">
-  <view style="margin: 40rpx;" >加入俱乐部需要用户昵称，头像等信息</view>
+  <view style="margin: 40rpx;" >{{authonMessage}}</view>
   <button 
     class="weui-btn" type="primary" size="default"
     open-type="getUserInfo" 

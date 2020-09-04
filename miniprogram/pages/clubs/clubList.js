@@ -16,6 +16,7 @@ Page({
     joinDialogShow: false,
     sharejoin: false,
     authDialogShow: false,
+    authDialogShow: '',
     createClubEnable: false,
     // inputShowed: false,
     // inputVal: "",
@@ -60,12 +61,13 @@ Page({
           //     console.log("wx.authorize scope.userInfo");
           //   }
           // })
+          // this.showAuthDialog(true);
           this.setData({
             login: false
           })
           if( this.data.sharejoin){
             wx.hideLoading();
-            this.showAuthDialog(true);
+            this.showAuthDialog(true, "加入俱乐部需要用户昵称，头像等信息");
           }
         }
       }
@@ -326,10 +328,17 @@ Page({
     }
   },
 
-  showAuthDialog: function(show) {
-    this.setData({
-      authDialogShow: show,
-    })
+  showAuthDialog: function(show, msg = '') {
+    if( show ){
+      this.setData({
+        authDialogShow: show,
+      })
+    } else {
+      this.setData({
+        authDialogShow: show,
+        authDialogShow: msg,
+      })
+    }
   },
 
   onSharedJoin: function(clubid) {
@@ -385,10 +394,14 @@ Page({
   
   onCreateClub: function(e) {
     console.log("onCreateClub");
-    var userInfo= encodeURIComponent(JSON.stringify(this.data.userInfo));
-    wx.navigateTo({
-      url: '../clubs/create?userInfo=' + userInfo,
-    })
+    if( this.data.login){
+      var userInfo= encodeURIComponent(JSON.stringify(this.data.userInfo));
+      wx.navigateTo({
+        url: '../clubs/create?userInfo=' + userInfo,
+      })
+    } else {
+      this.showAuthDialog(true, "创建俱乐部需要用户昵称，头像等信息");
+    }
   },
 
   checkCreateClubEnable: function () {

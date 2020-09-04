@@ -10,6 +10,14 @@
       每个用户仅可以创建一个俱乐部，请谨慎填写
     </view>
 
+     <view class="weui-cells__title">创建人</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" style="height: 80rpx;" >
+        <input class="weui-input" auto-focus value="{{creator}}" disabled="true"
+          bindinput="onInputWholdName" />
+      </view>
+    </view>
+
     <view class="weui-cells__title">名称<Span style="color: red;font-size: 20px;vertical-align: middle;padding: 10rpx;">*</Span></view>
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
@@ -29,7 +37,7 @@
     <view class="weui-cells__title">是否公开</view>
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell weui-cell_input" style="height: 100rpx; color: grey" >
-        允许被其他人搜索到
+        <View style="flex:9;">允许被其他人搜索到</View>
         <switch class="weui-switch switch-button" type="switch" 
           bindchange="onSwitchPublic"/>
       </view>
@@ -58,7 +66,7 @@
   class="weui-btn" type="primary" 
   size="normal"
   loading="{{loading}}"
-  style="margin-top: 50rpx" 
+  style="margin-top: 50rpx; margin-bottom: 50rpx;" 
   bindtap="onCreateClub">
   完成
 </button>

@@ -6,6 +6,7 @@ Page({
    */
   data: {
     title: "创建俱乐部",
+    creator: '',
     wholeName: '',
     shortName: '',
     password: '',
@@ -138,8 +139,10 @@ Page({
     console.log(options);
     if( options.userInfo ){
       var userInfoObject = JSON.parse(decodeURIComponent(options.userInfo));
+      console.log(userInfoObject);
       this.setData({
-        userInfo: userInfoObject
+        userInfo: userInfoObject,
+        creator: userInfoObject.nickName,
       })
     }
   },
