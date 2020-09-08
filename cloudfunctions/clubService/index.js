@@ -1,7 +1,7 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-var debug = false;
+var debug = true;
 
 const env = debug ? 'test-roundmatch' : "roundmatch";
 cloud.init({
@@ -40,6 +40,8 @@ exports.main = async (event, context) => {
     data = await getClubInfo(event.clubid);
   } else if ( action == 'listByOwner') {
     data = await listOwnClub(wxContext);
+  } else if ( action == 'search') {
+    data = await searchClub(event.keyword);
   } 
 
   return {
@@ -48,6 +50,42 @@ exports.main = async (event, context) => {
     appid: wxContext.APPID,
     unionid: wxContext.UNIONID,
   }
+}
+
+//查找包含关键字的俱乐部
+searchClub = async (keyword) => {
+  let regex = '.*' + keyword;
+  return await db.collection('clubs')
+    .aggregate()
+    .project({
+      wholeName: true,
+      shortName: true,
+      public: true,
+      length: $.strLenBytes( '$password'),
+      full: $.concat(['$shortName', ' ', '$wholeName'])
+    })
+    .project({
+      wholeName: true,
+      shortName: true,
+      public: true,
+      locked: $.gt(['$length', 0]),
+      full: true,
+    })
+    .match({
+      full: {
+        $regex: regex
+      },
+      public: _.neq(false),
+    })
+    .project({
+      public:false,
+      full: false,
+    })
+    .end()
+    .then(async res => {
+      console.log(res);
+      return res.list;
+    });
 }
 
 //读取俱乐部信息

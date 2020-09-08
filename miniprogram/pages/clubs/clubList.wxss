@@ -1,48 +1,42 @@
 /* miniprogram/pages/clubs/clubList.wxss */
 
-.avatar {   
-	height: 40px;    
-	width: 40px;    
-	border-radius: 50%;
-	margin: 10rpx;
-	box-shadow: 1px 1px 3px #CCCCCC;
+.avatar {
+    height: 40px;
+    width: 40px;
+    border-radius: 50%;
+    margin: 10rpx;
+    box-shadow: 1px 1px 3px #CCCCCC;
 }
-
-.avatar-small {   
-	height: 30px;    
-	width: 30px;    
-	border-radius: 50%;
-	margin: 10rpx;
-	box-shadow: 1px 1px 3px #CCCCCC;
+.avatar-small {
+    height: 30px;
+    width: 30px;
+    border-radius: 50%;
+    margin: 10rpx;
+    box-shadow: 1px 1px 3px #CCCCCC;
 }
-
-.club-status {   
-	height: 40rpx;    
-	width: 40rpx;    
-	margin: 10rpx;
+.club-status {
+    height: 40rpx;
+    width: 40rpx;
+    margin: 10rpx;
 }
-
-
 .password-input {
-	background-color: lightgrey;
-	margin-top: 20rpx;
-	height: 60rpx;
-	width: 300rpx;
+    background-color: lightgrey;
+    margin-top: 20rpx;
+    height: 60rpx;
+    width: 300rpx;
 }
-
 .dialog-content-container {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
-
 .hyperlink-text {
-	display: flex;
-	width: 100%;
-	align-items: center;
-	justify-content: center;
-	color: rgb(0, 90, 155);
-	font-size: 14px;
-	margin-left: 60rpx;
-	text-underline-position: 2rpx;
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: center;
+    color: rgb(0, 90, 155);
+    font-size: 14px;
+    margin-left: 60rpx;
+    text-underline-position: 2rpx;
 }

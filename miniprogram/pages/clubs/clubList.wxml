@@ -2,27 +2,21 @@
 
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" title="{{title}}" background="{{'white'}}" back="{{false}}" ></mp-navigation-bar>
 
-<!--  
+<van-notice-bar
+  scrollable="{{ true }}"
+  text="{{notice}}"
+  mode="closeable"
+  speed="{{10}}"
+  left-icon="volume-o"
+/>
 
-<view class="list">
-  <button 
-    open-type="getUserInfo" 
-    bindgetuserinfo="onGetUserInfo"
-    class="userinfo-avatar"
-    style="background-image: url({{avatarUrl}})"
-    size="default"
-  /> 
-</view> -->
-
-<!-- 
 <view class="page__bd">
   <mp-searchbar 
     bindselectresult="selectResult" 
-    search="{{search}}" 
-    bindinput="searchInput"
+    search="{{search}}"
     placeholder="{{'搜索俱乐部'}}" >
     </mp-searchbar>
-</view> -->
+</view>
 
 <View class="page-body" >
 
@@ -98,15 +92,15 @@
   <!--  {{createClubEnable? "创建自己的俱乐部" : "仅可以创建一个俱乐部"}} -->     
 
 
-<!--   <button 
+  <button 
         wx:if="{{(debug)}}"
         class="weui-btn" type="primary" 
         bindtap="onClickDebug"
         style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
         测试
-  </button> -->
+  </button>
 
-  <view 
+ <!--  <view 
     style="position: fixed;bottom: 0;margin: 10px; right: 25px;" >
     
     <view 
@@ -116,7 +110,7 @@
       </view>
 
   </view>
-
+ -->
 </View>
 
   <button 
