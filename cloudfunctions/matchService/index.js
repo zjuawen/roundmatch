@@ -1,7 +1,7 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-var debug = true;
+var debug = false;
 
 const env = debug ? 'test-roundmatch' : "roundmatch";
 cloud.init({

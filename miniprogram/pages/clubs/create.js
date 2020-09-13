@@ -1,4 +1,6 @@
 // miniprogram/pages/clubs/create.js
+var APIs = require('../common/apis.js');
+
 Page({
 
   /**
@@ -6,12 +8,15 @@ Page({
    */
   data: {
     title: "创建俱乐部",
+    mode: 'view', //'create', 'join'
+    btnText: '确定',  // '创建', '加入'
     creator: '',
     wholeName: '',
     shortName: '',
     password: '',
     password2: '',
     public: false,
+    publicInfo: '允许被其他人搜索到',
     loading: false,
   },
 
@@ -81,8 +86,10 @@ Page({
   onSwitchPublic: function(e) {
     console.log(e);
     let value = e.detail.value;
+    let publicInfo = value? '允许被其他人搜索到':'不允许被其他人搜索到';
     this.setData({
-      public: value
+      public: value,
+      publicInfo: publicInfo,
     })
   },
 
@@ -118,7 +125,7 @@ Page({
           this.loading(false);
         } else {
           
-          wx.navigateTo({
+          wx.redirectTo({
             url: '../clubs/clubList',
           })
           // wx.showToast({
@@ -137,12 +144,25 @@ Page({
    */
   onLoad: function (options) {
     console.log(options);
-    if( options.userInfo ){
+    if( options.action == 'create'){
       var userInfoObject = JSON.parse(decodeURIComponent(options.userInfo));
       console.log(userInfoObject);
       this.setData({
         userInfo: userInfoObject,
         creator: userInfoObject.nickName,
+        btnText: '创建',
+      })
+    } else if( options.action == 'view'){
+      this.setData({
+        btnText: '确定',
+      })
+    } else if( options.action == 'join'){
+      this.setData({
+        btnText: '加入',
+        clubid: options.clubid,
+      })
+      APIs.getClubInfo( options.clubid, this, res => {
+        console.log(res);
       })
     }
   },

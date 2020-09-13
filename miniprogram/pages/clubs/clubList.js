@@ -1,5 +1,8 @@
 // miniprogram/pages/clubs/clubList.js
 // var app = getApp();
+
+var APIs = require('../common/apis.js');
+
 Page({
     /**
      * 页面的初始数据
@@ -76,126 +79,31 @@ Page({
     },
     //更新用户信息
     updateUserInfo: function(userInfo) {
-        this.loading(true);
-        let func = 'userService';
-        let action = 'update';
-        console.log(func + " " + action);
-        wx.cloud.callFunction({
-            name: func,
-            data: {
-                action: action,
-                userInfo: userInfo,
-            },
-            success: res => {
-                console.log('[云函数] ' + func + ' return: ', res.result.data);
-                this.loading(false);
-            },
-            fail: err => {
-                console.error('[云函数] ' + func + ' 调用失败', err)
-                wx.navigateTo({
-                    url: '../error/deployFunctions',
-                })
-            }
-        })
+        APIs.updateUserInfo(userInfo, this);
     },
+
     getOpenid: async function() {
-        this.loading(true);
-        let func = 'userService';
-        let action = 'login';
-        console.log(func + " " + action);
-        wx.cloud.callFunction({
-            name: func,
-            data: {
-                action: action
-            },
-            success: res => {
-                console.log('[云函数] ' + func + ' return: ', res.result.data);
-                let data = res.result.data;
-                this.setData({
-                    openid: data.openid
-                });
-                this.loadClubs();
-            },
-            fail: err => {
-                console.error('[云函数] ' + func + ' 调用失败', err)
-                wx.navigateTo({
-                    url: '../error/deployFunctions',
-                })
-            }
+        let that = this; 
+        APIs.getOpenid(this, res => {
+            that.setData({
+                openid: res.openid
+            });
+            that.loadClubs();
         })
     },
     loadClubs: function() {
-        this.loading(true);
-        let func = 'clubService';
-        let action = 'list';
-        console.log(func + " " + action);
-        wx.cloud.callFunction({
-            name: func,
-            data: {
-                action: action
-            },
-            success: res => {
-                console.log('[云函数] ' + func + ' return: ', res.result.data);
-                let data = res.result.data;
-                this.setData({
-                    clubs: data.private,
-                    publicClubs: [], //data.public
-                })
-                this.reducePublicClubs();
-                this.loading(false);
-            },
-            fail: err => {
-                console.error('[云函数] ' + func + ' 调用失败', err)
-                wx.navigateTo({
-                    url: '../error/deployFunctions',
-                })
-            }
+        let that = this;
+        APIs.loadClubs( this, res => {
+            that.setData({
+                clubs: res.private,
+                publicClubs: [], //data.public
+            })
         })
-    },
-    search: function(value) {
-        console.log("searching: " + value);
-        if (value != "demo") {
-            return;
-        }
-        return new Promise((resolve, reject) => {
-            setTimeout(() => {
-                resolve([{
-                    text: 'DEMO俱乐部',
-                    value: 1
-                }])
-            }, 200)
-        })
-    },
-    selectResult: function(e) {
-        console.log('select result', e.detail);
-        // this.loading(true);
-        // let func = 'clubService';
-        // let action = 'join';
-        // console.log(func + " " + action);
-        // wx.cloud.callFunction({
-        //   name: func,
-        //   data: {
-        //     action: action
-        //   },
-        //   success: res => {
-        //     console.log('[云函数] ' + func + ' return: ', res.result.data);
-        //     let data = res.result.data;
-        //     this.setData({
-        //       clubs: data
-        //     })
-        //     this.loading(false);
-        //   },
-        //   fail: err => {
-        //     console.error('[云函数] ' + func + ' 调用失败', err)
-        //     wx.navigateTo({
-        //       url: '../error/deployFunctions',
-        //     })
-        //   }
     },
     onNewClub: function() {
         // this.onGetOpenid();
         wx.navigateTo({
-            url: './create',
+            url: './detail?action=create',
         })
     },
     onClickPublicClub: function(e) {
@@ -230,21 +138,9 @@ Page({
         })
     },
     joinClub: function(clubid) {
-        let func = 'clubService';
-        let action = 'join';
-        console.log(func + " " + action);
-        wx.cloud.callFunction({
-            name: func,
-            data: {
-                action: action,
-                clubid: clubid,
-                userInfo: this.data.userInfo,
-                password: this.data.password
-            },
-            success: res => {
-                this.loading(false);
-                console.log('[云函数] ' + func + ' return: ', res.result.data);
-                let data = res.result.data;
+        let that = this;
+        APIs.joinClub( clubid, this.data.userInfo, this.data.password,
+            this, res => {
                 if (data.status == 'fail') {
                     wx.showToast({
                         title: data.errMsg,
@@ -254,39 +150,16 @@ Page({
                     wx.showToast({
                         icon: 'success'
                     });
-                    this.data.clubs.push(this.data.selected);
-                    this.reducePublicClubs();
-                    this.setData({
-                        clubs: this.data.clubs
+                    that.data.clubs.push(that.data.selected);
+                    that.setData({
+                        clubs: that.data.clubs
                     });
                 }
-                this.setData({
+                that.setData({
                     joinDialogShow: false
                 });
-            },
-            fail: err => {
-                console.error('[云函数] ' + func + ' 调用失败', err)
-                wx.navigateTo({
-                    url: '../error/deployFunctions',
-                })
             }
-        })
-    },
-    reducePublicClubs: function() {
-        let publicClubs = this.data.publicClubs;
-        let privateClubs = this.data.clubs;
-        publicClubs = publicClubs.filter(function(publicClub) {
-            let keep = true;
-            privateClubs.forEach(function(privateClub) {
-                if (publicClub._id == privateClub._id) {
-                    keep = false;
-                }
-            });
-            return keep;
-        });
-        this.setData({
-            publicClubs: publicClubs
-        })
+        );
     },
     onGetUserInfo: function(e) {
         console.log(e);
@@ -322,111 +195,45 @@ Page({
             title: '获取俱乐部信息',
             mask: true
         })
-        this.loading(true);
-        let func = 'clubService';
-        let action = 'info';
-        console.log(func + " " + action);
-        wx.cloud.callFunction({
-            name: func,
-            data: {
-                action: action,
-                clubid: clubid,
-            },
-            success: res => {
-                console.log('[云函数] ' + func + ' return: ', res.result.data);
-                this.loading(false);
-                wx.hideLoading();
-                let data = res.result.data;
-                let e = {
-                    currentTarget: {
-                        dataset: {
-                            item: data
-                        }
+        APIs.getClubInfo( clubid, this, res => {
+            wx.hideLoading();
+            let data = res.result.data;
+            let e = {
+                currentTarget: {
+                    dataset: {
+                        item: data
                     }
-                };
-                if (data != null) {
-                    this.onClickPublicClub(e);
-                } else {
-                    wx.showToast({
-                        title: '错误：俱乐部信息不存在'
-                    })
                 }
-            },
-            fail: err => {
-                console.error('[云函数] ' + func + ' 调用失败', err)
-                wx.hideLoading();
-                wx.navigateTo({
-                    url: '../error/deployFunctions',
+            };
+            if (data != null) {
+                this.onClickPublicClub(e);
+            } else {
+                wx.showToast({
+                    title: '错误：俱乐部信息不存在'
                 })
             }
-        });
+        })
     },
     onCreateClub: function(e) {
         console.log("onCreateClub");
         if (this.data.login) {
             var userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
             wx.navigateTo({
-                url: '../clubs/create?userInfo=' + userInfo,
+                url: '../clubs/create?action=create&userInfo=' + userInfo,
             })
         } else {
             this.showAuthDialog(true, "创建俱乐部需要用户昵称，头像等信息");
         }
     },
     checkCreateClubEnable: function() {
-        let func = 'clubService';
-        let action = 'listByOwner';
-        console.log(func + " " + action);
         let that = this;
-        wx.cloud.callFunction({
-            name: func,
-            data: {
-                action: action,
-            },
-            success: res => {
-                this.loading(false);
-                let data = res.result.data;
-                console.log('[云函数] ' + func + ' return: ', res.result.data);
-                // if( data.list.size){
-                //    wx.showToast({
-                //     icon: "none",
-                //     title: data.errMsg,
-                //     duration: 1000
-                //   })
-                // }
-                that.setData({
-                    createClubEnable: (data == null) || (data.length <= 0),
-                })
-            }
-        });
-    },
-    searchClubs: function(keyword) {
-        let func = 'clubService';
-        let action = 'search';
-        console.log(func + " " + action);
-        let that = this;
-        return  wx.cloud.callFunction({
-            name: func,
-            data: {
-                action: action,
-                keyword: keyword,
-            },
-        }).then( res =>  {
-            // success: res  =>  {
-                this.loading(false);
-                let data = res.result.data;
-                console.log('[云函数] ' + func + ' return: ', res.result.data);
-                let clubs = [];
-                data.forEach((club) => {
-                    clubs.push({
-                        text: club.wholeName + '(' + club.shortName + ')',
-                        value: club._id,
-                    })
-                })
-                console.log(clubs);
-                return clubs;
-                // resolve(clubs);
-            // }
-        });
+        APIs.checkCreateClubEnable( this, res => {
+            let data = res;
+            that.setData({
+                createClubEnable: (data == null) || (data.length <= 0),
+                // createClubEnable: true,
+            })
+        })
     },
     onClickDownloadManual: function(e) {
         // let url = 'cloud://roundmatch.726f-roundmatch-1300750420/documents/羽毛球双打轮转小程序使用手册.pdf';
@@ -456,17 +263,34 @@ Page({
         }
         this.loading(true);
         return this.searchClubs(value);
-        // return this.searchClubs(value);
-        // return new Promise((resolve, reject) => {
-        //     // setTimeout(() => {
-        //     //     resolve([{text: '搜索结果', value: 1}, {text: '搜索结果2', value: 2}])
-        //     // }, 200)
-        // })
+    },
+    searchClubs: function(keyword) {
+        return APIs.searchClubs( keyword, this)
+            .then (res => {
+                let data = res.result.data;
+                let clubs = [];
+                data.forEach((club) => {
+                    clubs.push({
+                        text: club.wholeName + '(' + club.shortName + ')',
+                        value: club._id,
+                    })
+                })
+                console.log(clubs);
+                return clubs;
+            })
     },
     selectResult: function (e) {
         console.log('select result', e.detail);
         let clubid = e.detail.item.value;
-        this.onJoinClub(clubid);
+        var param = 'clubid=' + clubid;
+        if (this.data.login) {
+            var userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
+            param = param + '&userInfo=' + userInfo;
+        }
+        wx.navigateTo({
+            url: './detail?action=join&' + param
+        })
+        // this.onJoinClub(clubid);
     },
     /**
      * 生命周期函数--监听页面加载

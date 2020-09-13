@@ -14,6 +14,7 @@ Page({
     //debug
     wx.redirectTo({
       url: '../clubs/clubList',
+      // url: '../clubs/detail?action=join&clubid=65825b355f572ddb00fbbfd04737e52b',
       // url: '../clubs/create',
       // url: '../players/playerList?clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0',
       // url: '../matches/matchList?clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv',
@@ -71,7 +72,7 @@ Page({
       success: res => {
         console.log('[云函数] [login] user openid: ', res.result.openid)
         app.globalData.openid = res.result.openid
-        wx.navigateTo({
+        wx.redirectTo({
           // url: '../matchList/matchList',
           // url: '../players/playerList',
           // url: '../clubs/create',

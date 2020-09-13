@@ -1,7 +1,7 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-var debug = true;
+var debug = false;
 
 const env = debug ? 'test-roundmatch' : "roundmatch";
 cloud.init({
@@ -42,7 +42,11 @@ exports.main = async (event, context) => {
   } else if( action == 'readconfig') {
     let key = event.key;
     data = await readUserConfig(wxContext.OPENID, key);
+  // } else if( action == 'info') {
+  //   let key = event.key;
+  //   data = await readPlayerInfo(event.openid);
   }
+
 
   return {
     data,
@@ -138,6 +142,25 @@ updateUserInfo = async (openid, userInfo) => {
 //读取用户配置
 readUserConfig = async (openid, key) => {
   let doc = await db.collection('userconfig')
+    .where({
+      openid: openid,
+      key: key,
+    })
+    .get()
+    .then(res => {
+      return res.data
+    })
+
+  if( doc != null && doc.length > 0) {
+    return doc[0].value;
+  } 
+  return null;
+}
+
+
+//读取指定用户信息
+readPlayerInfo = async (openid) => {
+  let doc = await db.collection('players')
     .where({
       openid: openid,
       key: key,

@@ -1,7 +1,7 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-var debug = true;
+var debug = false;
 
 const env = debug ? 'test-roundmatch' : "roundmatch";
 cloud.init({
@@ -93,7 +93,7 @@ getClubInfo = async (clubid) => {
   return await db.collection('clubs')
     .doc(clubid)
     .get()
-    .then(res => {
+    .then( async res => {
       console.log(res);
       let club = res.data;
       if( club != null){
@@ -104,7 +104,23 @@ getClubInfo = async (clubid) => {
           club.locked = false;
         }
         club.password = null;
+        club.delete = null;
       }
+      if( club.creator && club.creator.length > 0){
+        let userinfo = await db.collection('players')
+          .where({
+            openid: club.creator,
+            clubid: clubid
+          })
+          .limit(1)
+          .get()
+          .then( async res => {
+            if( res.data && res.data.length > 0)
+            return res.data[0];
+          });
+        club.creatorInfo = userinfo;
+      }
+    
       return club;
     });
 }

@@ -37,10 +37,13 @@
     <view class="weui-cells__title">是否公开</view>
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell weui-cell_input" style="height: 100rpx; color: grey" >
-        <View style="flex:9;">允许被其他人搜索到</View>
+        <View style="flex:9;">{{publicInfo}}</View>
         <switch class="weui-switch switch-button" type="switch" 
           bindchange="onSwitchPublic"/>
       </view>
+    </view>
+    <view class="weui-cells__title" style="margin-top: 5rpx;color: orange;" >
+      注意：非公开的俱乐部不会在搜索结果中出现，只可以通过其他成员分享邀请方式加入。
     </view>
 
     <view class="weui-cells__title">密码（可选填）</view>
@@ -59,14 +62,14 @@
 
   </view>
 
+  <button 
+    class="weui-btn" type="primary" 
+    size="normal"
+    loading="{{loading}}"
+    style="margin-top: 50rpx; margin-bottom: 50rpx;" 
+    bindtap="onCreateClub">
+    {{btnText}}
+  </button>
 
 </view>
 
-<button 
-  class="weui-btn" type="primary" 
-  size="normal"
-  loading="{{loading}}"
-  style="margin-top: 50rpx; margin-bottom: 50rpx;" 
-  bindtap="onCreateClub">
-  完成
-</button>

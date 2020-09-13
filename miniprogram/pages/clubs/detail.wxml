@@ -1,0 +1,80 @@
+<!--miniprogram/pages/clubs/detail.wxml-->
+<mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
+
+<view class="page-body">
+
+  <view class="page-section">
+
+    <view class="weui-cells__title">创建人</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" style="height: 80rpx;" >
+        <input class="weui-input" auto-focus value="{{creatorName}}" disabled="true"
+          bindinput="onInputWholdName" />
+      </view>
+    </view>
+
+    <view class="weui-cells__title">名称</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
+        <input class="weui-input" disabled="true"
+        	value="{{(wholeName)}}" bindinput="onInputWholdName" />
+      </view>
+    </view>
+
+    <view class="weui-cells__title">缩写</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
+        <input class="weui-input" disabled="true"
+        	value="{{(shortName)}}" bindinput="onInputShortName" />
+      </view>
+    </view>
+
+    <view class="weui-cells__title">是否公开</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" style="height: 100rpx; color: grey" >
+        <View style="flex:9;">允许被其他人搜索到</View>
+        <switch class="weui-switch switch-button" type="switch" 
+          checked="{{(public)}}" disabled="true" />
+      </view>
+    </view>
+
+    <view class="weui-cells__title">是否设置密码</view>
+    <view class="weui-cells weui-cells_after-title">
+      <view class="weui-cell weui-cell_input" style="height: 100rpx; color: grey" >
+        <View style="flex:9;">加入俱乐部需要输入密码</View>
+        <switch class="weui-switch switch-button" type="switch" 
+          checked="{{(locked)}}" disabled="true"/>
+      </view>
+    </view>
+
+<!--     <view class="weui-cells__title">俱乐部介绍</view>
+    <view class="weui-cells weui-cells_after-title">
+        <textarea disabled="true" value="{{(description)}}" />
+    </view> -->
+
+  </view>
+
+  <button 
+    class="weui-btn" type="primary" 
+    size="normal"
+    loading="{{loading}}"
+    style="margin-top: 50rpx; margin-bottom: 50rpx;" 
+    bindtap="btnActionFunc">
+    {{btnText}}
+  </button>
+
+</view>
+
+
+<mp-dialog title="加入俱乐部" show="{{joinDialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
+  <block wx:if="{{!locked}}">
+    <view>确定要加入"{{wholeName}}"?</view>
+  </block>
+  <block wx:else >
+    <view class="dialog-content-container">
+      <view>请输入"{{wholeName}}"密码：</view>
+      <input class="password-input" type="password" 
+        bindinput="onInputPassword" bindchange="onInputPassword"></input>
+    </view>
+  </block>
+</mp-dialog>

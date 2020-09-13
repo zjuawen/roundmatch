@@ -1,0 +1,22 @@
+/* miniprogram/pages/clubs/detail.wxss */
+
+.switch-button {
+	position: relative;
+	right: 20rpx;
+}
+.password-input {
+    background-color: lightgrey;
+    margin-top: 20rpx;
+    height: 60rpx;
+    width: 300rpx;
+}
+.dialog-content-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+/*
+.title-mandatory {
+	color: red;
+	font-size: 40rpx;
+}*/
