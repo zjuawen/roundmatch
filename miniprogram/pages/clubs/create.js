@@ -16,7 +16,7 @@ Page({
     password: '',
     password2: '',
     public: false,
-    publicInfo: '允许被其他人搜索到',
+    publicInfo: '不允许被其他人搜索到',
     loading: false,
   },
 
