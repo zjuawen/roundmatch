@@ -58,14 +58,6 @@ Page({
                     })
                 } else {
                     console.log("Unauthrorized: authSetting['scope.userInfo'] null");
-                    // console.log("wx.authorize scope.userInfo");
-                    // wx.authorize({
-                    //   scope: 'scope.userInfo',
-                    //   success () {
-                    //     console.log("wx.authorize scope.userInfo");
-                    //   }
-                    // })
-                    // this.showAuthDialog(true);
                     this.setData({
                         login: false
                     })

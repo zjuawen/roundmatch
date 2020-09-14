@@ -95,49 +95,28 @@ Page({
 
   //创建俱乐部
   createClub: function(){
-    let func = 'clubService';
-    let action = 'create';
-    console.log(func + " " + action);
+    let clubInfo = {
+      wholeName: this.data.wholeName,
+      shortName: this.data.shortName,
+      public: this.data.public,
+      password: this.data.password,
+    }
+    let userInfo = this.data.userInfo;
 
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        info: {
-          wholeName: this.data.wholeName,
-          shortName: this.data.shortName,
-          public: this.data.public,
-          password: this.data.password,
-        },
-        userInfo: this.data.userInfo,
-      },
-      success: res => {
-        this.loading(false);
-        let data = res.result.data;
-        console.log('[云函数] ' + func + ' return: ', res.result.data);
+    APIs.createClub(clubInfo, userInfo, this, res => {
         if( data.errCode == 1){
           wx.showToast({
             icon: "none",
             title: data.errMsg,
             duration: 1000
           })
-          
-          this.loading(false);
         } else {
-          
           wx.redirectTo({
             url: '../clubs/clubList',
           })
-          // wx.showToast({
-          //   icon: "success",
-          //   title: '创建成功',
-          //   duration: 1000
-          // })
         }
-      }
     });
   },
-
 
   /**
    * 生命周期函数--监听页面加载
