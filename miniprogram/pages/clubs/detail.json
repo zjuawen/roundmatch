@@ -1,7 +1,8 @@
 {
   "usingComponents": {
   	"mp-navigation-bar": "../../weui-miniprogram/navigation-bar/navigation-bar",
-    "mp-dialog": "../../weui-miniprogram/dialog/dialog"
+    "mp-dialog": "../../weui-miniprogram/dialog/dialog",
+    "van-uploader": "../../vant-weapp/dist/uploader"
   },
   "navigationStyle": "custom",
   "navigationBarTitleText": "俱乐部详情"

@@ -114,10 +114,16 @@ Page({
     }
     APIs.getClubInfo( options.clubid, this, res => {
       console.log(res);
+      var logoList = [{path: '../../../images/default-club-logo.svg'}];
+      if( res.logo && res.logo.length > 0){
+        logoList = [{ path: res.logo }];
+      }
+      console.log(logoList)
       this.setData({
         wholeName: res.wholeName,
         shortName: res.shortName,
-        logo: res.logo,
+        // logo: res.logo,
+        fileList: logoList,
         public: res.public,
         locked: res.locked,
       })
