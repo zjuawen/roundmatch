@@ -113,6 +113,13 @@ function createClub(clubInfo, userInfo, that, callback){
     });
 }
 
+function updateClub(clubInfo, userInfo, that, callback){
+    commonCallFuction(that, callback, 'clubService', 'update', { 
+        info:  clubInfo,
+        userInfo: userInfo,
+    });
+}
+
 //exports
 module.exports = {
   getClubInfo:      getClubInfo,
@@ -122,6 +129,7 @@ module.exports = {
   loadClubs:        loadClubs,
   searchClubs:      searchClubs,
   createClub:       createClub,
+  updateClub:       updateClub,
   checkCreateClubEnable: checkCreateClubEnable,
 }
 

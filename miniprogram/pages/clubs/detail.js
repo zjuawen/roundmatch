@@ -13,6 +13,7 @@ Page({
     creatorName: '匿名',
     wholeName: '',
     shortName: '',
+    logo: '',
     public: false,
     locked: false,
     password: '',
@@ -35,7 +36,12 @@ Page({
   },
 
   btnActionFunc : function(){
-    this.onJoinClub();
+    let action = this.data.action;
+    if( action == 'join'){
+      this.onJoinClub();
+    } else {
+      wx.navigateBack();
+    }
   },
 
   onJoinClub: function() {
@@ -89,10 +95,13 @@ Page({
     console.log(options);
     if( options.action == 'view'){
       this.setData({
-        btnText: '确定',
+        action: options.action,
+        btnText: '返回',
+        clubid: options.clubid
       })
     } else if( options.action == 'join'){
       this.setData({
+        action: options.action,
         btnText: '加入',
         clubid: options.clubid
       })
@@ -102,21 +111,22 @@ Page({
           userInfo: userInfoObject
         })
       }
-      APIs.getClubInfo( options.clubid, this, res => {
-        console.log(res);
-        this.setData({
-          wholeName: res.wholeName,
-          shortName: res.shortName,
-          public: res.public,
-          locked: res.locked,
-        })
-        if( res.creatorInfo){
-          this.setData({
-            creatorName: res.creatorInfo.name,
-          })
-        } 
-      })
     }
+    APIs.getClubInfo( options.clubid, this, res => {
+      console.log(res);
+      this.setData({
+        wholeName: res.wholeName,
+        shortName: res.shortName,
+        logo: res.logo,
+        public: res.public,
+        locked: res.locked,
+      })
+      if( res.creatorInfo){
+        this.setData({
+          creatorName: res.creatorInfo.name,
+        })
+      } 
+    })
   },
 
   /**

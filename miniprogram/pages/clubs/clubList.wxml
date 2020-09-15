@@ -28,11 +28,13 @@
     style="padding: 0rpx; margin-top: 0px; margin-bottom: 0rpx;"  >
 
     <van-swipe-cell 
-      right-width="{{ 60 }}" 
+      left-width="{{ 60 }}" 
+      right-width="{{ item.owner? 60:0 }}" 
       bind:click="onClickClubCell"
       data-clubid="{{item._id}}"
       style="width: 100%" >
 
+      <view slot="left" class="swipe-cell-left">详情</view>
   	<!-- <navigator url="../matches/matchList?clubid={{item._id}}" 
       open-type="navigate" class="uploader-text"> -->
 
@@ -47,17 +49,18 @@
         </image>
         
         <text style="flex:7; margin: 20rpx;" >{{item.wholeName}}</text>
-        <text style="flex:3; align-content: left" >[{{" " + item.shortName + " "}}]</text>
+        <text style="flex:3; align-content: left; margin-right: {{item.owner?'20rpx':'80rpx'}};" >[{{" " + item.shortName + " "}}]</text>
 
-<!--         <image wx:if="{{true}}" class='owner' 
+        <image wx:if="{{item.owner}}" class='owner' 
           src="{{ '../../images/owner.svg'}}" mode="aspectFit">
         </image>
- -->
+
       </view>
 
   	<!-- </navigator> -->
 
-      <view slot="right" class="swipe-cell-right">修改</view>
+      <view wx:if="{{item.owner}}" slot="right" class="swipe-cell-right">修改</view>
+
     </van-swipe-cell>
 
   </view>

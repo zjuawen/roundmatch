@@ -16,8 +16,7 @@
         <view class="weui-cells__title">创建人</view>
         <view class="weui-cells weui-cells_after-title">
           <view class="weui-cell weui-cell_input" style="height: 80rpx;" >
-            <input class="weui-input" auto-focus value="{{creator}}" disabled="true"
-              bindinput="onInputWholdName" />
+            <input class="weui-input" value="{{creator}}" disabled="true"/>
           </view>
         </view>
       </View>
@@ -43,7 +42,7 @@
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
         <input class="weui-input" auto-focus placeholder="请输入俱乐部名称"
-        	bindinput="onInputWholdName" />
+        	bindinput="onInputWholdName" value="{{wholeName}}"/>
       </view>
     </view>
 
@@ -51,7 +50,7 @@
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
         <input class="weui-input" placeholder="请输入俱乐部缩写"
-        	bindinput="onInputShortName" />
+        	bindinput="onInputShortName" value="{{shortName}}"/>
       </view>
     </view>
 
@@ -60,7 +59,7 @@
       <view class="weui-cell weui-cell_input" style="height: 100rpx; color: grey" >
         <View style="flex:9;">{{publicInfo}}</View>
         <switch class="weui-switch switch-button" type="switch" 
-          bindchange="onSwitchPublic"/>
+          bindchange="onSwitchPublic" value="{{public}}"/>
       </view>
     </view>
     <view class="weui-cells__title" style="margin-top: 5rpx;color: orange;" >
@@ -88,7 +87,7 @@
     size="normal"
     loading="{{loading}}"
     style="margin-top: 50rpx; margin-bottom: 50rpx;" 
-    bindtap="onCreateClub">
+    bindtap="onOkButton">
     {{btnText}}
   </button>
 

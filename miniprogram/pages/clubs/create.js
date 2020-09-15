@@ -9,7 +9,7 @@ Page({
    */
   data: {
     title: "创建俱乐部",
-    mode: 'view', //'create', 'join'
+    action: 'view', //'create', 'join'
     btnText: '确定',  // '创建', '加入'
     creator: '',
     wholeName: '',
@@ -29,9 +29,7 @@ Page({
     });
   },
 
-  onCreateClub: function() {
-    this.loading(true);
-
+  onOkButton: function(){
     let errMsg = null;
     if( this.data.wholeName.length == 0){
       errMsg = '请填写俱乐部名称';
@@ -47,11 +45,16 @@ Page({
         title: errMsg,
         duration: 1000
       })
-      this.loading(false);
-    } else {
+      return;
+    } 
+
+    let action = this.data.action;
+
+    if( action == 'create'){
       this.createClub();
+    } else if( action == 'edit'){
+      this.updateClub();
     }
-    
   },
 
   onInputWholdName: function(e) {
@@ -123,6 +126,34 @@ Page({
     });
   },
 
+  //修改俱乐部信息
+  updateClub: function(){
+    let clubInfo = {
+      clubid: this.data.clubid,
+      wholeName: this.data.wholeName,
+      shortName: this.data.shortName,
+      logo: this.data.logo,
+      public: this.data.public,
+      password: this.data.password,
+    }
+    let userInfo = this.data.userInfo;
+
+    APIs.updateClub(clubInfo, userInfo, this, res => {
+      let data = res;
+        if( data.errCode == 1){
+          wx.showToast({
+            icon: "none",
+            title: data.errMsg,
+            duration: 1000
+          })
+        } else {
+          wx.redirectTo({
+            url: '../clubs/clubList',
+          })
+        }
+    });
+  },
+
   beforeRead: function(event) {
     console.log(event)
   },
@@ -136,7 +167,7 @@ Page({
     const { file, callback } = event.detail;
     let fileObject = { path: file.path, status: 'uploading', message: '上传中' };
     this.setData({ fileList: [ fileObject ] });
-    this.uploadToCloud();
+    this.uploadImageToCloud();
   },
 
   deleteLogo: function(){
@@ -146,7 +177,7 @@ Page({
     });
   },
 
-  uploadToCloud: function(){
+  uploadImageToCloud: function(){
     // 上传图片
     let filePath = this.data.fileList[0].path;
 
@@ -172,59 +203,44 @@ Page({
     });
   },
 
-  // 上传图片
-  // uploadToCloud: function(){
-  //   wx.cloud.init();
-  //   // const fileList = this.data.logo;
-  //   const { fileList } = this.data;
-  //   if (!fileList.length) {
-  //     wx.showToast({ title: '请选择图片', icon: 'none' });
-  //   } else {
-  //     const uploadTasks = fileList.map((file, index) => this.uploadFilePromise(`my-photo${index}.png`, file));
-  //     Promise.all(uploadTasks)
-  //       .then(data => {
-  //         wx.showToast({ title: '上传成功', icon: 'none' });
-  //         const newFileList = data.map(item => { url: item.fileID });
-  //         this.setData({ cloudPath: data, fileList: newFileList });
-  //       })
-  //       .catch(e => {
-  //         wx.showToast({ title: '上传失败', icon: 'none' });
-  //         console.log(e);
-  //       });
-  //   }
-  // },
-
-  // uploadFilePromise: function(fileName, chooseResult) {
-  //   return wx.cloud.uploadFile({
-  //     cloudPath: fileName,
-  //     filePath: chooseResult.path
-  //   });
-  // },
-
   /**
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
     console.log(options);
+    var userInfoObject = JSON.parse(decodeURIComponent(options.userInfo));
+    console.log(userInfoObject);
     if( options.action == 'create'){
-      var userInfoObject = JSON.parse(decodeURIComponent(options.userInfo));
-      console.log(userInfoObject);
       this.setData({
         userInfo: userInfoObject,
         creator: userInfoObject.nickName,
+        action: options.action,
         btnText: '创建',
+        title: '创建俱乐部',
       })
-    } else if( options.action == 'view'){
+    } else if( options.action == 'edit'){
       this.setData({
+        userInfo: userInfoObject,
+        creator: userInfoObject.nickName,
+        action: options.action,
         btnText: '确定',
-      })
-    } else if( options.action == 'join'){
-      this.setData({
-        btnText: '加入',
+        title: '修改俱乐部',
         clubid: options.clubid,
       })
       APIs.getClubInfo( options.clubid, this, res => {
         console.log(res);
+        var logoList = [];
+        if( res.logo && res.logo.length > 0){
+          logoList = [{ path: res.logo }];
+        }
+        
+        this.setData({
+          wholeName: res.wholeName,
+          shortName: res.shortName,
+          logo: res.logo,
+          public: res.public,
+          fileList: logoList,
+        })
       })
     }
   },

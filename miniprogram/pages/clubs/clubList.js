@@ -92,12 +92,6 @@ Page({
             })
         })
     },
-    onNewClub: function() {
-        // this.onGetOpenid();
-        wx.navigateTo({
-            url: './detail?action=create',
-        })
-    },
     onClickPublicClub: function(e) {
         console.log(e);
         let data = e.currentTarget.dataset.item;
@@ -131,9 +125,30 @@ Page({
     },
     onClickClubCell: function(event){
         console.log(event)
-        let clubid = event.target.dataset.clubid;
-        if(clubid){
-            wx.navigateTo({ url: '../matches/matchList?clubid='+ clubid });
+        let area = event.detail;
+        if( area == 'cell'){
+            let clubid = event.target.dataset.clubid;
+            if(clubid){
+                wx.navigateTo({ url: '../matches/matchList?clubid='+ clubid });
+            }
+        } else if( area == 'right'){
+            if (this.data.login) {
+                let clubid = event.target.dataset.clubid;
+                let userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
+                wx.navigateTo({
+                    url: './create?action=edit&clubid=' + clubid + '&userInfo=' + userInfo,
+                });
+            } else{
+                wx.showToast({
+                  title: '获取用户信息失败，无法修改',
+                  icon: 'none',
+                });
+            }
+        } else if( area == 'left'){
+           let clubid = event.target.dataset.clubid;
+            if(clubid){
+                wx.navigateTo({ url: './detail?action=view&clubid='+ clubid });
+            } 
         }
     },
     joinClub: function(clubid) {
@@ -256,6 +271,7 @@ Page({
     search: function (value) {
         console.log("search: " + value);
         if( value.length == 0){
+            this.loading(false);
             return new Promise((resolve, reject) => {
                 resolve([]);
             });
@@ -264,19 +280,19 @@ Page({
         return this.searchClubs(value);
     },
     searchClubs: function(keyword) {
-        return APIs.searchClubs( keyword, this)
-            .then (res => {
-                let data = res.result.data;
-                let clubs = [];
-                data.forEach((club) => {
-                    clubs.push({
-                        text: club.wholeName + '(' + club.shortName + ')',
-                        value: club._id,
-                    })
+        return APIs.searchClubs( keyword, this).then (res => {
+            let data = res.result.data;
+            let clubs = [];
+            data.forEach((club) => {
+                clubs.push({
+                    text: club.wholeName + '(' + club.shortName + ')',
+                    value: club._id,
                 })
-                console.log(clubs);
-                return clubs;
             })
+            this.loading(false);
+            console.log(clubs);
+            return clubs;
+        })
     },
     selectResult: function (e) {
         console.log('select result', e.detail);
@@ -289,7 +305,6 @@ Page({
         wx.navigateTo({
             url: './detail?action=join&' + param
         })
-        // this.onJoinClub(clubid);
     },
     /**
      * 生命周期函数--监听页面加载

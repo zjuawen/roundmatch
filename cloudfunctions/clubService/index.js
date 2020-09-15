@@ -34,6 +34,8 @@ exports.main = async (event, context) => {
     }
   } else if (action == 'create') {
     data = await createClub(wxContext, event.info, event.userInfo);
+  } else if (action == 'update') {
+    data = await updateClub(wxContext, event.info, event.userInfo);
   } else if( action == 'statis') {
      data = await statisUserInClub(event.clubid);
   } else if ( action == 'info') {
@@ -338,6 +340,46 @@ createClub = async (wxContext, info, userInfo) => {
       }
     });
 }
+
+
+//更新俱乐部信息
+updateClub = async (wxContext, info, userInfo) => {
+  let dt = db.serverDate();
+  let exist = await db.collection('clubs')
+  .where({
+    creator: wxContext.OPENID,
+    delete: _.neq(true),
+  })
+  .get()
+  .then( async res => {
+    console.log(res);
+    return (res.data.length > 0);
+    // if( res.data && res.data.)
+  });
+  if( !exist){
+    return {
+      errCode: 1,
+      errMsg: "错误：未找到俱乐部"
+    }
+  }
+
+  return await db.collection('clubs')
+    .doc(info.clubid)
+    .update({
+      data: {
+        password: info.password,
+        shortName: info.shortName,
+        wholeName: info.wholeName,
+        logo: info.logo,
+        public: info.public
+      }
+    })
+    .then(async res =>  {
+      console.log(res);
+      return res.errMsg;
+    });
+}
+
 
 
 //统计俱乐部成员胜率

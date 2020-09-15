@@ -5,13 +5,13 @@
 
   <view class="page-section">
 
-    <view class="weui-cells__title">创建人</view>
-    <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell weui-cell_input" style="height: 80rpx;" >
-        <input class="weui-input" auto-focus value="{{creatorName}}" disabled="true"
-          bindinput="onInputWholdName" />
-      </view>
-    </view>
+    <View style="flex-direction: row;display: flex; align-items: center; color:grey; margin: 40rpx" >
+      <view style="flex: 2;">创建人: {{creatorName}}</view>
+      <view style="flex: 1;text-align: right;">俱乐部LOGO</view>
+      <image class='logo' mode="aspectFit" style="flex: 1;"
+          src="{{logo?logo:'../../images/default-club-logo.svg'}}" >
+        </image>
+    </View>
 
     <view class="weui-cells__title">名称</view>
     <view class="weui-cells weui-cells_after-title">
