@@ -3,7 +3,8 @@
     "mp-navigation-bar": "../../weui-miniprogram/navigation-bar/navigation-bar",
     "mp-dialog": "../../weui-miniprogram/dialog/dialog",
     "mp-searchbar": "../../weui-miniprogram/searchbar/searchbar",
-    "van-notice-bar": "../../vant-weapp/dist/notice-bar"
+    "van-notice-bar": "../../vant-weapp/dist/notice-bar",
+    "van-swipe-cell": "../../vant-weapp/dist/swipe-cell"
   },
   "navigationStyle": "custom",
   "navigationBarTitleText": "选择俱乐部"

@@ -25,23 +25,29 @@
   	wx:for="{{ clubs }}"
     wx:key="{{ item._id }}"
   	class="uploader" 
-    style="padding-left: 20rpx; margin-top: 0px; margin-bottom: 20rpx;"  >
+    style="padding: 0rpx; margin-top: 0px; margin-bottom: 0rpx;"  >
 
-  	<navigator url="../matches/matchList?clubid={{item._id}}" 
-      open-type="navigate" class="uploader-text">
+    <van-swipe-cell 
+      right-width="{{ 60 }}" 
+      bind:click="onClickClubCell"
+      data-clubid="{{item._id}}"
+      style="width: 100%" >
 
-      <view style="display: flex; align-items: center; margin-left: 20rpx;">
+  	<!-- <navigator url="../matches/matchList?clubid={{item._id}}" 
+      open-type="navigate" class="uploader-text"> -->
+
+      <view style="display: flex; align-items: center; margin-left: 40rpx;">
         
-        <image class='avatar' style="margin: 20rpx;" 
-          src="{{ item.logo ? item.logo: '../../images/default-club-logo.svg'}}" mode="aspectFit">
+        <image class='avatar' mode="aspectFit"
+          src="{{ item.logo ? item.logo: '../../images/default-club-logo.svg'}}" >
         </image>
 
         <image wx:if="{{item.vip}}" class='vip' 
           src="{{ '../../images/vip.svg'}}" mode="aspectFit">
         </image>
         
-        <text style="flex:7" >{{item.wholeName}}</text>
-        <text style="flex:3; align-content: left" > ({{item.shortName}})</text>
+        <text style="flex:7; margin: 20rpx;" >{{item.wholeName}}</text>
+        <text style="flex:3; align-content: left" >[{{" " + item.shortName + " "}}]</text>
 
 <!--         <image wx:if="{{true}}" class='owner' 
           src="{{ '../../images/owner.svg'}}" mode="aspectFit">
@@ -49,7 +55,10 @@
  -->
       </view>
 
-  	</navigator>
+  	<!-- </navigator> -->
+
+      <view slot="right" class="swipe-cell-right">修改</view>
+    </van-swipe-cell>
 
   </view>
 
