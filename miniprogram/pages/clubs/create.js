@@ -1,5 +1,6 @@
 // miniprogram/pages/clubs/create.js
 var APIs = require('../common/apis.js');
+var Utils = require('../common/utils.js');
 
 Page({
 
@@ -13,10 +14,12 @@ Page({
     creator: '',
     wholeName: '',
     shortName: '',
+    logo: '',
     password: '',
     password2: '',
     public: false,
     publicInfo: '不允许被其他人搜索到',
+    fileList: [],
     loading: false,
   },
 
@@ -98,12 +101,14 @@ Page({
     let clubInfo = {
       wholeName: this.data.wholeName,
       shortName: this.data.shortName,
+      logo: this.data.logo,
       public: this.data.public,
       password: this.data.password,
     }
     let userInfo = this.data.userInfo;
 
     APIs.createClub(clubInfo, userInfo, this, res => {
+      let data = res;
         if( data.errCode == 1){
           wx.showToast({
             icon: "none",
@@ -117,6 +122,84 @@ Page({
         }
     });
   },
+
+  beforeRead: function(event) {
+    console.log(event)
+  },
+
+  oversize: function(event){
+    wx.showToast({ title: '请选择200K以下的图片', icon: 'none' });
+  },
+
+  afterRead: function(event) {
+    console.log(event)
+    const { file, callback } = event.detail;
+    let fileObject = { path: file.path, status: 'uploading', message: '上传中' };
+    this.setData({ fileList: [ fileObject ] });
+    this.uploadToCloud();
+  },
+
+  deleteLogo: function(){
+    this.setData({ 
+      fileList:[],
+      logo: ''
+    });
+  },
+
+  uploadToCloud: function(){
+    // 上传图片
+    let filePath = this.data.fileList[0].path;
+
+    let fileName = 'icon-' + Utils.getCurrentDateTime() + filePath.match(/\.[^.]+?$/)[0];
+    const cloudPath = 'clubicons/' + fileName;
+    wx.cloud.uploadFile({
+      cloudPath,
+      filePath,
+      success: res => {
+        console.log('[上传文件] 成功：', res)
+        if( res.errMsg == "cloud.uploadFile:ok"){
+          var fileObject = {
+            path: res.fileID,
+            status: 'done',
+            message: '',
+          };
+          this.setData({
+            fileList: [ fileObject ],
+            logo: res.fileID,
+          })
+        }
+      }
+    });
+  },
+
+  // 上传图片
+  // uploadToCloud: function(){
+  //   wx.cloud.init();
+  //   // const fileList = this.data.logo;
+  //   const { fileList } = this.data;
+  //   if (!fileList.length) {
+  //     wx.showToast({ title: '请选择图片', icon: 'none' });
+  //   } else {
+  //     const uploadTasks = fileList.map((file, index) => this.uploadFilePromise(`my-photo${index}.png`, file));
+  //     Promise.all(uploadTasks)
+  //       .then(data => {
+  //         wx.showToast({ title: '上传成功', icon: 'none' });
+  //         const newFileList = data.map(item => { url: item.fileID });
+  //         this.setData({ cloudPath: data, fileList: newFileList });
+  //       })
+  //       .catch(e => {
+  //         wx.showToast({ title: '上传失败', icon: 'none' });
+  //         console.log(e);
+  //       });
+  //   }
+  // },
+
+  // uploadFilePromise: function(fileName, chooseResult) {
+  //   return wx.cloud.uploadFile({
+  //     cloudPath: fileName,
+  //     filePath: chooseResult.path
+  //   });
+  // },
 
   /**
    * 生命周期函数--监听页面加载

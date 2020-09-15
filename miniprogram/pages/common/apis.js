@@ -113,7 +113,7 @@ function createClub(clubInfo, userInfo, that, callback){
     });
 }
 
-//转化成小程序模板语言 这一步非常重要 不然无法正确调用
+//exports
 module.exports = {
   getClubInfo:      getClubInfo,
   joinClub: 	    joinClub,

@@ -308,6 +308,8 @@ createClub = async (wxContext, info, userInfo) => {
         password: info.password,
         shortName: info.shortName,
         wholeName: info.wholeName,
+        logo: info.logo,
+        vip: false,
         public: info.public,
         delete: false,
         createDate: dt

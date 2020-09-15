@@ -25,7 +25,7 @@
   	wx:for="{{ clubs }}"
     wx:key="{{ item._id }}"
   	class="uploader" 
-    style="padding-left: 0px; margin-top: 0px; margin-bottom: 20rpx;"  >
+    style="padding-left: 20rpx; margin-top: 0px; margin-bottom: 20rpx;"  >
 
   	<navigator url="../matches/matchList?clubid={{item._id}}" 
       open-type="navigate" class="uploader-text">
@@ -33,16 +33,20 @@
       <view style="display: flex; align-items: center; margin-left: 20rpx;">
         
         <image class='avatar' style="margin: 20rpx;" 
-          src="../../images/default_club.png" mode="aspectFit">
+          src="{{ item.logo ? item.logo: '../../images/default-club-logo.svg'}}" mode="aspectFit">
+        </image>
+
+        <image wx:if="{{item.vip}}" class='vip' 
+          src="{{ '../../images/vip.svg'}}" mode="aspectFit">
         </image>
         
         <text style="flex:7" >{{item.wholeName}}</text>
         <text style="flex:3; align-content: left" > ({{item.shortName}})</text>
-        <!-- <text style="flex:1" >{{item.createDate}}</text> -->
 
-         <!-- <image class='avatar' style="margin: 20rpx; border-radius: 0px;" 
-          src="../../images/locked.png" mode="aspectFit">
-        </image> -->
+<!--         <image wx:if="{{true}}" class='owner' 
+          src="{{ '../../images/owner.svg'}}" mode="aspectFit">
+        </image>
+ -->
       </view>
 
   	</navigator>
@@ -92,13 +96,13 @@
   <!--  {{createClubEnable? "创建自己的俱乐部" : "仅可以创建一个俱乐部"}} -->     
 
 
-  <button 
-        wx:if="{{(debug)}}"
-        class="weui-btn" type="primary" 
-        bindtap="onClickDebug"
-        style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
-        测试
-  </button>
+<button 
+      wx:if="{{(debug)}}"
+      class="weui-btn" type="primary" 
+      bindtap="onClickDebug"
+      style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
+      测试
+</button>
 
  <!--  <view 
     style="position: fixed;bottom: 0;margin: 10px; right: 25px;" >
@@ -113,23 +117,13 @@
  -->
 </View>
 
-  <button 
-        wx:if="{{(createClubEnable)}}"
-        class="weui-btn" type="default" size="default" plain="false"
-        bindtap="onCreateClub"
-        style="margin-Top: 40rpx; margin-bottom: 40rpx; font-size: 36rpx;">
-          创建俱乐部
-  </button>
-
-<!-- 
 <button 
-  class="weui-btn" type="primary" 
-  size="mini"
-  style="margin-top: 50rpx" 
-  bindtap="onNewClub">
-  创建
+      wx:if="{{(createClubEnable)}}"
+      class="weui-btn" type="default" size="default" plain="false"
+      bindtap="onCreateClub"
+      style="margin-Top: 40rpx; margin-bottom: 40rpx; font-size: 36rpx;">
+        创建俱乐部
 </button>
--->
 
 
 <mp-dialog title="获取授权" show="{{authDialogShow}}" bindbuttontap="onCancelAuthDialog" buttons="{{[{text: '取消'}]}}">

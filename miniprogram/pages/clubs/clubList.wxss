@@ -1,5 +1,17 @@
 /* miniprogram/pages/clubs/clubList.wxss */
-
+.itemContent {
+  margin-top: 40rpx;
+  height: 140rpx;
+  width: 100%;
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-left: none;
+  border-right: none;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  transition: all 300ms ease;
+}
 .avatar {
     height: 40px;
     width: 40px;
@@ -13,6 +25,19 @@
     border-radius: 50%;
     margin: 10rpx;
     box-shadow: 1px 1px 3px #CCCCCC;
+}
+.vip {
+    width: 40rpx;
+    height: 40rpx;
+    margin-top: -60rpx;
+    margin-left: -120rpx;
+    margin-right: 120rpx;
+}
+.owner {
+    width: 40rpx;
+    height: 40rpx;
+    margin-right: 40rpx;
+    margin-left: -20rpx;
 }
 .club-status {
     height: 40rpx;
