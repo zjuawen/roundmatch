@@ -28,9 +28,9 @@ exports.main = async (event, context) => {
     data = await joinClub( wxContext, event);
   } else if (action == 'list') {
     let private = await listPrivateClub( wxContext );
-    let public = await listPublicClub( wxContext );
+    // let public = await listPublicClub( wxContext );
     data = {
-      private, public
+      private, //public
     }
   } else if (action == 'create') {
     data = await createClub(wxContext, event.info, event.userInfo);
@@ -172,21 +172,25 @@ listPrivateClub = async (wxContext) => {
   	.get()
   	.then(res => {
   		console.log(res);
-  		return loadClubData(res.data);
+  		return loadClubData(wxContext.OPENID, res.data);
   	})
 }
 
-loadClubData = async (uacs) => {
+loadClubData = async (openid, uacs) => {
 	let clubids = uacs.map(a=> a.clubid);
 	return await db.collection('clubs')
-		.where({
-			_id: _.in(clubids),
-      delete: _.neq(true),
-		})
-		.get()
-  	.then(res => {
+    .aggregate()
+    .match({
+        _id: _.in(clubids),
+        delete: _.neq(true),
+    })
+    .addFields({
+      owner: $.eq(['$creator', openid]),
+    })
+    .end()
+  	.then(async res => {
       console.log(res);
-      return res.data;
+      return res.list;
   	});
 }
 
