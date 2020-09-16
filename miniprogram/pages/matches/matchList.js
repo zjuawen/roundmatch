@@ -112,7 +112,8 @@ Page({
         console.log('[云函数] ' + func + ' return: ', res.result.data);
         let clubinfo = res.result.data;
         this.setData({
-          clubinfo: clubinfo
+          clubinfo: clubinfo,
+          title: clubinfo.wholeName,
         });
         getApp().globalData.clubinfo = clubinfo;
         wx.showShareMenu({});

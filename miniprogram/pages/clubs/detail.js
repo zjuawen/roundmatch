@@ -114,7 +114,7 @@ Page({
     }
     APIs.getClubInfo( options.clubid, this, res => {
       console.log(res);
-      var logoList = [{path: '../../../images/default-club-logo.svg'}];
+      var logoList = [{path: 'cloud://roundmatch.726f-roundmatch-1300750420/clubicons/default-club-logo.svg'}];
       if( res.logo && res.logo.length > 0){
         logoList = [{ path: res.logo }];
       }
