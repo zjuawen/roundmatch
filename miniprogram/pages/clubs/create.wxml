@@ -24,15 +24,15 @@
       <View style="flex: 1;align-items: center;display: flex;flex-direction: row;margin-bottom: -80rpx;" >
         <view class="weui-cells__title" style="flex: 2;margin: 40rpx 0rpx 40rpx 40rpx;">请上传俱乐部LOGO</view>
         <view class="weui-cells_after-title" style="flex: 2; margin: 20rpx 40rpx 20rpx 0rpx;" >
-          <van-uploader 
+          <mp-uploader
+            title="{{''}}"
             max-count="1" 
-            file-list="{{ fileList }}"
-            accept="image"
+            files="{{ fileList }}"
             max-size="{{ 204800 }}"
-            deletable="{{ true }}"
-            bind:delete="deleteLogo"
-            bind:after-read="afterRead" 
-            bind:oversize="oversize" />
+            delete="true"
+            binddelete="onDeleteLogo"
+            bindselect="onSelectLogo" 
+            bindfail="logoFail" />
         </view>
       </View>
 

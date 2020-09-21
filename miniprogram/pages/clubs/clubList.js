@@ -23,6 +23,19 @@ Page({
         authDialogShow: false,
         authDialogMessage: '',
         createClubEnable: false,
+        slideButtonTwo: [{
+          text: '查看',
+          // src: '/page/weui/cell/icon_love.svg', // icon的路径
+        },{
+          type: 'warn',
+          text: '修改',
+          // extClass: 'test',
+          // src: '/page/weui/cell/icon_del.svg', // icon的路径
+        }],
+        slideButtonOne: [{
+          text: '查看',
+          // src: '/page/weui/cell/icon_love.svg', // icon的路径
+        }],
         // inputShowed: false,
         // inputVal: "",
         notice: "新版本又上线！俱乐部的创建者可以向左滑动，修改俱乐部信息，并上传俱乐部自定义LOGO图片了！加入俱乐部的用户可以向右滑动，打开隐藏的查看按钮，点击查看俱乐部详细信息。",
@@ -125,30 +138,32 @@ Page({
     },
     onClickClubCell: function(event){
         console.log(event)
-        let area = event.detail;
-        if( area == 'cell'){
-            let clubid = event.target.dataset.clubid;
-            if(clubid){
-                wx.navigateTo({ url: '../matches/matchList?clubid='+ clubid });
-            }
-        } else if( area == 'right'){
-            if (this.data.login) {
-                let clubid = event.target.dataset.clubid;
-                let userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
-                wx.navigateTo({
-                    url: './create?action=edit&clubid=' + clubid + '&userInfo=' + userInfo,
-                });
-            } else{
-                wx.showToast({
-                  title: '获取用户信息失败，无法修改',
-                  icon: 'none',
-                });
-            }
-        } else if( area == 'left'){
-           let clubid = event.target.dataset.clubid;
-            if(clubid){
+        let clubid = event.currentTarget.dataset.clubid;
+        if( !clubid) {
+            console.log('no cluid present with onClickClubCell, some error oops~');
+            return;
+        }
+
+        let type = event.type;
+        if( type == 'tap'){
+            wx.navigateTo({ url: '../matches/matchList?clubid='+ clubid });
+        } else if( type == 'buttontap'){
+            let buttonIndex = event.detail.index;
+            if( buttonIndex == 0) { //查看
                 wx.navigateTo({ url: './detail?action=view&clubid='+ clubid });
-            } 
+            } else if( buttonIndex == 1){   //修改
+                if (this.data.login) {
+                    let userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
+                    wx.navigateTo({
+                        url: './create?action=edit&clubid=' + clubid + '&userInfo=' + userInfo,
+                    });
+                } else{
+                    wx.showToast({
+                      title: '获取用户信息失败，无法修改',
+                      icon: 'none',
+                    });
+                }
+            }
         }
     },
     joinClub: function(clubid) {
@@ -244,8 +259,8 @@ Page({
         APIs.checkCreateClubEnable( this, res => {
             let data = res;
             that.setData({
-                createClubEnable: (data == null) || (data.length <= 0),
-                // createClubEnable: true,
+                // createClubEnable: (data == null) || (data.length <= 0),
+                createClubEnable: true,
             })
         })
     },

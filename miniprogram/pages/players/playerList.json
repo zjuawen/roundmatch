@@ -1,5 +1,6 @@
 {
-  "usingComponents": {"mp-navigation-bar": "../../weui-miniprogram/navigation-bar/navigation-bar"
+  "usingComponents": {
+  	"mp-navigation-bar": "/miniprogram_npm/weui-miniprogram/navigation-bar/navigation-bar"
   },
   "navigationStyle": "custom",
   "navigationBarTitleText": "选择人员"

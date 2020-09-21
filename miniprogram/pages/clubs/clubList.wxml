@@ -20,26 +20,26 @@
 
 <View class="page-body" >
 
-  <view wx:if="{{(clubs.length>0)}}" class="weui-cells__title">已加入的俱乐部</view>
-  <view 
+  <mp-cells wx:if="{{(clubs.length>0)}}" title="已加入的俱乐部" >
+  <!-- <view wx:if="{{(clubs.length>0)}}" class="weui-cells__title">已加入的俱乐部</view> -->
+  <!-- <view 
   	wx:for="{{ clubs }}"
     wx:key="{{ item._id }}"
   	class="uploader" 
-    style="padding: 0rpx; margin-top: 0px; margin-bottom: 0rpx;"  >
+    style="padding: 0rpx; margin-top: 0px; margin-bottom: 0rpx;"  > -->
 
-    <van-swipe-cell 
-      left-width="{{ 60 }}" 
-      right-width="{{ item.owner? 60:0 }}" 
-      bind:click="onClickClubCell"
-      data-clubid="{{item._id}}"
-      style="width: 100%" >
-
-      <view slot="left" class="swipe-cell-left">详情</view>
-  	<!-- <navigator url="../matches/matchList?clubid={{item._id}}" 
-      open-type="navigate" class="uploader-text"> -->
+    <mp-slideview
+      wx:for="{{ clubs }}"
+      wx:key="{{ item._id }}"
+      buttons="{{ item.owner? slideButtonTwo: slideButtonOne }}" 
+      bindbuttontap="onClickClubCell"
+      bind:tap="onClickClubCell"
+      data-clubid="{{ item._id }}"
+      style="width: 100%;">
 
       <view style="display: flex; align-items: center; margin-left: 40rpx;">
-        
+        <!-- 
+        <image slot="icon" mode="aspectFit" src="{{ item.logo ? item.logo: '../../images/default-club-logo.svg'}}" style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;"></image> -->
         <image class='avatar' mode="aspectFit"
           src="{{ item.logo ? item.logo: '../../images/default-club-logo.svg'}}" >
         </image>
@@ -57,76 +57,14 @@
 
       </view>
 
-  	<!-- </navigator> -->
+      <view style="background-color: lightgrey; height: 1rpx; width: 96%; margin-left: 2%;" />
 
-      <view wx:if="{{item.owner}}" slot="right" class="swipe-cell-right">修改</view>
+    </mp-slideview>
 
-    </van-swipe-cell>
+  <!-- </view> -->
 
-  </view>
+</mp-cells>
 
-  <!-- 
-  <view wx:if="{{(publicClubs.length>0)}}" class="weui-cells__title">公开的俱乐部</view>
-  <view 
-    wx:for="{{ publicClubs }}"
-    wx:key="{{ item._id }}"
-    wx:for-index="index" 
-    class="uploader" 
-    style="display: flex; flex-direction:row; padding-left: 20rpx; padding-top: 20rpx; padding-bottom: 20rpx; align-items: center;" >
-
-      <image class='avatar-small' 
-        src="../../images/default_club.png" mode="aspectFit">
-      </image>
-
-      <view style="flex:2; font-size: 14px; margin-left: 50rpx;" >{{item.wholeName}}</view>
-
-      <image wx:if="{{item.locked}}" class='club-status' 
-        src="../../images/locked.png" mode="aspectFit">
-      </image>
-
-      <button 
-        wx:if="{{(!login)}}"
-        class="weui-btn" type="primary" size="mini"
-        data-item="{{item}}"
-        open-type="getUserInfo" 
-        bindgetuserinfo="onGetUserInfo"
-        style="flex:1; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;" >
-        加入
-        </button>
-
-      <button 
-        wx:if="{{(login)}}"
-        class="weui-btn" type="primary" size="mini"
-        data-item="{{item}}"
-        bindtap="onClickPublicClub"
-        style="flex:1; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
-        加入
-        </button>
-  </view>
-   -->
-  <!-- disabled="{{!createClubEnable}}" -->
-  <!--  {{createClubEnable? "创建自己的俱乐部" : "仅可以创建一个俱乐部"}} -->     
-
-
-<button 
-      wx:if="{{(debug)}}"
-      class="weui-btn" type="primary" 
-      bindtap="onClickDebug"
-      style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
-      测试
-</button>
-
- <!--  <view 
-    style="position: fixed;bottom: 0;margin: 10px; right: 25px;" >
-    
-    <view 
-        class="hyperlink-text" 
-        bindtap="onClickDownloadManual" >
-        查看用户手册
-      </view>
-
-  </view>
- -->
 </View>
 
 <button 
@@ -135,6 +73,14 @@
       bindtap="onCreateClub"
       style="margin-Top: 40rpx; margin-bottom: 40rpx; font-size: 36rpx;">
         创建俱乐部
+</button>
+
+<button 
+      wx:if="{{(debug)}}"
+      class="weui-btn" type="primary" 
+      bindtap="onClickDebug"
+      style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
+      测试
 </button>
 
 

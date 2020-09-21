@@ -154,23 +154,25 @@ Page({
     });
   },
 
-  beforeRead: function(event) {
-    console.log(event)
-  },
+  // beforeRead: function(event) {
+  //   console.log(event)
+  // },
 
-  oversize: function(event){
-    wx.showToast({ title: '请选择200K以下的图片', icon: 'none' });
-  },
+  // oversize: function(event){
+  //   wx.showToast({ title: '请选择200K以下的图片', icon: 'none' });
+  // },
 
-  afterRead: function(event) {
+  onSelectLogo: function(event) {
     console.log(event)
-    const { file, callback } = event.detail;
-    let fileObject = { path: file.path, status: 'uploading', message: '上传中' };
+    const { tempFiles, callback } = event.detail;
+    // console.log(tempFiles[0]);
+    let fileObject = { url: tempFiles[0].path, loading: true };
     this.setData({ fileList: [ fileObject ] });
     this.uploadImageToCloud();
   },
 
-  deleteLogo: function(){
+  onDeleteLogo: function(event){
+    console.log(event)
     this.setData({ 
       fileList:[],
       logo: ''
@@ -178,8 +180,10 @@ Page({
   },
 
   uploadImageToCloud: function(){
+    // console.log('upload files', files)
+
     // 上传图片
-    let filePath = this.data.fileList[0].path;
+    let filePath = this.data.fileList[0].url;
 
     let fileName = 'icon-' + Utils.getCurrentDateTime() + filePath.match(/\.[^.]+?$/)[0];
     const cloudPath = 'clubicons/' + fileName;
@@ -190,9 +194,8 @@ Page({
         console.log('[上传文件] 成功：', res)
         if( res.errMsg == "cloud.uploadFile:ok"){
           var fileObject = {
-            path: res.fileID,
-            status: 'done',
-            message: '',
+            url: res.fileID,
+            loading: false
           };
           this.setData({
             fileList: [ fileObject ],
@@ -231,7 +234,7 @@ Page({
         console.log(res);
         var logoList = [];
         if( res.logo && res.logo.length > 0){
-          logoList = [{ path: res.logo }];
+          logoList = [{ url: res.logo }];
         }
         
         this.setData({

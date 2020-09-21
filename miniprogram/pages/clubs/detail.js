@@ -87,6 +87,12 @@ Page({
     })
   },
 
+  onDummy: function(event){
+    let logoList = this.data.fileList;
+    this.setData({
+      fileList: logoList
+    })
+  },
   /**
    * 生命周期函数--监听页面加载
    */
@@ -114,9 +120,9 @@ Page({
     }
     APIs.getClubInfo( options.clubid, this, res => {
       console.log(res);
-      var logoList = [{path: 'cloud://roundmatch.726f-roundmatch-1300750420/clubicons/default-club-logo.svg'}];
+      var logoList = [{url: 'cloud://roundmatch.726f-roundmatch-1300750420/clubicons/default-club-logo.svg'}];
       if( res.logo && res.logo.length > 0){
-        logoList = [{ path: res.logo }];
+        logoList = [{ url: res.logo }];
       }
       console.log(logoList)
       this.setData({

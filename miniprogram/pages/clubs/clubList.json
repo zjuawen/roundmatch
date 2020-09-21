@@ -1,10 +1,11 @@
 {
   "usingComponents": {
-    "mp-navigation-bar": "../../weui-miniprogram/navigation-bar/navigation-bar",
-    "mp-dialog": "../../weui-miniprogram/dialog/dialog",
-    "mp-searchbar": "../../weui-miniprogram/searchbar/searchbar",
-    "van-notice-bar": "../../vant-weapp/dist/notice-bar",
-    "van-swipe-cell": "../../vant-weapp/dist/swipe-cell"
+    "mp-navigation-bar": "/miniprogram_npm/weui-miniprogram/navigation-bar/navigation-bar",
+    "mp-dialog": "/miniprogram_npm/weui-miniprogram/dialog/dialog",
+    "mp-searchbar": "/miniprogram_npm/weui-miniprogram/searchbar/searchbar",
+    "mp-cells": "/miniprogram_npm/weui-miniprogram/cells/cells",
+    "mp-cell": "/miniprogram_npm/weui-miniprogram/cell/cell",
+    "mp-slideview": "/miniprogram_npm/weui-miniprogram/slideview/slideview"
   },
   "navigationStyle": "custom",
   "navigationBarTitleText": "选择俱乐部"
