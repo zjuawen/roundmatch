@@ -39,20 +39,20 @@
 
       <view style="display: flex; align-items: center; margin-left: 40rpx;">
         <!-- 
-        <image slot="icon" mode="aspectFit" src="{{ item.logo ? item.logo: '../../images/default-club-logo.svg'}}" style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;"></image> -->
+        <image slot="icon" mode="aspectFit" src="{{ item.logo ? item.logo: '/images/default-club-logo.svg'}}" style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;"></image> -->
         <image class='avatar' mode="aspectFit"
-          src="{{ item.logo ? item.logo: '../../images/default-club-logo.svg'}}" >
+          src="{{ item.logo ? item.logo: '/images/default-club-logo.svg'}}" >
         </image>
 
         <image wx:if="{{item.vip}}" class='vip' 
-          src="{{ '../../images/vip.svg'}}" mode="aspectFit">
+          src="{{ '/images/vip.svg'}}" mode="aspectFit">
         </image>
         
         <text style="flex:7; margin: 20rpx;" >{{item.wholeName}}</text>
         <text style="flex:3; align-content: left; margin-right: {{item.owner?'20rpx':'80rpx'}};" >[{{" " + item.shortName + " "}}]</text>
 
         <image wx:if="{{item.owner}}" class='owner' 
-          src="{{ '../../images/owner.svg'}}" mode="aspectFit">
+          src="{{ '/images/owner.svg'}}" mode="aspectFit">
         </image>
 
       </view>

@@ -36,14 +36,14 @@ Page({
     tabIndex: 0,
     tabLabelList: [{
       "text": "比分",
-      "iconPath": "../../images/score.svg",
-      "selectedIconPath": "../../images/score_selected.svg",
+      "iconPath": "/images/score.svg",
+      "selectedIconPath": "/images/score_selected.svg",
       // dot: true
     },
     {
       "text": "统计",
-      "iconPath": "../../images/stats.svg",
-      "selectedIconPath": "../../images/stats_selected.svg",
+      "iconPath": "/images/stats.svg",
+      "selectedIconPath": "/images/stats_selected.svg",
       // badge: 'New'
     }],
 
@@ -243,7 +243,7 @@ Page({
         let data = res.result.data;
          data.forEach(function (item){
           if( item.avatarUrl == null){
-            item.avatarUrl = '../../images/user-unlogin.png';
+            item.avatarUrl = '/images/user-unlogin.png';
           }
         });
         this.setData({
@@ -311,7 +311,7 @@ Page({
         let data = res.result.data;
         data.forEach(function (item){
           if( item.avatarUrl == null){
-            item.avatarUrl = '../../images/user-unlogin.png';
+            item.avatarUrl = '/images/user-unlogin.png';
           }
         });
         this.setData({

@@ -28,11 +28,11 @@
 
   	<image wx:if="{{!item.checked}}" class="checkbox" 
       data-id="{{item._id}}" catchtap="onSelectPlayer"
-      src="../../images/icon-emptybox.svg" mode="aspectFit">
+      src="/images/icon-emptybox.svg" mode="aspectFit">
       </image>
   	<image wx:else class="checkbox" 
       data-id="{{item._id}}" catchtap="onSelectPlayer"
-      src="../../images/icon-checkbox.svg" mode="aspectFit">
+      src="/images/icon-checkbox.svg" mode="aspectFit">
       </image>
 
     <image class="avatar" 

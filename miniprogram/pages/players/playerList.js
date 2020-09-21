@@ -44,7 +44,7 @@ Page({
         data.forEach(function (item) {
           item.checked = false;
           if( item.avatarUrl == null){
-            item.avatarUrl = '../../images/user-unlogin.png';
+            item.avatarUrl = '/images/user-unlogin.png';
           }
         });
 

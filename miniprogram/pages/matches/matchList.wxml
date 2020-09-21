@@ -20,7 +20,7 @@
     </view> -->
 
     <view> 
-      <image src="../../images/add.png" class="img-add"
+      <image src="/images/add.png" class="img-add"
         bindtap="onNewGame" ></image> 
     </view>
 
@@ -35,9 +35,9 @@
 
       <view class="match-date">
         {{item.name}}
-          <image wx:if="{{(item.owner)}}" src="../../images/edit.svg" class="img-edit"
+          <image wx:if="{{(item.owner)}}" src="/images/edit.svg" class="img-edit"
             data-index="{{index}}" bindtap="onEditMatchTitle" ></image> 
-          <image wx:if="{{(item.owner && (item.finish < item.total))}}" src="../../images/delete.svg" class="img-del"
+          <image wx:if="{{(item.owner && (item.finish < item.total))}}" src="/images/delete.svg" class="img-del"
             data-id="{{item._id}}" bindtap="oDeleteMatch" ></image>   
         </view>
 
@@ -117,19 +117,19 @@
       <view class="statistic-header-label" style="flex:3;">姓名</view >
       <view class="statistic-header-label" bindtap="onTapOrder" data-id="pigCount">猪</view>
       <image wx:if="{{orderField=='pigCount'}}"
-          class="sort-order-icon" src="{{orderDesc? '../../images/asc.svg' : '../../images/desc.svg' }}"></image>
+          class="sort-order-icon" src="{{orderDesc? '/images/asc.svg' : '/images/desc.svg' }}"></image>
       <view class="statistic-header-label" bindtap="onTapOrder" data-id="crownCount">冠</view>
       <image wx:if="{{orderField=='crownCount'}}"
-          class="sort-order-icon" src="{{orderDesc? '../../images/asc.svg' : '../../images/desc.svg' }}"></image>
+          class="sort-order-icon" src="{{orderDesc? '/images/asc.svg' : '/images/desc.svg' }}"></image>
       <view class="statistic-header-label" bindtap="onTapOrder" data-id="winCount">胜</view>
       <image wx:if="{{orderField=='winCount'}}"
-          class="sort-order-icon" src="{{orderDesc? '../../images/asc.svg' : '../../images/desc.svg' }}"></image>
+          class="sort-order-icon" src="{{orderDesc? '/images/asc.svg' : '/images/desc.svg' }}"></image>
       <view class="statistic-header-label" bindtap="onTapOrder" data-id="lostCount">负</view>
       <image wx:if="{{orderField=='lostCount'}}"
-          class="sort-order-icon" src="{{orderDesc? '../../images/asc.svg' : '../../images/desc.svg' }}"></image>
+          class="sort-order-icon" src="{{orderDesc? '/images/asc.svg' : '/images/desc.svg' }}"></image>
       <view class="statistic-header-label" bindtap="onTapOrder" data-id="winrate" style="flex:2;">总胜率</view>
       <image wx:if="{{orderField=='winrate'}}"
-          class="sort-order-icon" src="{{orderDesc? '../../images/asc.svg' : '../../images/desc.svg' }}"></image>
+          class="sort-order-icon" src="{{orderDesc? '/images/asc.svg' : '/images/desc.svg' }}"></image>
     </view>
 
     <view class="statistic-line" 

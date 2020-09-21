@@ -29,14 +29,14 @@ Page({
     tabIndex: 0,
     tabLabelList: [{
       "text": "比赛列表",
-      "iconPath": "../../images/match-list.svg",
-      "selectedIconPath": "../../images/match-list-selected.svg",
+      "iconPath": "/images/match-list.svg",
+      "selectedIconPath": "/images/match-list-selected.svg",
       // dot: true
     },
     {
       "text": "排行榜",
-      "iconPath": "../../images/match-statistic.svg",
-      "selectedIconPath": "../../images/match-statistic-selected.svg",
+      "iconPath": "/images/match-statistic.svg",
+      "selectedIconPath": "/images/match-statistic-selected.svg",
       // badge: 'New'
     }],
 
@@ -174,7 +174,7 @@ Page({
         let data = res.result.data;
         data.forEach(function (item) {
           if( item.avatarUrl == null){
-            item.avatarUrl = '../../images/user-unlogin.png';
+            item.avatarUrl = '/images/user-unlogin.png';
           }
           // item.pigCount = 0;
           // item.crownCount = 0;
@@ -466,7 +466,7 @@ Page({
    
     return ({
       title: player.nickName + "邀请你加入" + clubinfo.wholeName,
-      imageUrl: '../../images/background.jpg',
+      imageUrl: '/images/background.jpg',
       path: '/pages/clubs/clubList?action=sharejoin&clubid=' + this.data.clubid,
     })
   },

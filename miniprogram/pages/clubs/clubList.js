@@ -11,7 +11,7 @@ Page({
         title: "俱乐部",
         login: false,
         openid: '',
-        avatarUrl: '../../images/user-unlogin.png',
+        avatarUrl: '/images/user-unlogin.png',
         loading: false,
         buttons: [{
             text: '取消'

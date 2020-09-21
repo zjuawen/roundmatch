@@ -16,6 +16,6 @@
 
   <view class="guide">
     <text class="headline">示例客服消息配置</text>
-    <image class="code-image" src="../../../images/code-cloud-callback-config.png" mode="aspectFit"></image>
+    <image class="code-image" src="/images/code-cloud-callback-config.png" mode="aspectFit"></image>
   </view>
 </view>
