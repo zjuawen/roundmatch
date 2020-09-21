@@ -259,8 +259,8 @@ Page({
         APIs.checkCreateClubEnable( this, res => {
             let data = res;
             that.setData({
-                // createClubEnable: (data == null) || (data.length <= 0),
-                createClubEnable: true,
+                createClubEnable: (data == null) || (data.length <= 0),
+                // createClubEnable: true,
             })
         })
     },
