@@ -30,7 +30,7 @@
 
     <mp-slideview
       wx:for="{{ clubs }}"
-      wx:key="{{ item._id }}"
+      wx:key="{{ _id }}"
       buttons="{{ item.owner? slideButtonTwo: slideButtonOne }}" 
       bindbuttontap="onClickClubCell"
       bind:tap="onClickClubCell"

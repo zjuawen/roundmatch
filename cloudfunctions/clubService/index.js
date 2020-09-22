@@ -129,7 +129,19 @@ getClubInfo = async (clubid) => {
 
 //查找所有已创建的俱乐部
 listOwnClub = async (wxContext) => {
-  return await db.collection('clubs')
+  let vip = await db.collection('userconfig')
+    .where({
+      openid: wxContext.OPENID,
+      key: "vip",
+    })
+    .limit(1)
+    .get()
+    .then(async res => {
+      console.log(res);
+      let data = res.data;
+      return (data.length > 0) && (data[0].value == true);
+    });
+  let clubs = await db.collection('clubs')
     .where({
       creator: wxContext.OPENID,
       delete: _.neq(true),
@@ -139,6 +151,11 @@ listOwnClub = async (wxContext) => {
       console.log(res);
       return res.data;
     });
+
+  return {
+    vip: vip,
+    clubs: clubs,
+  }
 }
 
 //公开的俱乐部列表

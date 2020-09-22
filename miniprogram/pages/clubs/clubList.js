@@ -257,9 +257,12 @@ Page({
     checkCreateClubEnable: function() {
         let that = this;
         APIs.checkCreateClubEnable( this, res => {
+            console.log(res);
             let data = res;
+            let createClubEnable = data.vip || (data.clubs && (data.clubs.length <= 0));
             that.setData({
-                createClubEnable: (data == null) || (data.length <= 0),
+                vip: data.vip,
+                createClubEnable: createClubEnable,
                 // createClubEnable: true,
             })
         })
