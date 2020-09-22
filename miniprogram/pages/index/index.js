@@ -14,15 +14,7 @@ Page({
     //debug
     wx.redirectTo({
       url: '../clubs/clubList',
-      // url: '/pages/matches/detail?action=new&clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0&data=[{"name":"3局制","data":[{"order":1,"player1":"EiOz7d37IZCA7HtcKG8s6djmoZgASsCnqXyAk1gwkRaspRX3","player2":"B5p7Q7hVtx6owUdTh5g5mfbJRE87HJX9KeKTCjSIrKAxw6Uq","player3":"SxECnjF0RoD0uQq3O21WYc2n1WVmIEhksQGWCpCK38sOBNlS","player4":"2vIcXyorzmRjQGKt012ziFxGb8VXMvsi4Gtg721BVPKsvAMy","score1":-1,"score2":-1},{"order":2,"player1":"EiOz7d37IZCA7HtcKG8s6djmoZgASsCnqXyAk1gwkRaspRX3","player2":"SxECnjF0RoD0uQq3O21WYc2n1WVmIEhksQGWCpCK38sOBNlS","player3":"B5p7Q7hVtx6owUdTh5g5mfbJRE87HJX9KeKTCjSIrKAxw6Uq","player4":"2vIcXyorzmRjQGKt012ziFxGb8VXMvsi4Gtg721BVPKsvAMy","score1":-1,"score2":-1},{"order":3,"player1":"EiOz7d37IZCA7HtcKG8s6djmoZgASsCnqXyAk1gwkRaspRX3","player2":"2vIcXyorzmRjQGKt012ziFxGb8VXMvsi4Gtg721BVPKsvAMy","player3":"B5p7Q7hVtx6owUdTh5g5mfbJRE87HJX9KeKTCjSIrKAxw6Uq","player4":"SxECnjF0RoD0uQq3O21WYc2n1WVmIEhksQGWCpCK38sOBNlS","score1":-1,"score2":-1}]}]',
-      // url: '../clubs/create?action=edit&clubid=65825b355f572ddb00fbbfd04737e52b',
-      // url: '../clubs/detail?action=view&clubid=65825b355f572ddb00fbbfd04737e52b',
-      // url: '../players/playerList?clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0',
-      // url: '../matches/matchList?clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv',
-      // url: '../matches/detail?action=old&clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv&matchid=dbff9fc75de78816004e74cf5e6107d0',
-      // url: '../players/playerList?clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv&action=new',
-      // url: '../clubs/clubList?action=sharejoin&clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv',
-
+      
     })
     return;
     //end of debug

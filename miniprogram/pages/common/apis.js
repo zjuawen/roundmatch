@@ -91,7 +91,7 @@ function createNewMatch(that, players, callback) {
     });
 }
 
-function saveNewMatch(that, matchata, playerCount, clubid, callback) {
+function saveNewMatch(that, matchdata, playerCount, clubid, callback) {
     commonCallFuction(that, callback, 'matchService', 'save', {
         matchdata: matchdata,
         playerCount: playerCount,
