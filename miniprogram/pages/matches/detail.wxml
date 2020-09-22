@@ -179,6 +179,15 @@
     bindtap="onSaveMatch">
     保存
   </button>
+
+  <image 
+    wx:if="{{action=='new'}}" 
+    src="/images/refresh.svg" 
+    mode="aspectFit"
+    class="refresh_btn"
+    bindtap="onRefreshMatch" >
+  </image>
+
 </view>
 
 <mp-tabbar 

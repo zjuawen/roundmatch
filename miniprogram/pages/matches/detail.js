@@ -1,4 +1,6 @@
 // miniprogram/pages/matchList/detail.js
+var APIs = require('../common/apis.js');
+
 Page({
 
   /**
@@ -226,39 +228,24 @@ Page({
 
   //开始读取新建的比赛
   loadNewMatch: function (clubid, matchArray) {
-    this.loading(true);
 
-    let func = 'userService';
-    let action = 'listAll';
-    console.log(func + " " + action);
-
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        clubid: clubid,
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result.data);
-        let data = res.result.data;
-         data.forEach(function (item){
+    if( this.data.players ){
+      this.renderNewMatch(matchArray);
+    } else {
+      let that = this;
+      APIs.listClubUsers( this, clubid, res => {
+        let data = res;
+        data.forEach(function (item){
           if( item.avatarUrl == null){
             item.avatarUrl = '/images/user-unlogin.png';
           }
         });
-        this.setData({
+        that.setData({
           players: data
         });
-        this.renderNewMatch(matchArray);
-        this.loading(false);
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
-        })
-      }
-    })
+        that.renderNewMatch(matchArray);
+      });
+    }
   },
 
   //显示新建的比赛数据
@@ -294,39 +281,24 @@ Page({
 
   //加载比赛数据
   loadMatchData: function (clubid, matchid) {
-    this.loading(true);
 
-    let func = 'userService';
-    let action = 'listAll';
-    console.log(func + " " + action);
-
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        clubid: clubid,
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result.data);
-        let data = res.result.data;
+    if( this.data.players ){
+      this.loadGames(clubid, matchid);
+    } else {
+      let that = this;
+      APIs.listClubUsers( this, clubid, res => {
+        let data = res;
         data.forEach(function (item){
           if( item.avatarUrl == null){
             item.avatarUrl = '/images/user-unlogin.png';
           }
         });
-        this.setData({
+        that.setData({
           players: data
         });
-        this.loadGames(clubid, matchid);
-        this.loading(false);
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
-        })
-      }
-    })
+        that.loadGames(clubid, matchid);
+      });
+    }
   },
 
   //读取单局比赛数据
@@ -540,42 +512,19 @@ Page({
   },
 
   onSaveMatch: function (event) {
-    this.loading(true);
-
-    let func = 'matchService';
-    let action = 'save';
-    console.log('saving match ...');
-
+    let that = this;
+    let matchdata = this.data.games;
     let playerCount = this.data.matchPlayers.length;
-    console.log('total ' + playerCount + " players");
+    let clubid = this.data.clubid;
 
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        matchdata: this.data.games,
-        playerCount: playerCount,
-        clubid: this.data.clubid,
-        // remark: "test"
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result);
-        let matchid = res.result.data.matchid;
-        this.setData({
+    APIs.saveNewMatch(this, matchdata, playerCount, clubid, res => {
+        let matchid = res.matchid;
+        that.setData({
           matchid: matchid
         })
-        this.loadMatchData(this.data.clubid, matchid);
-        this.onSaveOK();
-        
-        this.loading(false);
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
-        })
-      }
-    })
+        that.loadMatchData(that.data.clubid, matchid);
+        that.onSaveOK();
+      });
   },
 
   onSaveOK: function () {
@@ -644,18 +593,35 @@ Page({
       this.loadMatchData(this.data.clubid, this.data.matchid);
       // this.test(this.data.clubid, this.data.matchid);
     } else if (action == 'new') {
-      var matchArray = JSON.parse(options.data);
+      var selectedPlayers = JSON.parse(options.players);
       // var matchdata = JSON.parse(options.data);
       this.setData({
         action: options.action,
         clubid: options.clubid,
-        matchArray: matchArray,
+        selectedPlayers: selectedPlayers,
+        // matchArray: matchArray,
         saved: false,
-        vsBtnDisable: true
+        vsBtnDisable: false,//true
       });
-      this.loadNewMatch(this.data.clubid, this.data.matchArray)
+      this.createNewMatch();
     }
     this.readUserConfig()
+  },
+
+  createNewMatch: function(){
+    let that = this; 
+    APIs.createNewMatch(this, this.data.selectedPlayers, res => {
+      let data = res;
+      that.setData({
+        matchArray: data,
+        vsBtnDisable: true,
+      })
+      that.loadNewMatch(that.data.clubid, that.data.matchArray);
+    })
+  },
+
+  onRefreshMatch: function(){
+    this.createNewMatch();
   },
 
   onGamesDataChange: function() {

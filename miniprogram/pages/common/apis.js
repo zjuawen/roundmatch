@@ -85,11 +85,20 @@ function checkCreateClubEnable(that, callback) {
     commonCallFuction(that, callback, 'clubService', 'listByOwner');
 }
 
-// function searchClubs(keyword, that, callback) {
-    // commonCallFuction(that, callback, 'clubService', 'search', {
-    //     keyword: keyword,
-    // });
-// }
+function createNewMatch(that, players, callback) {
+    commonCallFuction(that, callback, 'matchService', 'create', { 
+        players: players,
+    });
+}
+
+function saveNewMatch(that, matchata, playerCount, clubid, callback) {
+    commonCallFuction(that, callback, 'matchService', 'save', {
+        matchdata: matchdata,
+        playerCount: playerCount,
+        clubid: clubid,
+    });
+}
+
 function searchClubs(keyword, that) {
     commonStartCloudFunction(that);
     let func = 'clubService';
@@ -120,17 +129,33 @@ function updateClub(clubInfo, userInfo, that, callback){
     });
 }
 
+function listClubUsers(that, clubid, callback){
+    commonCallFuction(that, callback, 'userService', 'listAll', { 
+        clubid:  clubid
+    });
+}
+
 //exports
 module.exports = {
-  getClubInfo:      getClubInfo,
-  joinClub: 	    joinClub,
-  updateUserInfo:   updateUserInfo,
-  getOpenid:        getOpenid,
-  loadClubs:        loadClubs,
-  searchClubs:      searchClubs,
-  createClub:       createClub,
-  updateClub:       updateClub,
-  checkCreateClubEnable: checkCreateClubEnable,
+// user api
+  updateUserInfo:           updateUserInfo,
+  getOpenid:                getOpenid,
+
+// club api
+  getClubInfo:              getClubInfo,
+  joinClub:                 joinClub,
+  loadClubs:                loadClubs,
+  searchClubs:              searchClubs,
+  createClub:               createClub,
+  updateClub:               updateClub,
+  checkCreateClubEnable:    checkCreateClubEnable,
+
+// match api
+  createNewMatch:           createNewMatch,
+  saveNewMatch:             saveNewMatch,
+
+//user api
+  listClubUsers:            listClubUsers,
 }
 
 

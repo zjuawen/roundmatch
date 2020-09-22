@@ -106,33 +106,11 @@ Page({
   },
 
   onPlayerSelected: function(event) {
-
-    let func = 'matchService';
     let playerArray = this.getSelectedPlayers();
-    console.log('selected: '+ playerArray);
-
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: 'create',
-        players:playerArray
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result);
-        var data = JSON.stringify(res.result.data);
-        wx.navigateTo({
-          // url: '../matchList/matchList',
-          // url: '../players/playerList',
-          url: '../matches/detail?action=new&clubid=' + this.data.clubid + '&data=' + data,
-        })
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
-        })
-      }
-    })
+    var data = JSON.stringify(playerArray);
+    wx.navigateTo({
+      url: '../matches/detail?action=new&clubid=' + this.data.clubid + '&players=' + data,
+    });
   },
 
 
