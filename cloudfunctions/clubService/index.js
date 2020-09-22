@@ -127,9 +127,8 @@ getClubInfo = async (clubid) => {
     });
 }
 
-//查找所有已创建的俱乐部
-listOwnClub = async (wxContext) => {
-  let vip = await db.collection('userconfig')
+isVipUser = async (wxContext) =>{
+  return await db.collection('userconfig')
     .where({
       openid: wxContext.OPENID,
       key: "vip",
@@ -141,6 +140,11 @@ listOwnClub = async (wxContext) => {
       let data = res.data;
       return (data.length > 0) && (data[0].value == true);
     });
+}
+
+//查找所有已创建的俱乐部
+listOwnClub = async (wxContext) => {
+  let vip = isVipUser(wxContext);
   let clubs = await db.collection('clubs')
     .where({
       creator: wxContext.OPENID,
@@ -306,21 +310,24 @@ addUserToClub = async (clubid, openid, userInfo) => {
 //创建俱乐部
 createClub = async (wxContext, info, userInfo) => {
   let dt = db.serverDate();
-  let exist = await db.collection('clubs')
-  .where({
-    creator: wxContext.OPENID,
-    delete: _.neq(true),
-  })
-  .get()
-  .then( async res => {
-    console.log(res);
-    return (res.data.length > 0);
-    // if( res.data && res.data.)
-  });
-  if( exist){
-    return {
-      errCode: 1,
-      errMsg: "每个用户仅可以创建一个俱乐部"
+  let vip = isVipUser(wxContext);
+  if( !vip){
+    let exist = await db.collection('clubs')
+    .where({
+      creator: wxContext.OPENID,
+      delete: _.neq(true),
+    })
+    .get()
+    .then( async res => {
+      console.log(res);
+      return (res.data.length > 0);
+      // if( res.data && res.data.)
+    });
+    if( exist){
+      return {
+        errCode: 1,
+        errMsg: "每个用户仅可以创建一个俱乐部"
+      }
     }
   }
 
