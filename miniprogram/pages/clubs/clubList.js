@@ -108,6 +108,13 @@ Page({
     onClickPublicClub: function(e) {
         console.log(e);
         let data = e.currentTarget.dataset.item;
+        if( !data ){
+            wx.showToast({
+              title: '获取俱乐部信息失败',
+              icon: 'none',
+            });
+            return;
+        }
         this.setData({
             selected: data,
             joinDialogShow: true,
