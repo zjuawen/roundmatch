@@ -32,7 +32,7 @@
             delete="true"
             binddelete="onDeleteLogo"
             bindselect="onSelectLogo" 
-            bindfail="logoFail" />
+            bindfail="onFailLogo" />
         </view>
       </View>
 

@@ -1,7 +1,7 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-var debug = false;//true;
+var debug = false;
 
 const env = debug ? 'test-roundmatch' : "roundmatch";
 cloud.init({
@@ -27,6 +27,8 @@ exports.main = async (event, context) => {
     data = await getNotice( wxContext.OPENID, event.param);
   } else if (action == 'msgSecCheck') {
     data = await msgSecCheck( wxContext.OPENID, event.param);
+  } else if (action == 'imgSecCheck') {
+    data = await imgSecCheck( event);
   }
 
   return {
@@ -34,6 +36,28 @@ exports.main = async (event, context) => {
     openid: wxContext.OPENID,
     appid: wxContext.APPID,
     unionid: wxContext.UNIONID,
+  }
+}
+
+imgSecCheck = async (event) => {
+  try {
+    let res = false;
+
+    //  检查图像内容是否违规
+    if (event.img) {
+      res = await cloud.openapi.security.imgSecCheck({
+        media: {
+          header: {
+            'Content-Type': 'application/octet-stream'
+          },
+          contentType: 'image',
+          value: Buffer.from(event.img) // 官方文档这里是个坑
+        }
+      });
+    };
+    return res;
+  } catch (e) {
+    return e;
   }
 }
 

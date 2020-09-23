@@ -43,7 +43,7 @@ Page({
       wx.showToast({
         icon: "none",
         title: errMsg,
-        duration: 1000
+        duration: 2000
       })
       return;
     } 
@@ -116,7 +116,7 @@ Page({
         wx.showToast({
           icon: "none",
           title: data.errMsg,
-          duration: 1000
+          duration: 3000
         })
       } else if( data.errCode == 87014){
         wx.showToast({
@@ -150,12 +150,12 @@ Page({
           wx.showToast({
             icon: "none",
             title: data.errMsg,
-            duration: 1000
+            duration: 3000
           })
         } else if( data.errCode == 87014){
           wx.showToast({
             icon: "none",
-            title: "输入信息中包含不符合法律法规内容，请修改后重新提交",
+            title: "输入信息中包含不符合相关法律法规内容，请修改后重新提交",
             duration: 3000
           })
         } else {
@@ -176,11 +176,30 @@ Page({
 
   onSelectLogo: function(event) {
     console.log(event)
-    const { tempFiles, callback } = event.detail;
+    const { tempFiles, contents } = event.detail;
     // console.log(tempFiles[0]);
     let fileObject = { url: tempFiles[0].path, loading: true };
     this.setData({ fileList: [ fileObject ] });
-    this.uploadImageToCloud();
+    let that = this;
+    APIs.imageSecCheck(this, contents[0], res => {
+      if( res.errCode == 0){
+        that.uploadImageToCloud();
+      } else if( res.errCode == 87014){
+        this.setData({ fileList: [] });
+        wx.showToast({
+          icon: "none",
+          title: "上传图片内容不符合相关法律法规内容，请修改后重新提交",
+          duration: 3000
+        })
+      } else {
+        this.setData({ fileList: [] });
+        wx.showToast({
+          icon: "none",
+          title: "上传图片失败：" + res.errMsg,
+          duration: 3000
+        })
+      }
+    })
   },
 
   onDeleteLogo: function(event){
@@ -189,6 +208,21 @@ Page({
       fileList:[],
       logo: ''
     });
+  },
+
+  onFailLogo: function(event){
+    console.log(event)
+    let type = event.type;
+    if( type == 'fail'){
+      let detail = event.detail;
+      if( detail.type == 1){
+        wx.showToast({
+          icon: "none",
+          title: "最大允许图片尺寸为200K",
+          duration: 3000
+        })
+      }
+    }
   },
 
   uploadImageToCloud: function(){

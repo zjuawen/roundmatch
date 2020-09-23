@@ -15,9 +15,11 @@ function commonCallFuction(that, callback, serviceName, actionName, params){
         name: func,
         data: data,
         success: res => {
-            console.log('[云函数] ' + func + ' return: ', res.result.data);
-            let data = res.result.data;
-            commonSuccessHandler( data, that, callback);
+            console.log('[云函数] ' + func + ' return: ', res);
+            if( res.result){
+                let data = res.result.data;
+                commonSuccessHandler( data, that, callback);
+            }
         },
         fail: err => {
             console.error('[云函数] ' + func + ' 调用失败', err);
@@ -135,9 +137,15 @@ function listClubUsers(that, clubid, callback){
     });
 }
 
-function msgSecCheck(that, callback, content){
+function msgSecCheck(that, content, callback ){
     commonCallFuction(that, callback, 'systemService', 'msgSecCheck', { 
         content:  content
+    });
+}
+
+function imageSecCheck(that, imageContent, callback ){
+    commonCallFuction(that, callback, 'systemService', 'imgSecCheck', { 
+        img:  imageContent
     });
 }
 
@@ -165,6 +173,7 @@ module.exports = {
 
 //system api
   msgSecCheck:              msgSecCheck,
+  imageSecCheck:            imageSecCheck,
 }
 
 
