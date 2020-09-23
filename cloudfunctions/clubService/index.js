@@ -92,6 +92,17 @@ searchClub = async (keyword) => {
 
 //读取俱乐部信息
 getClubInfo = async (clubid) => {
+  let secret = await cloud.callFunction({
+    "name" : "systemService",
+    "data" : {
+      "action": "msgSecCheck",
+      "param": {
+        "content" : clubid,
+      }
+    }
+  })
+  console.log(secret);
+
   return await db.collection('clubs')
     .doc(clubid)
     .get()
@@ -156,6 +167,10 @@ listOwnClub = async (wxContext) => {
       return res.data;
     });
 
+    //temp disable create club
+    // return {
+    //   vip: false
+    // }
   return {
     vip: vip,
     clubs: clubs,
@@ -330,6 +345,10 @@ createClub = async (wxContext, info, userInfo) => {
       }
     }
   }
+
+  // let secret = cloud.callFunction({
+
+  // })
 
   return await db.collection('clubs')
     .add({

@@ -135,6 +135,12 @@ function listClubUsers(that, clubid, callback){
     });
 }
 
+function msgSecCheck(that, callback, content){
+    commonCallFuction(that, callback, 'systemService', 'msgSecCheck', { 
+        content:  content
+    });
+}
+
 //exports
 module.exports = {
 // user api
@@ -156,6 +162,9 @@ module.exports = {
 
 //user api
   listClubUsers:            listClubUsers,
+
+//system api
+  msgSecCheck:              msgSecCheck,
 }
 
 
