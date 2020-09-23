@@ -26,6 +26,23 @@
     margin: 10rpx;
     box-shadow: 1px 1px 3px #CCCCCC;
 }
+
+.club-name {
+    flex:7; 
+    margin: 20rpx;
+    height: 50rpx;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.club-shortname {
+    flex:3; 
+    align-content: left; 
+    height: 50rpx;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .vip {
     width: 40rpx;
     height: 40rpx;

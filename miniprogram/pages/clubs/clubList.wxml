@@ -48,8 +48,8 @@
           src="{{ '/images/vip.svg'}}" mode="aspectFit">
         </image>
         
-        <text style="flex:7; margin: 20rpx;" >{{item.wholeName}}</text>
-        <text style="flex:3; align-content: left; margin-right: {{item.owner?'20rpx':'80rpx'}};" >[{{" " + item.shortName + " "}}]</text>
+        <text class="club-name" >{{item.wholeName}}</text>
+        <text class="club-shortname" style="margin-right: {{item.owner?'20rpx':'80rpx'}};" >[{{" " + item.shortName + " "}}]</text>
 
         <image wx:if="{{item.owner}}" class='owner' 
           src="{{ '/images/owner.svg'}}" mode="aspectFit">

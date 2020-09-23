@@ -14,7 +14,7 @@
 
     <view class="weui-cells__title">名称</view>
     <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
+      <view class="weui-cell" >
         <input class="weui-input" disabled="true"
         	style="width: 100%;" value="{{(wholeName)}}" bindinput="onInputWholdName" />
       </view>
@@ -22,24 +22,24 @@
 
     <view class="weui-cells__title">缩写</view>
     <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell weui-cell_input" style="height: 100rpx;" >
-        <input class="weui-input" disabled="true"
-        	style="width: 100%;" value="{{(shortName)}}" bindinput="onInputShortName" />
+      <view class="weui-cell" style="height: 50rpx;" >
+        <input disabled="true" style="width: 100%;" 
+          value="{{(shortName)}}" bindinput="onInputShortName" />
       </view>
     </view>
 
     <view class="weui-cells__title">是否公开</view>
     <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell weui-cell_input" style="height: 100rpx; color: grey" >
+      <view class="weui-cell" style="height: 50rpx; color: grey" >
         <View style="flex:9;">允许被其他人搜索到</View>
-        <switch class="weui-switch switch-button" type="switch" 
+        <switch class="weui-switch" type="switch" 
           checked="{{(public)}}" disabled="true" />
       </view>
     </view>
 
     <view class="weui-cells__title">是否设置密码</view>
     <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell weui-cell_input" style="height: 100rpx; color: grey" >
+      <view class="weui-cell" style="height: 50rpx; color: grey" >
         <View style="flex:9;">加入俱乐部需要输入密码</View>
         <switch class="weui-switch switch-button" type="switch" 
           checked="{{(locked)}}" disabled="true"/>
