@@ -32,8 +32,7 @@
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell" style="height: 50rpx; color: grey" >
         <View style="flex:9;">允许被其他人搜索到</View>
-        <switch class="weui-switch" type="switch" 
-          checked="{{(public)}}" disabled="true" />
+        <switch type="switch" checked="{{(public)}}" disabled="true" />
       </view>
     </view>
 
@@ -41,8 +40,7 @@
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell" style="height: 50rpx; color: grey" >
         <View style="flex:9;">加入俱乐部需要输入密码</View>
-        <switch class="weui-switch switch-button" type="switch" 
-          checked="{{(locked)}}" disabled="true"/>
+        <switch type="switch" checked="{{(locked)}}" disabled="true"/>
       </view>
     </view>
 

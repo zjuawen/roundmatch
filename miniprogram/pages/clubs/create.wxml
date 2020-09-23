@@ -58,8 +58,7 @@
     <view class="weui-cells weui-cells_after-title">
       <view class="weui-cell" style="color: grey" >
         <View style="flex:9;">{{publicInfo}}</View>
-        <switch class="weui-switch switch-button" type="switch" 
-          bindchange="onSwitchPublic" value="{{public}}"/>
+        <switch type="switch" bindchange="onSwitchPublic" value="{{public}}"/>
       </view>
     </view>
     <view class="weui-cells__title" style="margin-top: 5rpx;color: orange;" >
