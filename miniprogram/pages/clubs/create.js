@@ -112,17 +112,23 @@ Page({
 
     APIs.createClub(clubInfo, userInfo, this, res => {
       let data = res;
-        if( data.errCode == 1){
-          wx.showToast({
-            icon: "none",
-            title: data.errMsg,
-            duration: 1000
-          })
-        } else {
-          wx.redirectTo({
-            url: '../clubs/clubList',
-          })
-        }
+      if( data.errCode == 1){
+        wx.showToast({
+          icon: "none",
+          title: data.errMsg,
+          duration: 1000
+        })
+      } else if( data.errCode == 87014){
+        wx.showToast({
+          icon: "none",
+          title: "输入信息中包含不符合法律法规内容，请修改后重新提交",
+          duration: 3000
+        })
+      } else {
+        wx.redirectTo({
+          url: '../clubs/clubList',
+        })
+      }
     });
   },
 
@@ -145,6 +151,12 @@ Page({
             icon: "none",
             title: data.errMsg,
             duration: 1000
+          })
+        } else if( data.errCode == 87014){
+          wx.showToast({
+            icon: "none",
+            title: "输入信息中包含不符合法律法规内容，请修改后重新提交",
+            duration: 3000
           })
         } else {
           wx.redirectTo({

@@ -92,17 +92,6 @@ searchClub = async (keyword) => {
 
 //读取俱乐部信息
 getClubInfo = async (clubid) => {
-  let secret = await cloud.callFunction({
-    "name" : "systemService",
-    "data" : {
-      "action": "msgSecCheck",
-      "param": {
-        "content" : clubid,
-      }
-    }
-  })
-  console.log(secret);
-
   return await db.collection('clubs')
     .doc(clubid)
     .get()
@@ -138,7 +127,22 @@ getClubInfo = async (clubid) => {
     });
 }
 
-isVipUser = async (wxContext) =>{
+checkMessageSec = async (content) => {
+  let result = await cloud.callFunction({
+    "name" : "systemService",
+    "data" : {
+      "action": "msgSecCheck",
+      "param": {
+        "content" : content,
+      }
+    }
+  })
+  console.log(result);
+
+  return result;
+}
+
+isVipUser = async (wxContext) => {
   return await db.collection('userconfig')
     .where({
       openid: wxContext.OPENID,
@@ -322,33 +326,45 @@ addUserToClub = async (clubid, openid, userInfo) => {
   	})
 }
 
+checkOwnedClub = async (wxContext) => {
+  let vip = isVipUser(wxContext);
+  if( vip){
+    return false;
+  }
+  return await db.collection('clubs')
+  .where({
+    creator: wxContext.OPENID,
+    delete: _.neq(true),
+  })
+  .get()
+  .then( async res => {
+    console.log(res);
+    return (res.data.length > 0);
+    // if( res.data && res.data.)
+  });
+}
+
 //创建俱乐部
 createClub = async (wxContext, info, userInfo) => {
-  let dt = db.serverDate();
-  let vip = isVipUser(wxContext);
-  if( !vip){
-    let exist = await db.collection('clubs')
-    .where({
-      creator: wxContext.OPENID,
-      delete: _.neq(true),
-    })
-    .get()
-    .then( async res => {
-      console.log(res);
-      return (res.data.length > 0);
-      // if( res.data && res.data.)
-    });
-    if( exist){
-      return {
-        errCode: 1,
-        errMsg: "每个用户仅可以创建一个俱乐部"
-      }
+  let exist = await checkOwnedClub(wxContext);
+  if( exist){
+    return {
+      errCode: 1,
+      errMsg: "普通用户仅可以创建一个俱乐部"
     }
   }
 
-  // let secret = cloud.callFunction({
+  let secCheckContent = info.wholeName + info.shortName;
+  let secCheck = await checkMessageSec(secCheckContent);
+  let result = secCheck.result.data;
+  if( result.errCode != 0){
+    return {
+      errCode: result.errCode,
+      errMsg: result.errMsg,
+    }
+  }
 
-  // })
+  let dt = db.serverDate();
 
   return await db.collection('clubs')
     .add({
@@ -403,6 +419,16 @@ updateClub = async (wxContext, info, userInfo) => {
     return {
       errCode: 1,
       errMsg: "错误：未找到俱乐部"
+    }
+  }
+
+  let secCheckContent = info.wholeName + info.shortName;
+  let secCheck = await checkMessageSec(secCheckContent);
+  let result = secCheck.result.data;
+  if( result.errCode != 0){
+    return {
+      errCode: result.errCode,
+      errMsg: result.errMsg,
     }
   }
 
