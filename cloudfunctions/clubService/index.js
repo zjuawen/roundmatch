@@ -491,6 +491,19 @@ listClubGames = async (clubid, page = 1) => {
   // let page = 1;
   let page_size = RECORD_MAX_COUNT;
 
+  let exist = true;
+  try{
+    await db.collection('games_' + clubid)
+    .get();
+  } catch (e){
+    console.log(e)
+    exist = false;
+  }
+
+  if( !exist ){
+    return [];
+  }
+
   return await db.collection('games_' + clubid)
     .where({
       clubid: clubid,
@@ -509,7 +522,6 @@ listClubGames = async (clubid, page = 1) => {
         let dataMore = await listClubGames(clubid, page+1);
         return data.concat(dataMore);
       }
-      
     })
 }
 
