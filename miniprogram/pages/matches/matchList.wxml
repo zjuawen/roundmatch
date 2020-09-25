@@ -167,8 +167,7 @@
 
   <view style="display: flex; flex-direction: column;">  
     <view style="display: flex; flex-direction: row; margin-top: 20px; justify-content: center;">  
-      <input class="name_input"
-        type="text" value="{{(tempName<0?'':tempName)}}" 
+      <input class="dialog-input" type="text" value="{{(tempName<0?'':tempName)}}" 
         bindinput="inputNewName" bindchange="inputNewName" focus="true" ></input>
     </view>    
   </view>

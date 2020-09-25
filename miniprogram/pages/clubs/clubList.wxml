@@ -101,7 +101,7 @@
   <block wx:else >
     <view class="dialog-content-container">
       <view>请输入"{{selected.wholeName}}"密码：</view>
-      <input class="password-input" type="password" 
+      <input class="dialog-input" type="password" 
         bindinput="onInputPassword" bindchange="onInputPassword"></input>
     </view>
   </block>

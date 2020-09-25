@@ -156,3 +156,9 @@ page {
   line-height: 36rpx;
   word-break: break-all;
 }
+
+.dialog-input {
+  border: 1px solid;
+  height: 60rpx;
+  margin-top: 20rpx;
+}
