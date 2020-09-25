@@ -1,7 +1,11 @@
 <!--miniprogram/pages/matchList/matchList.wxml-->
 
-<!-- <mp-actionSheet bindactiontap="btnClick" show="{{showActionsheet}}" actions="{{actions}}" title="这是一个标题，可以为一行或者两行。">
-</mp-actionSheet> -->
+<mp-actionsheet 
+  bindactiontap="onActionSheetClick" 
+  show="{{showActionsheet}}" 
+  actions="{{gameTypeNames}}" 
+  title="比赛类型">
+</mp-actionsheet>
 
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 

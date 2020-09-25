@@ -45,6 +45,11 @@ Page({
     dialogBtns: [{ text: '取消' }, { text: '确定' }],
     tempName: '',
 
+    showActionsheet: false,
+    gameTypeNames: [
+      { text: '轮转搭档循环', value: 1 },
+      { text: '固定搭档循环', value: 2 }
+    ],
   },
 
   loading: function (value) {
@@ -128,7 +133,23 @@ Page({
     })
   },
 
-  onNewGame: function() {
+  onNewGame: function(gameType) {
+    this.setData({
+      showActionsheet: true
+    })
+    
+  },
+
+  onActionSheetClick: function(event){
+    console.log(event);
+    let type = event.detail.value;
+    this.setData({
+      showActionsheet: false
+    })
+    this.goPlayerList(type);
+  },
+
+  goPlayerList: function(){
     wx.navigateTo({
       url: '../players/playerList?clubid=' + this.data.clubid + '&action=new',
     })
