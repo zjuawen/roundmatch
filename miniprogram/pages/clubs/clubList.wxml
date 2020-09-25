@@ -21,12 +21,6 @@
 <View class="page-body" >
 
   <mp-cells wx:if="{{(clubs.length>0)}}" title="已加入的俱乐部" >
-  <!-- <view wx:if="{{(clubs.length>0)}}" class="weui-cells__title">已加入的俱乐部</view> -->
-  <!-- <view 
-  	wx:for="{{ clubs }}"
-    wx:key="{{ item._id }}"
-  	class="uploader" 
-    style="padding: 0rpx; margin-top: 0px; margin-bottom: 0rpx;"  > -->
 
     <mp-slideview
       wx:for="{{ clubs }}"

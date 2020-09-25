@@ -7,17 +7,8 @@
 
 <view style="margin-bottom: 140rpx;">
 
+  <!-- start of match-list -->
   <block wx:if="{{tabIndex==0}}">
-    <!-- <view style="flex-direction:row;"> -->
-    <!-- <mp-searchbar bindselectresult="selectResult" search="{{search}}"></mp-searchbar> -->
- <!--    <view style="display: flex;" >
-      <button 
-        class="weui-btn" type="primary" 
-        size="mini" bindtap="onNewGame"
-        style="margin-top: 40rpx; margin-bottom: 40rpx;" >
-        新建
-      </button>
-    </view> -->
 
     <view> 
       <image src="/images/add.png" class="img-add"
@@ -26,10 +17,16 @@
 
     <view style="margin-top: 40rpx;"></view>
 
-    <!-- match-list -->
+    <mp-slideview
+      wx:for="{{ matches }}"
+      wx:key="{{ _id }}"
+      buttons="{{ (item.owner && (item.finish < item.total))? slideButtonOne : [] }}" 
+      bindbuttontap="onClickMatchCellButton"
+      bind:tap="onClickMatchCell"
+      data-matchid="{{ item._id }}"
+      style="width: 100%; background-color: red;">
+
     <view 
-    	wx:for="{{matches}}"
-      wx:key="{{item._id}}" 
       class="match-list-block" 
       style="background-color: {{(item.finish >= item.total)? '#DDFFDD' : 'white' }};" >
 
@@ -37,14 +34,7 @@
         {{item.name}}
           <image wx:if="{{(item.owner)}}" src="/images/edit.svg" class="img-edit"
             data-index="{{index}}" bindtap="onEditMatchTitle" ></image> 
-          <image wx:if="{{(item.owner && (item.finish < item.total))}}" src="/images/delete.svg" class="img-del"
-            data-id="{{item._id}}" bindtap="oDeleteMatch" ></image>   
         </view>
-
-    	<navigator 
-        class="match-list-navigator" 
-        url="../matches/detail?action=old&clubid={{item.clubid}}&matchid={{item._id}}" 
-        open-type="navigate" >
     	  
         <view class="match-progress-block">
           <view wx:if="{{(item.finish==0)}}" 
@@ -93,9 +83,9 @@
 
         </view>  
 
-    	</navigator>
-
     </view>
+
+    </mp-slideview>
 
     <view wx:if="{{noMore}}" class="footer" >
       -------- 已经到底了 --------
@@ -155,7 +145,7 @@
 </view>  
 
 <mp-tabbar 
-  style="position:fixed;bottom:0;width:100%;left:0;right:0;" 
+  style="position:fixed;bottom:0;width:100%;left:0;right:0; z-index: 80" 
   list="{{tabLabelList}}"  bindchange="tabChange" >
 </mp-tabbar>
 

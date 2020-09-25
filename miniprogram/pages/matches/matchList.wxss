@@ -67,8 +67,8 @@
 .match-info-block {
 	border-width: 1px;
 	display: flex;
+	width: 100%;
 	flex-direction: row;
-
 }
 
 .match-info-line {
@@ -166,6 +166,7 @@
 	bottom: 150rpx; 
 	right: 50rpx; 
 	opacity: 0.8;
+	z-index: 100;
 } 
 
 .img-edit {

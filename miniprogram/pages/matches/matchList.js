@@ -15,12 +15,11 @@ Page({
     pageNum: 1, //初始页默认值为1
     pageSize: 10,
     noMore: false,
-    // showActionsheet: false,
-    // actions: [
-    //   { text: '示例菜单', value: 1 },
-    //   { text: '示例菜单', value: 2 },
-    //   { text: '负向菜单', type: 'warn', value: 3 }
-    // ]
+    slideButtonOne: [{
+      type: 'warn',
+      text: '删除',
+      // src: '/page/weui/cell/icon_love.svg', // icon的路径
+    }],
 
     orderField: 'notSet',
     orderDesc: 'notSet',
@@ -319,11 +318,23 @@ Page({
     })
   },
 
-  oDeleteMatch: function (e) {
+  onClickMatchCellButton: function(event) {
+    console.log(event);
+    let type = event.type;
+    if( type != 'buttontap'){
+      return;
+    }
+    let index = event.detail.index;
+    if( index == 0 ){ 
+      let matchid = event.currentTarget.dataset.matchid;
+      this.oDeleteMatch(matchid);
+    }
+  },
+
+  oDeleteMatch: function (matchid) {
     console.log('onDeleteGame');
 
-    let clubid = this.data.clubid;
-    let matchid = e.target.dataset.id;  
+    let clubid = this.data.clubid; 
     var that = this;
     
     wx.showModal({
@@ -369,6 +380,15 @@ Page({
         })
       }
     })
+  },
+
+  onClickMatchCell: function(event) {
+    console.log(event);
+    let clubid = this.data.clubid;
+    let matchid = event.currentTarget.dataset.matchid;
+    wx.navigateTo({
+      url: '../matches/detail?action=old&clubid=' + clubid + '&matchid=' + matchid,
+    });
   },
 
   reorderPlayers: function(data, field, desc){
