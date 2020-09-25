@@ -463,11 +463,12 @@ Page({
   onShareAppMessage: function () {
     let player = getApp().globalData.userInfo;
     let clubinfo = getApp().globalData.clubinfo;
-   
+    let shareUrl = '/pages/clubs/clubList?action=sharejoin&clubid=' + this.data.clubid;
+    console.log(shareUrl)
     return ({
       title: player.nickName + "邀请你加入" + clubinfo.wholeName,
       imageUrl: '/images/background.jpg',
-      path: '/pages/clubs/clubList?action=sharejoin&clubid=' + this.data.clubid,
+      path: shareUrl,
     })
   },
 })

@@ -13,8 +13,8 @@ Page({
   onLoad: function() {
     //debug
     wx.redirectTo({
-      url: '../clubs/clubList',
-      
+      // url: '../clubs/clubList',
+       url: '/pages/clubs/clubList?action=sharejoin&clubid=1b64dd7b5f688b9b0036ea5e65c0b470',
     })
     return;
     //end of debug

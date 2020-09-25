@@ -46,37 +46,38 @@ Page({
             loading: value
         });
     },
-    loadUserinfo: function() {
+    loadUserinfo: async function() {
         // 获取用户信息
-        wx.getSetting({
-            success: res => {
+        let that = this;
+        await wx.getSetting({
+            success: async res => {
                 console.log(res);
                 if (res.authSetting['scope.userInfo']) {
                     // 已经授权，可以直接调用 getUserInfo 获取头像昵称，不会弹框
-                    wx.getUserInfo({
-                        success: res => {
+                    await wx.getUserInfo({
+                        success: async res => {
                             console.log(res.userInfo);
                             getApp().globalData.userInfo = res.userInfo;
-                            this.setData({
+                            that.setData({
                                 avatarUrl: res.userInfo.avatarUrl,
                                 userInfo: res.userInfo,
                                 login: true
                             })
-                            this.updateUserInfo(res.userInfo);
-                            if (this.data.sharejoin) {
+                            that.updateUserInfo(res.userInfo);
+                            if (that.data.sharejoin) {
                                 wx.hideLoading();
-                                this.onSharedJoin(this.data.sharedclubid);
+                                that.onJoinClub(that.data.sharedclubid);
                             }
                         }
                     })
                 } else {
                     console.log("Unauthrorized: authSetting['scope.userInfo'] null");
-                    this.setData({
+                    that.setData({
                         login: false
                     })
-                    if (this.data.sharejoin) {
+                    if (that.data.sharejoin) {
                         wx.hideLoading();
-                        this.showAuthDialog(true, "加入俱乐部需要用户昵称，头像等信息");
+                        that.showAuthDialog(true, "加入俱乐部需要用户昵称，头像等信息");
                     }
                 }
             }
@@ -177,6 +178,7 @@ Page({
         let that = this;
         APIs.joinClub( clubid, this.data.userInfo, this.data.password,
             this, res => {
+                let data = res;
                 if (data.status == 'fail') {
                     wx.showToast({
                         title: data.errMsg,
@@ -208,7 +210,7 @@ Page({
         }
         if (this.data.sharejoin) {
             this.showAuthDialog(false);
-            this.onSharedJoin(this.data.sharedclubid);
+            this.onJoinClub(this.data.sharedclubid);
         } else {
             this.onClickPublicClub(e);
         }
@@ -233,7 +235,7 @@ Page({
         })
         APIs.getClubInfo( clubid, this, res => {
             wx.hideLoading();
-            let data = res.result.data;
+            let data = res;
             let e = {
                 currentTarget: {
                     dataset: {

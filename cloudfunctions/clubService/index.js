@@ -253,7 +253,7 @@ joinClub = async (wxContext, event) => {
   		if( res.data.length > 0){
   			return ({ 
           status: "fail", 
-          errMsg: 'Already join Club!'
+          errMsg: '已经加入俱乐部!'
         });
   		}
 
@@ -261,7 +261,7 @@ joinClub = async (wxContext, event) => {
       if(passwordCheck == false) {
         return ({ 
           status: "fail", 
-          errMsg: 'Incorrect password!'
+          errMsg: '密码错误！'
         });
       }
 
