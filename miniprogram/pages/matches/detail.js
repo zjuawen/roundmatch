@@ -226,39 +226,39 @@ Page({
     })
   },
 
-  //开始读取新建的比赛
-  loadNewMatch: function (clubid, matchArray) {
+  // //开始读取新建的比赛
+  // loadNewMatch: function (clubid, matchArray) {
 
-    if( this.data.players ){
-      this.renderNewMatch(matchArray);
-    } else {
-      let that = this;
-      APIs.listClubUsers( this, clubid, res => {
-        let data = res;
-        data.forEach(function (item){
-          if( item.avatarUrl == null){
-            item.avatarUrl = '/images/user-unlogin.png';
-          }
-        });
-        that.setData({
-          players: data
-        });
-        that.renderNewMatch(matchArray);
-      });
-    }
-  },
+  //   if( this.data.players ){
+  //     this.renderNewMatch(matchArray);
+  //   } else {
+  //     let that = this;
+  //     APIs.listClubUsers( this, clubid, res => {
+  //       let data = res;
+  //       data.forEach(function (item){
+  //         if( item.avatarUrl == null){
+  //           item.avatarUrl = '/images/user-unlogin.png';
+  //         }
+  //       });
+  //       that.setData({
+  //         players: data
+  //       });
+  //       that.renderNewMatch(matchArray);
+  //     });
+  //   }
+  // },
 
   //显示新建的比赛数据
   renderNewMatch: function (matchArray) {
     let gameTitles = [];
     for( let n = 0; n<matchArray.length; n++){
       let data = matchArray[n].data;
-      for (let i = 0; i < data.length; i++) {
-        data[i].playerInfo1 = this.getPlayerById(data[i].player1);
-        data[i].playerInfo2 = this.getPlayerById(data[i].player2);
-        data[i].playerInfo3 = this.getPlayerById(data[i].player3);
-        data[i].playerInfo4 = this.getPlayerById(data[i].player4);
-      }
+      // for (let i = 0; i < data.length; i++) {
+      //   data[i].playerInfo1 = this.getPlayerById(data[i].player1);
+      //   data[i].playerInfo2 = this.getPlayerById(data[i].player2);
+      //   data[i].playerInfo3 = this.getPlayerById(data[i].player3);
+      //   data[i].playerInfo4 = this.getPlayerById(data[i].player4);
+      // }
       let type = 'default';
       if( n == 0){
         type = 'warn';
@@ -282,65 +282,42 @@ Page({
   //加载比赛数据
   loadMatchData: function (clubid, matchid) {
 
-    if( this.data.players ){
-      this.loadGames(clubid, matchid);
-    } else {
-      let that = this;
-      APIs.listClubUsers( this, clubid, res => {
-        let data = res;
-        data.forEach(function (item){
-          if( item.avatarUrl == null){
-            item.avatarUrl = '/images/user-unlogin.png';
-          }
-        });
-        that.setData({
-          players: data
-        });
-        that.loadGames(clubid, matchid);
-      });
-    }
+    this.loadGames(clubid, matchid);
+
+    // if( this.data.players ){
+    //   this.loadGames(clubid, matchid);
+    // } else {
+    //   let that = this;
+    //   APIs.listClubUsers( this, clubid, res => {
+    //     let data = res;
+    //     data.forEach(function (item){
+    //       if( item.avatarUrl == null){
+    //         item.avatarUrl = '/images/user-unlogin.png';
+    //       }
+    //     });
+    //     that.setData({
+    //       players: data
+    //     });
+    //     that.loadGames(clubid, matchid);
+    //   });
+    // }
   },
 
   //读取单局比赛数据
   loadGames: function (clubid, matchid) {
-    this.loading(true);
 
-    let func = 'matchService';
-    let action = 'read';
-    console.log(func + " " + action);
-
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        clubid: clubid,
-        matchid: matchid
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result.data);
-        let data = res.result.data;
-        this.setData({
+    let that = this;
+    APIs.readMatch( this, clubid, matchid, res => {
+        let data = res;
+        that.setData({
           matchPlayers:[]
         });
-        for (let i = 0; i < data.length; i++) {
-          data[i].playerInfo1 = this.getPlayerById(data[i].player1);
-          data[i].playerInfo2 = this.getPlayerById(data[i].player2);
-          data[i].playerInfo3 = this.getPlayerById(data[i].player3);
-          data[i].playerInfo4 = this.getPlayerById(data[i].player4);
-        }
-        this.setData({
+
+        that.setData({
           games: data
         })
-        this.statistic();
-        this.loading(false);
-        this.scrollToFirstUnfinish();
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
-        })
-      }
+        that.statistic();
+        that.scrollToFirstUnfinish();
     })
   },
 
@@ -614,9 +591,11 @@ Page({
       let data = res;
       that.setData({
         matchArray: data,
-        vsBtnDisable: true,
+        vsBtnDisable: true
       })
-      that.loadNewMatch(that.data.clubid, that.data.matchArray);
+
+      // that.loadNewMatch(that.data.clubid, that.data.matchArray);
+      that.renderNewMatch(data);
     })
   },
 

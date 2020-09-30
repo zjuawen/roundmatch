@@ -42,21 +42,21 @@
         <!-- column1 -->
         <view class="detail-content-column">
           <view wx:if="{{expand}}" class="detail-content-avatars">
-            <image class="avatar" src="{{item.playerInfo1.avatarUrl}}" 
+            <image class="avatar" src="{{item.player1.avatarUrl}}" 
               data-id="{{item.player1}}" bindtap="onTapPlayer" >
               </image>
-            <image class="avatar" src="{{item.playerInfo2.avatarUrl}}" 
+            <image class="avatar" src="{{item.player2.avatarUrl}}" 
               data-id="{{item.player2}}" bindtap="onTapPlayer">
               </image> 
           </view>
           <view class="detail-content-names">
             <view data-id="{{item.player1}}" bindtap="onTapPlayer"
               class="{{item.player1 == highlight? 'detail-content-name-highlight' : 'detail-content-name'}}" >
-              {{item.playerInfo1.name}}
+              {{item.player1.name}}
             </view>
             <view data-id="{{item.player2}}" bindtap="onTapPlayer"
               class="{{item.player2 == highlight? 'detail-content-name-highlight' : 'detail-content-name'}}" >
-              {{item.playerInfo2.name}}
+              {{item.player2.name}}
             </view>        
           </view>
         </view>
@@ -85,21 +85,21 @@
         <!-- column3 -->
         <view class="detail-content-column">
           <view wx:if="{{expand}}" class="detail-content-avatars">
-            <image class="avatar" src="{{item.playerInfo3.avatarUrl}}" 
+            <image class="avatar" src="{{item.player3.avatarUrl}}" 
               data-id="{{item.player3}}" bindtap="onTapPlayer" >
               </image>
-            <image class="avatar" src="{{item.playerInfo4.avatarUrl}}" 
+            <image class="avatar" src="{{item.player4.avatarUrl}}" 
               data-id="{{item.player4}}" bindtap="onTapPlayer">
               </image> 
           </view>
           <view class="detail-content-names">
             <view data-id="{{item.player3}}" bindtap="onTapPlayer" 
               class="{{item.player3 == highlight? 'detail-content-name-highlight' : 'detail-content-name'}}" >
-              {{item.playerInfo3.name}}
+              {{item.player3.name}}
             </view>
             <view data-id="{{item.player4}}" bindtap="onTapPlayer"
               class="{{item.player4 == highlight? 'detail-content-name-highlight' : 'detail-content-name'}}">
-              {{item.playerInfo4.name}}
+              {{item.player4.name}}
             </view>        
           </view>
         </view>

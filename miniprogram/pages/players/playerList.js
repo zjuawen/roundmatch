@@ -7,9 +7,9 @@ Page({
   data: {
     title: "选择人员",
     loading: false,
+    selectedPlayers: [],
     players: [],
 
-    selectedCount: 0,
     nextDisable: true,
 
     pageNum: 1, //初始页默认值为1
@@ -69,43 +69,89 @@ Page({
     })
   },
 
-  onSelectPlayer: function(event) {
-    let data = this.data.players;
-    let playerid = event.target.dataset.id;
-    for( let i = 0; i<data.length; i++){
-      if( data[i]._id == playerid){
-        data[i].checked = !data[i].checked;
-        let count = this.data.selectedCount;
-        if( data[i].checked){
-          count++;
-        } else {
-          count--;
-        }
-        let disable = (count<4)||(count>8);
-        this.setData({ 
-          players:data,
-          selectedCount: count,
-          nextDisable: disable
-        });
-        return;
-      }
-    }
+  onDeselectPlayer: function(event) {
+    console.log(event);
+
+    let players = this.data.players;
+    let selectedPlayers = this.data.selectedPlayers;
+
+    let index = event.target.dataset.index;
+    let player = selectedPlayers[index];
+    
+    players.push(player);
+    selectedPlayers.splice(index, 1);
+
+    let count = selectedPlayers.length;
+    let disable = (count<4)||(count>8);
+    
+    this.setData({
+      selectedPlayers: selectedPlayers,
+      players: players,
+      nextDisable: disable
+    })
   },
+
+  onSelectPlayer: function(event) {
+    console.log(event);
+
+    let players = this.data.players;
+    let selectedPlayers = this.data.selectedPlayers;
+
+    let index = event.target.dataset.index;
+    let player = players[index];
+
+    selectedPlayers.push(player);
+    players.splice(index, 1);
+
+    let count = selectedPlayers.length;
+    let disable = (count<4)||(count>8);
+ 
+     this.setData({
+      selectedPlayers: selectedPlayers,
+      players: players,
+      nextDisable: disable
+    })
+  },
+
+  // onSelectPlayer: function(event) {
+  //   console.log(event);
+  //   let data = this.data.players;
+  //   let playerid = event.target.dataset.id;
+  //   for( let i = 0; i<data.length; i++){
+  //     if( data[i]._id == playerid){
+  //       data[i].checked = !data[i].checked;
+  //       let count = this.data.selectedCount;
+  //       if( data[i].checked){
+  //         count++;
+  //       } else {
+  //         count--;
+  //       }
+  //       let disable = (count<4)||(count>8);
+  //       this.setData({ 
+  //         players:data,
+  //         selectedCount: count,
+  //         nextDisable: disable
+  //       });
+  //       return;
+  //     }
+  //   }
+  // },
 
   getSelectedPlayers: function() {
-    let data = this.data.players;
-    let playerArray = [];
-    for( let i = 0; i<data.length; i++){
-      if( data[i].checked){
-         playerArray.push(data[i]._id)
-      }
-    }
-    console.log("getSelectedPlayers return: " + playerArray);
-    
-    return playerArray;
+    // let data = this.data.players;
+    // let playerArray = [];
+    // for( let i = 0; i<data.length; i++){
+    //   if( data[i].checked){
+    //      playerArray.push(data[i]._id)
+    //   }
+    // }
+    // console.log("getSelectedPlayers return: " + playerArray);
+    // 
+    // return playerArray;
+    return this.data.selectedPlayers;
   },
 
-  onPlayerSelected: function(event) {
+  onPlayerSelectedDone: function(event) {
     let playerArray = this.getSelectedPlayers();
     var data = JSON.stringify(playerArray);
     wx.navigateTo({
@@ -121,7 +167,12 @@ Page({
     this.setData({
       clubid: options.clubid,
       action: options.action,
+      players: [],
+      selectedPlayers: [],
+      pageNum: 1,
+      noMore: false
     });
+    this.loadPlayers(this.data.clubid);
     // this.loadPlayers(this.data.clubid);
   },
 
@@ -136,13 +187,7 @@ Page({
    * 生命周期函数--监听页面显示
    */
   onShow: function () {
-    this.setData({
-      players: [],
-      selectedCount: 0,
-      pageNum: 1,
-      noMore: false
-    });
-    this.loadPlayers(this.data.clubid);
+
   },
 
   /**

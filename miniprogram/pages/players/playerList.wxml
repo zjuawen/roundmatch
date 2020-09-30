@@ -2,29 +2,94 @@
 
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
+<view class="page__bd">
+  <mp-searchbar 
+    style="z-index: 100;"
+    bindselectresult="selectResult" 
+    search="{{search}}"
+    placeholder="{{'搜索队员'}}" >
+    </mp-searchbar>
+
 <view class="player-header" >
   <view style=" flex: 1;color: grey; display: flex; justify-content: center; " >
-    选择4～8人继续:（{{selectedCount}}）
+    选择4～8人继续:（{{selectedPlayers.length}}）
     </view>
     
   <button 
     class="weui-btn" type="primary" 
     disabled="{{nextDisable}}"
-    size="mini"  bindtap="onPlayerSelected"
+    size="mini"  bindtap="onPlayerSelectedDone"
     style="margin-left: 40rpx;margin-right: 40rpx;" >
   	下一步
   </button>
 </view>
 
+</view>
+
+
 <view style="height: 110rpx" />
 
+<mp-cells title="已选择" >
+
+  <mp-cell class="player-list-cell"
+    wx:for="{{selectedPlayers}}" wx:key="{{item._id}}"
+    data-index="{{index}}" value="{{item.name}}" 
+    bindtap="onDeselectPlayer" >
+
+      <image slot="icon" src="{{item.avatarUrl}}" 
+        style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
+      </image>
+
+  </mp-cell>
+
+</mp-cells>
+
+<view style="height: 50rpx" />
+
+<mp-cells title="俱乐部成员" >
+
+  <mp-cell class="player-list-cell"
+    wx:for="{{players}}" wx:key="{{item._id}}"
+    data-index="{{index}}" value="{{item.name}}" 
+    bindtap="onSelectPlayer" >
+
+      <image slot="icon" src="{{item.avatarUrl}}" 
+        style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
+      </image>
+
+  </mp-cell>
+
+  <!-- <mp-cell class="player-list-item"
+    wx:for="{{players}}" wx:key="{{item._id}}"
+    data-id="{{item._id}}" bindtap="onSelectPlayer">
+
+
+    <image wx:if="{{!item.checked}}" class="checkbox" 
+      data-id="{{item._id}}" catchtap="onSelectPlayer"
+      src="/images/icon-emptybox.svg" mode="aspectFit">
+      </image>
+    <image wx:else class="checkbox" 
+      data-id="{{item._id}}" catchtap="onSelectPlayer"
+      src="/images/icon-checkbox.svg" mode="aspectFit">
+      </image>
+
+    <image class="avatar" 
+      data-id="{{item._id}}" catchtap="onSelectPlayer"
+      src="{{item.avatarUrl}}">
+      </image>
+
+    <view class="player-item-name" data-id="{{item._id}}" catchtap="onSelectPlayer">
+      {{item.name}}
+    </view>
+
+  </mp-cell> -->
+
+</mp-cells>
+
+<!-- 
 <view class="player-list-item"
   wx:for="{{players}}" wx:key="{{item._id}}"
   data-id="{{item._id}}" bindtap="onSelectPlayer">
-
-  <!-- <label >
-    <checkbox value="{{item._id}}" checked="{{item.checked}}"/>{{item.name}}
-  </label> -->
 
   	<image wx:if="{{!item.checked}}" class="checkbox" 
       data-id="{{item._id}}" catchtap="onSelectPlayer"
@@ -44,7 +109,7 @@
       {{item.name}}
     </view>
 
-</view>
+</view> -->
 
 <view wx:if="{{noMore}}" class="footer" >
   -------- 已经到底了 --------

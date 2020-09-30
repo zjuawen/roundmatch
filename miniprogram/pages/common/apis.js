@@ -93,6 +93,13 @@ function createNewMatch(that, players, callback) {
     });
 }
 
+function readMatch(that, clubid, matchid, callback) {
+    commonCallFuction(that, callback, 'matchService', 'read', { 
+        clubid: clubid,
+        matchid: matchid
+    });
+}
+
 function saveNewMatch(that, matchdata, playerCount, clubid, callback) {
     commonCallFuction(that, callback, 'matchService', 'save', {
         matchdata: matchdata,
@@ -167,7 +174,8 @@ module.exports = {
 // match api
   createNewMatch:           createNewMatch,
   saveNewMatch:             saveNewMatch,
-
+  readMatch:                readMatch,
+  
 //user api
   listClubUsers:            listClubUsers,
 
