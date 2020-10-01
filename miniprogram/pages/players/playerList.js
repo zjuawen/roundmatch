@@ -7,7 +7,10 @@ Page({
   data: {
     title: "选择人员",
     loading: false,
+    type: 'nonefix',
     selectedPlayers: [],
+    selectedPlayerPairs: [],
+    selectCount: 0,
     players: [],
 
     nextDisable: true,
@@ -73,44 +76,126 @@ Page({
     console.log(event);
 
     let players = this.data.players;
-    let selectedPlayers = this.data.selectedPlayers;
-
     let index = event.target.dataset.index;
-    let player = selectedPlayers[index];
     
-    players.push(player);
-    selectedPlayers.splice(index, 1);
+    let type = this.data.type;
 
-    let count = selectedPlayers.length;
-    let disable = (count<4)||(count>8);
-    
-    this.setData({
-      selectedPlayers: selectedPlayers,
-      players: players,
-      nextDisable: disable
-    })
+    if( type == 'fixpair'){
+      let selectedPlayerPairs = this.data.selectedPlayerPairs;
+      let slot = event.target.dataset.slot;
+
+      if( slot == 0){
+        let player = selectedPlayerPairs[index].player1;
+        players.push(player);
+        selectedPlayerPairs[index].player1 = null;
+      } else {
+        let player = selectedPlayerPairs[index].player2;
+        players.push(player);
+        selectedPlayerPairs[index].player2 = null;
+      }
+      
+      if( selectedPlayerPairs[index].player1 == null 
+        && selectedPlayerPairs[index].player2 == null ){
+        selectedPlayerPairs.splice(index, 1);
+      }
+
+      let count = 0;
+      selectedPlayerPairs.forEach(item => {
+        if( item.player1 && item.player2){
+          count++;
+        }
+      })  
+      let disable = (count<4)||(count>8);
+      
+      this.setData({
+        selectedPlayerPairs: selectedPlayerPairs,
+        players: players,
+        selectCount: count,
+        nextDisable: disable
+      })
+    } else {
+      let selectedPlayers = this.data.selectedPlayers;
+      let player = selectedPlayers[index];
+
+      players.push(player);
+      selectedPlayers.splice(index, 1);
+  
+      let count = selectedPlayers.length;
+      let disable = (count<4)||(count>8);
+      
+      this.setData({
+        selectedPlayers: selectedPlayers,
+        players: players,
+        selectCount: count,
+        nextDisable: disable
+      })
+    }
   },
 
   onSelectPlayer: function(event) {
     console.log(event);
 
-    let players = this.data.players;
-    let selectedPlayers = this.data.selectedPlayers;
-
     let index = event.target.dataset.index;
+    let players = this.data.players;
     let player = players[index];
 
-    selectedPlayers.push(player);
-    players.splice(index, 1);
+    let type = this.data.type;
+    if( type == 'fixpair'){
+      let selectedPlayerPairs = this.data.selectedPlayerPairs;
 
-    let count = selectedPlayers.length;
-    let disable = (count<4)||(count>8);
- 
-     this.setData({
-      selectedPlayers: selectedPlayers,
-      players: players,
-      nextDisable: disable
-    })
+      let done = false;
+      for( let i = 0; i < selectedPlayerPairs.length; i++){
+        if( selectedPlayerPairs[i].player1 == null){
+          selectedPlayerPairs[i].player1 = player;
+          done = true;
+          break;
+        } else if( selectedPlayerPairs[i].player2 == null){
+          selectedPlayerPairs[i].player2 = player;
+          done = true;
+          break;
+        }
+      }
+
+      if( !done){
+        selectedPlayerPairs.push({
+          player1: player,
+          player2: null
+        });
+      }
+
+      players.splice(index, 1);
+
+      let count = 0;
+      selectedPlayerPairs.forEach(item => {
+        if( item.player1 && item.player2){
+          count++;
+        }
+      })      
+      let disable = (count<4)||(count>8);
+
+      this.setData({
+        selectedPlayerPairs: selectedPlayerPairs,
+        players: players,
+        selectCount: count,
+        nextDisable: disable
+      })
+
+    } else {
+      let selectedPlayers = this.data.selectedPlayers;
+
+      selectedPlayers.push(player);
+      players.splice(index, 1);
+
+      let count = selectedPlayers.length;
+      let disable = (count<4)||(count>8);
+   
+      this.setData({
+        selectedPlayers: selectedPlayers,
+        players: players,
+        selectCount: count,
+        nextDisable: disable
+      })
+     }
   },
 
   // onSelectPlayer: function(event) {
@@ -167,8 +252,11 @@ Page({
     this.setData({
       clubid: options.clubid,
       action: options.action,
+      type: options.type,
       players: [],
       selectedPlayers: [],
+      selectedPlayerPairs: [],
+      selectCount: 0,
       pageNum: 1,
       noMore: false
     });

@@ -12,7 +12,7 @@
 
 <view class="player-header" >
   <view style=" flex: 1;color: grey; display: flex; justify-content: center; " >
-    选择4～8人继续:（{{selectedPlayers.length}}）
+    请选择4～8{{type=='fixpair'?'对':'人'}}后继续:（ {{selectCount}} ）
     </view>
     
   <button 
@@ -30,17 +30,43 @@
 <view style="height: 110rpx" />
 
 <mp-cells title="已选择" >
+  <view wx:if="{{type=='fixpair'}}" >
+    <view style="display: flex;" 
+      wx:for="{{selectedPlayerPairs}}" 
+      wx:key="{{item._id}}">
+    <mp-cell class="player-list-cell"
+      style="width: 50%;" 
+      value="{{item.player1.name}}" 
+      data-index="{{index}}" 
+      data-slot="{{0}}" 
+      bindtap="onDeselectPlayer" >
+        <image slot="icon" src="{{item.player1.avatarUrl}}" 
+          style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
+        </image>
+    </mp-cell>
+    <mp-cell class="player-list-cell"
+      style="width: 50%;" 
+      data-index="{{index}}" 
+      value="{{item.player2.name}}" 
+      data-slot="{{1}}" 
+      bindtap="onDeselectPlayer" >
+        <image slot="icon" src="{{item.player2.avatarUrl}}" 
+          style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
+        </image>
+    </mp-cell>
+    </view>
+  </view> 
 
-  <mp-cell class="player-list-cell"
-    wx:for="{{selectedPlayers}}" wx:key="{{item._id}}"
-    data-index="{{index}}" value="{{item.name}}" 
-    bindtap="onDeselectPlayer" >
-
-      <image slot="icon" src="{{item.avatarUrl}}" 
-        style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
-      </image>
-
-  </mp-cell>
+  <view wx:if="{{type!='fixpair'}}" >
+    <mp-cell class="player-list-cell"
+      wx:for="{{selectedPlayers}}" wx:key="{{item._id}}"
+      data-index="{{index}}" value="{{item.name}}" 
+      bindtap="onDeselectPlayer" >
+        <image slot="icon" src="{{item.avatarUrl}}" 
+          style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
+        </image>
+    </mp-cell>
+  </view>
 
 </mp-cells>
 
