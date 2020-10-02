@@ -138,22 +138,23 @@ savaGames = async (clubid, matchid, games) => {
 
   let count = 0;
   for (let i = 0; i < data.length; i++) {
+    let gamedata = {
+      clubid: clubid,
+      matchid: matchid,
+      order: data[i].order,
+      player1: (data[i].player1._id)? data[i].player1._id : data[i].player1.toString(),
+      player2: (data[i].player2._id)? data[i].player2._id : data[i].player2.toString(),
+      player3: (data[i].player3._id)? data[i].player3._id : data[i].player3.toString(),
+      player4: (data[i].player4._id)? data[i].player4._id : data[i].player4.toString(),
+      score1: -1,
+      score2: -1,
+      createDate: db.serverDate(),
+    };
+
     await db.collection('games_' + clubid )
       .add({
         // data 字段表示需新增的 JSON 数据
-        data: {
-          // id: db.command.inc(1).toString(),
-          clubid: clubid,
-          matchid: matchid,
-          order: data[i].order,
-          player1: data[i].player1.toString(),
-          player2: data[i].player2.toString(),
-          player3: data[i].player3.toString(),
-          player4: data[i].player4.toString(),
-          score1: -1,
-          score2: -1,
-          createDate: db.serverDate(),
-        }
+        data: gamedata
       })
       .then(res => {
         console.log(res)
@@ -326,13 +327,13 @@ readMatch = async (clubid, matchid) => {
       player3: $.arrayElemAt(["$player3", 0]),
       player4: $.arrayElemAt(["$player4", 0]),
     })
-    sort({
+    .sort({
       'order': 1
     })
     .end()
     .then(async res => {
       console.log(res)
-      return res.data;
+      return res.list;
     })
 }
 

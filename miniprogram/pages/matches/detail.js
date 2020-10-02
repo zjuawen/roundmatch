@@ -51,6 +51,7 @@ Page({
 
     expand: true,
 
+    defaultAvatar: '/images/user-unlogin.png',
   },
 
   loading: function (value) {

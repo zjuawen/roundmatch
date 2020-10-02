@@ -142,17 +142,23 @@ Page({
 
   onActionSheetClick: function(event){
     console.log(event);
-    let type = event.detail.value;
+    let value = event.detail.value;
     this.setData({
       showActionsheet: false
     })
-    this.goPlayerList(type);
+    this.goPlayerList(value);
   },
 
-  goPlayerList: function(){
-    wx.navigateTo({
-      url: '../players/playerList?clubid=' + this.data.clubid + '&action=new',
-    })
+  goPlayerList: function(value){
+    if( value==2 ){
+      wx.navigateTo({
+        url: '../players/playerList?clubid=' + this.data.clubid + '&action=new&&type=fixpair',
+      })
+    } else { //if( value==1 )
+      wx.navigateTo({
+        url: '../players/playerList?clubid=' + this.data.clubid + '&action=new',
+      })
+    }
   },
 
   tabChange(e) {

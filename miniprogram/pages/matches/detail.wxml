@@ -42,11 +42,11 @@
         <!-- column1 -->
         <view class="detail-content-column">
           <view wx:if="{{expand}}" class="detail-content-avatars">
-            <image class="avatar" src="{{item.player1.avatarUrl}}" 
-              data-id="{{item.player1}}" bindtap="onTapPlayer" >
+            <image class="avatar" data-id="{{item.player1}}" bindtap="onTapPlayer"
+              src="{{ (item.player1.avatarUrl)?item.player1.avatarUrl:defaultAvatar }}" >
               </image>
-            <image class="avatar" src="{{item.player2.avatarUrl}}" 
-              data-id="{{item.player2}}" bindtap="onTapPlayer">
+            <image class="avatar" data-id="{{item.player2}}" bindtap="onTapPlayer"
+              src="{{ (item.player2.avatarUrl)?item.player2.avatarUrl:defaultAvatar }}" >
               </image> 
           </view>
           <view class="detail-content-names">
@@ -85,11 +85,11 @@
         <!-- column3 -->
         <view class="detail-content-column">
           <view wx:if="{{expand}}" class="detail-content-avatars">
-            <image class="avatar" src="{{item.player3.avatarUrl}}" 
-              data-id="{{item.player3}}" bindtap="onTapPlayer" >
+             <image class="avatar" data-id="{{item.player3}}" bindtap="onTapPlayer"
+              src="{{ (item.player3.avatarUrl)?item.player3.avatarUrl:defaultAvatar }}" >
               </image>
-            <image class="avatar" src="{{item.player4.avatarUrl}}" 
-              data-id="{{item.player4}}" bindtap="onTapPlayer">
+             <image class="avatar" data-id="{{item.player4}}" bindtap="onTapPlayer"
+              src="{{ (item.player4.avatarUrl)?item.player4.avatarUrl:defaultAvatar }}" >
               </image> 
           </view>
           <view class="detail-content-names">
