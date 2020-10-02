@@ -22,7 +22,7 @@ exports.main = async (event, context) => {
   let action = event.action;
   let data;
   if( action == 'create'){
-    data = await createMatchData(event.players);
+    data = await createMatchData(event.type, event.players);
   } else if (action == 'list') {
     let pageNum = (event.pageNum==null)? 1: event.pageNum;
     let pageSize = (event.pageSize==null)? 10: event.pageSize;
@@ -219,13 +219,26 @@ justifyPlayerOrder = async (weightObj) => {
 }
 
 //创建比赛数据（排阵，未保存）
-createMatchData = async (playerArray) => {
+createMatchData = async (type, playerArray) => {
   // let playerArray = event.data;
+
+  var orderArraies = null;
+  var typeValue = 'none';
+  if( type == 'fixpair'){
+    typeValue = 'fix';
+  } else {
+    typeValue = 'none';
+  }
 
   playerArray = shuffleArray(playerArray);
   console.log('after shuffle: ' + playerArray);
+
+  if( type == 'fixpair'){
+    playerArray = flatPlayerArray(playerArray);
+  }
+
   let count = playerArray.length;
-  let orderArraies = await loadOrders(count);
+  orderArraies = await loadOrders(count, typeValue);
 
   let allgames = [];
   for( let n = 0; n < orderArraies.length; n++){
@@ -250,11 +263,25 @@ createMatchData = async (playerArray) => {
       data : games,
     });
   }
+  
   return allgames;
 }
 
-loadOrders = async (playerNum) => {
-  let key = 'ORDERS_' + playerNum;
+flatPlayerArray = (array) => {
+  var newArray = [];
+  array.forEach( pair => {
+    newArray.push(pair.player1);
+    newArray.push(pair.player2);
+  });
+
+  return newArray;
+}
+
+loadOrders = async (playerNum, typeValue) => {
+  var key = 'ORDERS_' + playerNum;
+  if( typeValue == 'fix'){
+    key = 'PAIR_ORDERS_' + playerNum;
+  }
   return await db.collection('systemconfig')
     .where({
       key: key,
@@ -269,25 +296,6 @@ loadOrders = async (playerNum) => {
 
 //读取比赛对阵数据
 readMatch = async (clubid, matchid) => {
-
-  // return await db.collection('games_' + clubid)
-  //   .where({
-  //     matchid: matchid,
-  //   })
-  //   .orderBy('order', 'asc')
-  //   .get()
-  //   .then(async res => {
-  //     console.log(res.data)
-  //     // return res.data;
-  //     let list = res.data;
-  //     list.forEach(data => {
-  //       for( let i = 1; i <= 4; i++){
-  //         let userid = data['player' + i];
-
-  //       }
-  //     })
-  //   })
-
   return await db.collection('games_' + clubid)
     .aggregate()
     .match({
@@ -418,6 +426,20 @@ shuffleArray = (array) => {
   }
   return array;
 }
+
+// //保持一对
+// shuffleArray2 = (array) => {
+//   if( array.length % 2 != 0){
+//     console.log("shuffleArray2: array length = " + array.length + " incorrect");
+//     return null;
+//   }
+//   for (let i = 0; i<array.length/2; i++) {
+//     let j = Math.floor(Math.random() * i);
+//     [array[2*i], array[2*j]] = [array[2*j], array[2*i]];
+//     [array[2*i+1], array[2*j+1]] = [array[2*j+1], array[2*i+1]];
+//   }
+//   return array;
+// }
 
 //清除matches和games数据
 // debug = () => {

@@ -87,8 +87,9 @@ function checkCreateClubEnable(that, callback) {
     commonCallFuction(that, callback, 'clubService', 'listByOwner');
 }
 
-function createNewMatch(that, players, callback) {
+function createNewMatch(that, players, type, callback) {
     commonCallFuction(that, callback, 'matchService', 'create', { 
+        type: type,
         players: players,
     });
 }

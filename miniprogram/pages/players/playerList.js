@@ -89,7 +89,7 @@ Page({
         console.log("deselect empty slot player");
         return;
       }
-      
+
       players.push(player);
       selectedPlayerPairs[index]['player'+slot] = null;
       
@@ -238,14 +238,20 @@ Page({
     // console.log("getSelectedPlayers return: " + playerArray);
     // 
     // return playerArray;
-    return this.data.selectedPlayers;
+    let type = this.data.type;
+    if( type == 'fixpair'){
+      return this.data.selectedPlayerPairs;
+    } else {
+      return this.data.selectedPlayers;
+    }
   },
 
   onPlayerSelectedDone: function(event) {
     let playerArray = this.getSelectedPlayers();
     var data = JSON.stringify(playerArray);
     wx.navigateTo({
-      url: '../matches/detail?action=new&clubid=' + this.data.clubid + '&players=' + data,
+      url: '../matches/detail?action=new&type=' + this.data.type 
+          + '&clubid=' + this.data.clubid + '&players=' + data,
     });
   },
 

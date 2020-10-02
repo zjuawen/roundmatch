@@ -563,13 +563,14 @@ Page({
         vsBtnDisable: false
       });
       this.loadMatchData(this.data.clubid, this.data.matchid);
-      // this.test(this.data.clubid, this.data.matchid);
     } else if (action == 'new') {
-      var selectedPlayers = JSON.parse(options.players);
+      let type = options.type;
+      let selectedPlayers = JSON.parse(options.players);
       // var matchdata = JSON.parse(options.data);
       this.setData({
         action: options.action,
         clubid: options.clubid,
+        type: type,
         selectedPlayers: selectedPlayers,
         // matchArray: matchArray,
         saved: false,
@@ -582,16 +583,19 @@ Page({
 
   createNewMatch: function(){
     let that = this; 
-    APIs.createNewMatch(this, this.data.selectedPlayers, res => {
-      let data = res;
-      that.setData({
-        matchArray: data,
-        vsBtnDisable: true
-      })
+    APIs.createNewMatch(this, 
+      this.data.selectedPlayers, 
+      this.data.type,
+      res => {
+        let data = res;
+        that.setData({
+          matchArray: data,
+          vsBtnDisable: true
+        })
 
-      // that.loadNewMatch(that.data.clubid, that.data.matchArray);
-      that.renderNewMatch(data);
-    })
+        // that.loadNewMatch(that.data.clubid, that.data.matchArray);
+        that.renderNewMatch(data);
+      })
   },
 
   onRefreshMatch: function(){
