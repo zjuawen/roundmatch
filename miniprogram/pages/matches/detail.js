@@ -284,24 +284,6 @@ Page({
   loadMatchData: function (clubid, matchid) {
 
     this.loadGames(clubid, matchid);
-
-    // if( this.data.players ){
-    //   this.loadGames(clubid, matchid);
-    // } else {
-    //   let that = this;
-    //   APIs.listClubUsers( this, clubid, res => {
-    //     let data = res;
-    //     data.forEach(function (item){
-    //       if( item.avatarUrl == null){
-    //         item.avatarUrl = '/images/user-unlogin.png';
-    //       }
-    //     });
-    //     that.setData({
-    //       players: data
-    //     });
-    //     that.loadGames(clubid, matchid);
-    //   });
-    // }
   },
 
   //读取单局比赛数据
@@ -317,9 +299,48 @@ Page({
         that.setData({
           games: data
         })
+
+        that.initMatchPlayers();
+
         that.statistic();
         that.scrollToFirstUnfinish();
     })
+  },
+
+  initMatchPlayers: function(){
+    let games = this.data.games;
+    let data = this.data.matchPlayers;
+
+    for (let gi = 0; gi < games.length; gi++) {
+      for(let n = 1; n<5; n++){
+        let player = games[gi]['player' + n];
+        let found = false;
+
+        for (let i = 0; i < data.length; i++) {
+          if( data[i]._id == player._id){
+            found = true;
+            break;
+          }
+        }
+
+        if( found){
+          continue;
+        }
+
+        player.win = 0;
+        player.lost = 0;
+        player.delta = 0;
+        player.total = 0;
+        
+        data.push(player);
+        console.log('addToMatchPlayers: ' + player.name);
+      }
+    }
+
+    this.setData({
+      matchPlayers: data
+    });
+
   },
 
   scrollToFirstUnfinish: function(){
@@ -351,33 +372,6 @@ Page({
     );
   },
 
-  //
-  addToMatchPlayers: function (player) {
-    let data = this.data.matchPlayers;
-    
-    let found = false;
-    for (let i = 0; i < data.length; i++) {
-      if( data[i]._id == player._id){
-        found = true;
-        break;
-      }
-    }
-
-    if( !found){
-      player.win = 0;
-      player.lost = 0;
-      player.delta = 0;
-      player.total = 0;
-      
-      data.push(player);
-      console.log('addToMatchPlayers: ' + player.name);
-    }
-
-    this.setData({
-      matchPlayers: data
-    });
-  },
-
   //统计
   statistic: function () {
     
@@ -402,10 +396,10 @@ Page({
       }
       let delta = score1 - score2;
 
-      let index1 = this.findMatchPlayerIndex(players, game.player1);
-      let index2 = this.findMatchPlayerIndex(players, game.player2);
-      let index3 = this.findMatchPlayerIndex(players, game.player3);
-      let index4 = this.findMatchPlayerIndex(players, game.player4);
+      let index1 = this.findMatchPlayerIndex(players, game.player1._id);
+      let index2 = this.findMatchPlayerIndex(players, game.player2._id);
+      let index3 = this.findMatchPlayerIndex(players, game.player3._id);
+      let index4 = this.findMatchPlayerIndex(players, game.player4._id);
       players[index1].delta += delta;
       players[index2].delta += delta;
       players[index3].delta -= delta;

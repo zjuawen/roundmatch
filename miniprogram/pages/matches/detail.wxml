@@ -146,7 +146,7 @@
           class="statistic-line-column" >{{index+1}}</view>
 
         <image class="avatar" 
-          src="{{item.avatarUrl}}">
+          src="{{ (item.avatarUrl)?item.avatarUrl:defaultAvatar }}" >
           </image>
 
         <view class="statistic-line-column" >{{item.name}}</view>
