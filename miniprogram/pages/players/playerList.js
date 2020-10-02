@@ -100,12 +100,15 @@ Page({
       }
 
       let count = 0;
+      let empty = false;
       selectedPlayerPairs.forEach(item => {
         if( item.player1 && item.player2){
           count++;
+        } else {
+          empty = true;
         }
       })  
-      let disable = (count<4)||(count>8);
+      let disable = empty || (count<4) || (count>8);
       
       this.setData({
         selectedPlayerPairs: selectedPlayerPairs,
@@ -166,13 +169,16 @@ Page({
       players.splice(index, 1);
 
       let count = 0;
+      let empty = false;
       selectedPlayerPairs.forEach(item => {
         if( item.player1 && item.player2){
           count++;
+        } else {
+          empty = true;
         }
       })      
-      let disable = (count<4)||(count>8);
-
+      let disable = empty || (count<4) || (count>8);
+      
       this.setData({
         selectedPlayerPairs: selectedPlayerPairs,
         players: players,
