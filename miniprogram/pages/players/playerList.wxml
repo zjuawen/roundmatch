@@ -3,31 +3,37 @@
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
 <view class="page__bd">
-  <mp-searchbar 
-    style="z-index: 100;"
-    bindselectresult="selectResult" 
-    search="{{search}}"
-    placeholder="{{'搜索队员'}}" >
-    </mp-searchbar>
 
-<view class="player-header" >
-  <view style=" flex: 1;color: grey; display: flex; justify-content: center; " >
-    请选择4～8{{type=='fixpair'?'对':'人'}}后继续:（ {{selectCount}} ）
+  <view class="player-header" >
+
+    <mp-searchbar 
+      class="player-header-search"
+      bindselectresult="selectResult" 
+      search="{{search}}"
+      placeholder="{{'搜索队员'}}" >
+      </mp-searchbar>
+
+    <view class="player-header-status" >
+
+      <view style=" flex: 1;color: grey; display: flex; justify-content: center; " >
+        请选择4～8{{type=='fixpair'?'对':'人'}}后继续:（ {{selectCount}} ）
+        </view>
+        
+      <button 
+        class="weui-btn" type="primary" 
+        disabled="{{nextDisable}}"
+        size="mini"  bindtap="onPlayerSelectedDone"
+        style="margin-left: 40rpx;margin-right: 40rpx;" >
+      	下一步
+      </button>
     </view>
-    
-  <button 
-    class="weui-btn" type="primary" 
-    disabled="{{nextDisable}}"
-    size="mini"  bindtap="onPlayerSelectedDone"
-    style="margin-left: 40rpx;margin-right: 40rpx;" >
-  	下一步
-  </button>
-</view>
+
+  </view>
 
 </view>
 
 
-<view style="height: 110rpx" />
+<view style="height: 200rpx" />
 
 <mp-cells title="已选择" >
   <view wx:if="{{type=='fixpair'}}" >
@@ -38,7 +44,7 @@
       style="width: 50%;" 
       value="{{item.player1.name}}" 
       data-index="{{index}}" 
-      data-slot="{{0}}" 
+      data-slot="{{1}}" 
       bindtap="onDeselectPlayer" >
         <image slot="icon" src="{{item.player1.avatarUrl}}" 
           style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
@@ -48,7 +54,7 @@
       style="width: 50%;" 
       data-index="{{index}}" 
       value="{{item.player2.name}}" 
-      data-slot="{{1}}" 
+      data-slot="{{2}}" 
       bindtap="onDeselectPlayer" >
         <image slot="icon" src="{{item.player2.avatarUrl}}" 
           style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">

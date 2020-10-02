@@ -84,15 +84,14 @@ Page({
       let selectedPlayerPairs = this.data.selectedPlayerPairs;
       let slot = event.target.dataset.slot;
 
-      if( slot == 0){
-        let player = selectedPlayerPairs[index].player1;
-        players.push(player);
-        selectedPlayerPairs[index].player1 = null;
-      } else {
-        let player = selectedPlayerPairs[index].player2;
-        players.push(player);
-        selectedPlayerPairs[index].player2 = null;
+      let player = selectedPlayerPairs[index]['player'+slot];
+      if( !player){
+        console.log("deselect empty slot player");
+        return;
       }
+      
+      players.push(player);
+      selectedPlayerPairs[index]['player'+slot] = null;
       
       if( selectedPlayerPairs[index].player1 == null 
         && selectedPlayerPairs[index].player2 == null ){
