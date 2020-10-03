@@ -109,12 +109,29 @@ function saveNewMatch(that, matchdata, playerCount, clubid, callback) {
     });
 }
 
-function searchClubs(keyword, that) {
+function searchClubs(that, keyword) {
     commonStartCloudFunction(that);
     let func = 'clubService';
     let action = 'search';
     let data = { 
         action: action,
+        keyword: keyword,
+    };
+    console.log(func + " " + action + " with data:");
+    console.log(data);
+    return wx.cloud.callFunction({
+        name: func,
+        data: data,
+    });
+}
+
+function searchPlayers(that, clubid, keyword) {
+    commonStartCloudFunction(that);
+    let func = 'userService';
+    let action = 'search';
+    let data = { 
+        action: action,
+        clubid: clubid,
         keyword: keyword,
     };
     console.log(func + " " + action + " with data:");
@@ -157,6 +174,26 @@ function imageSecCheck(that, imageContent, callback ){
     });
 }
 
+function readUserConfig(that, key, callback ){
+    commonCallFuction(that, callback, 'userService', 'readconfig', { 
+        key:  key
+    });
+}
+
+function saveUserConfig(that, key, value, callback ){
+    commonCallFuction(that, callback, 'userService', 'saveconfig', { 
+        key:  key,
+        value: value,
+    });
+}
+
+function saveGameData(that, clubid, gamedata, callback ){
+    commonCallFuction(that, callback, 'gameService', 'save', { 
+        clubid:  clubid,
+        gamedata: gamedata,
+    });
+}
+
 //exports
 module.exports = {
 // user api
@@ -176,10 +213,16 @@ module.exports = {
   createNewMatch:           createNewMatch,
   saveNewMatch:             saveNewMatch,
   readMatch:                readMatch,
-  
+
+// game api
+  saveGameData:              saveGameData,
+
 //user api
   listClubUsers:            listClubUsers,
-
+  readUserConfig:           readUserConfig,
+  saveUserConfig:           saveUserConfig,
+  searchPlayers:            searchPlayers,
+  
 //system api
   msgSecCheck:              msgSecCheck,
   imageSecCheck:            imageSecCheck,

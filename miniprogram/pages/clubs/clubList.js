@@ -307,7 +307,7 @@ Page({
         return this.searchClubs(value);
     },
     searchClubs: function(keyword) {
-        return APIs.searchClubs( keyword, this).then (res => {
+        return APIs.searchClubs(this, keyword).then (res => {
             let data = res.result.data;
             let clubs = [];
             data.forEach((club) => {

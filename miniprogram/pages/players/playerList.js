@@ -1,6 +1,8 @@
 // miniprogram/pages/players/playerList.js
-Page({
 
+var APIs = require('../common/apis.js');
+
+Page({
   /**
    * 页面的初始数据
    */
@@ -228,16 +230,6 @@ Page({
   // },
 
   getSelectedPlayers: function() {
-    // let data = this.data.players;
-    // let playerArray = [];
-    // for( let i = 0; i<data.length; i++){
-    //   if( data[i].checked){
-    //      playerArray.push(data[i]._id)
-    //   }
-    // }
-    // console.log("getSelectedPlayers return: " + playerArray);
-    // 
-    // return playerArray;
     let type = this.data.type;
     if( type == 'fixpair'){
       return this.data.selectedPlayerPairs;
@@ -255,6 +247,45 @@ Page({
     });
   },
 
+  search: function (value) {
+    console.log("search: " + value);
+    if( value.length == 0){
+        this.loading(false);
+        return new Promise((resolve, reject) => {
+            resolve([]);
+        });
+    }
+    this.loading(true);
+    return this.searchPlayer(value);
+  },
+  searchPlayer: function(keyword) {
+    let clubid = this.data.clubid;
+    return APIs.searchPlayers(this, clubid, keyword).then (res => {
+      let data = res.result.data;
+      let players = [];
+      data.forEach((player) => {
+        players.push({
+          text: player.name,
+          value: player._id,
+        })
+      })
+      this.loading(false);
+      console.log(players);
+      return players;
+    })
+  },
+  selectResult: function (e) {
+    console.log('select result', e.detail);
+    // let clubid = e.detail.item.value;
+    // var param = 'clubid=' + clubid;
+    // if (this.data.login) {
+    //     var userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
+    //     param = param + '&userInfo=' + userInfo;
+    // }
+    // wx.navigateTo({
+    //     url: './detail?action=join&' + param
+    // })
+  },
 
   /**
    * 生命周期函数--监听页面加载
@@ -272,6 +303,9 @@ Page({
       noMore: false
     });
     this.loadPlayers(this.data.clubid);
+    this.setData({
+        search: this.search.bind(this)
+    })
     // this.loadPlayers(this.data.clubid);
   },
 

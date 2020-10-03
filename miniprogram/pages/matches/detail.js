@@ -200,66 +200,19 @@ Page({
 
   //保存单局比分
   onSaveGame: function(gameIndex) {
-    let func = 'gameService';
-    let action = 'save';
-    console.log(func + " " + action);
 
     let gamedata = this.data.games[gameIndex];
-
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        clubid: gamedata.clubid,
-        gamedata: gamedata,
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result.data);
-        this.statistic();
-        this.loading(false);
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
-        })
-      }
+    let that = this;
+    APIs.saveGameData(this, gamedata.clubid, gamedata, res => {
+      that.statistic();
     })
   },
-
-  // //开始读取新建的比赛
-  // loadNewMatch: function (clubid, matchArray) {
-
-  //   if( this.data.players ){
-  //     this.renderNewMatch(matchArray);
-  //   } else {
-  //     let that = this;
-  //     APIs.listClubUsers( this, clubid, res => {
-  //       let data = res;
-  //       data.forEach(function (item){
-  //         if( item.avatarUrl == null){
-  //           item.avatarUrl = '/images/user-unlogin.png';
-  //         }
-  //       });
-  //       that.setData({
-  //         players: data
-  //       });
-  //       that.renderNewMatch(matchArray);
-  //     });
-  //   }
-  // },
 
   //显示新建的比赛数据
   renderNewMatch: function (matchArray) {
     let gameTitles = [];
     for( let n = 0; n<matchArray.length; n++){
       let data = matchArray[n].data;
-      // for (let i = 0; i < data.length; i++) {
-      //   data[i].playerInfo1 = this.getPlayerById(data[i].player1);
-      //   data[i].playerInfo2 = this.getPlayerById(data[i].player2);
-      //   data[i].playerInfo3 = this.getPlayerById(data[i].player3);
-      //   data[i].playerInfo4 = this.getPlayerById(data[i].player4);
-      // }
       let type = 'default';
       if( n == 0){
         type = 'warn';
@@ -675,33 +628,14 @@ Page({
   },
 
   readUserConfig: function(){
-    this.loading(true);
-
-    let func = 'userService';
-    let action = 'readconfig';
-    console.log('reading user config ...');
-
     let key = 'expand';
-
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        key: key,
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result);
-        let value = res.result.data;
-        if( value != null){
-          this.setData({
-            expand: value
-          })
-        }
-        this.loading(false);
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        this.loading(false);
+    let that = this;
+    APIs.readUserConfig(this, key, res => {
+      let value = res;
+      if( value != null){
+        that.setData({
+          expand: value
+        })
       }
     })
   },
@@ -711,30 +645,10 @@ Page({
       expand: !this.data.expand,
     })
 
-    this.loading(true);
-
-    let func = 'userService';
-    let action = 'saveconfig';
-    console.log('saving user config ...');
-
     let key = 'expand';
     let value = this.data.expand;
-
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        key: key,
-        value: value,
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result);
-        this.loading(false);
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        this.loading(false);
-      }
+    APIs.readUserConfig(this, key, res => {
+      console.log('save user config: ' + res);
     })
   },
 

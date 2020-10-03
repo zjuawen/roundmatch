@@ -32,6 +32,8 @@ exports.main = async (event, context) => {
     let pageNum = 1;
     let pageSize = RECORD_MAX_COUNT;
     data = await listUserInClub(event.clubid, pageNum, pageSize);
+  } else if( action == 'search') {
+    data = await searchUserInClub(event.clubid, event.keyword);
   } else if( action == 'update') {
     let userInfo = event.userInfo;
     data = await updateUserInfo(wxContext.OPENID, userInfo);
@@ -119,6 +121,29 @@ listUserInClub = async (clubid, pageNum, pageSize) => {
     })
 }
 
+//列出俱乐部成员
+searchUserInClub = async (clubid, keyword) => {
+  let regex = '.*' + keyword;
+  return await db.collection('players')
+    .aggregate()
+    .match({
+      clubid: clubid,
+      enable: 1,
+      name: {
+        $regex: regex
+      },
+    })
+    .sort({
+      'order': -1
+    })
+    .end()
+    .then(res => {
+      console.log(res);
+      // return res.data;
+      let data = res.list;
+      return data;
+    })
+}
 
 //更新用户微信信息
 updateUserInfo = async (openid, userInfo) => {
