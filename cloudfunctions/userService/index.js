@@ -104,10 +104,9 @@ addUserData = async (context) => {
 
 //列出俱乐部成员
 listUserInClub = async (clubid, pageNum, pageSize) => {
-
    return await db.collection('players')
     .where({
-      clubid: clubid
+      clubid: clubid,
     })
     .orderBy('order', 'desc')
     .skip(pageSize*(pageNum-1))
@@ -128,7 +127,6 @@ searchUserInClub = async (clubid, keyword) => {
     .aggregate()
     .match({
       clubid: clubid,
-      enable: 1,
       name: {
         $regex: regex
       },

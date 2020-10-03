@@ -6,14 +6,12 @@
 
   <view class="player-header" >
 
-    <mp-searchbar 
-      class="player-header-search"
-      bindselectresult="selectResult" 
-      search="{{search}}"
-      placeholder="{{'搜索队员'}}" >
-      </mp-searchbar>
-
     <view class="player-header-status" >
+
+      <image class="search-btn"
+        bindtap="onSwitchSearchBar" 
+        src="/images/player-search.svg" >
+        </image>
 
       <view style=" flex: 1;color: grey; display: flex; justify-content: center; " >
         请选择4～8{{type=='fixpair'?'对':'人'}}后继续:（ {{selectCount}} ）
@@ -28,12 +26,20 @@
       </button>
     </view>
 
+    <mp-searchbar 
+        wx:if="{{searchShow}}"
+        class="player-header-search"
+        search="{{search}}"
+        bindselectresult="onSelectResult" 
+        placeholder="{{'搜索队员'}}" >
+      </mp-searchbar>
+
   </view>
 
 </view>
 
-
-<view style="height: 200rpx" />
+<view wx:if="{{!searchShow}}" style="height: 120rpx" />
+<view wx:if="{{searchShow}}" style="height: 200rpx" />
 
 <mp-cells title="已选择" >
   <view wx:if="{{type=='fixpair'}}" >
@@ -46,8 +52,8 @@
       data-index="{{index}}" 
       data-slot="{{1}}" 
       bindtap="onDeselectPlayer" >
-        <image slot="icon" src="{{item.player1.avatarUrl}}" 
-          style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
+        <image wx:if="{{item.player1}}" slot="icon" class="avatar"
+          src="{{ (item.player1.avatarUrl)?item.player1.avatarUrl:defaultAvatar }}" >
         </image>
     </mp-cell>
     <mp-cell class="player-list-cell"
@@ -56,8 +62,8 @@
       value="{{item.player2.name}}" 
       data-slot="{{2}}" 
       bindtap="onDeselectPlayer" >
-        <image slot="icon" src="{{item.player2.avatarUrl}}" 
-          style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
+        <image wx:if="{{item.player2}}"  slot="icon" class="avatar"
+          src="{{ (item.player2.avatarUrl)?item.player2.avatarUrl:defaultAvatar }}" >
         </image>
     </mp-cell>
     </view>
@@ -68,8 +74,8 @@
       wx:for="{{selectedPlayers}}" wx:key="{{item._id}}"
       data-index="{{index}}" value="{{item.name}}" 
       bindtap="onDeselectPlayer" >
-        <image slot="icon" src="{{item.avatarUrl}}" 
-          style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
+        <image slot="icon" class="avatar"
+          src="{{ (item.avatarUrl)?item.avatarUrl:defaultAvatar }}" >
         </image>
     </mp-cell>
   </view>
@@ -85,8 +91,8 @@
     data-index="{{index}}" value="{{item.name}}" 
     bindtap="onSelectPlayer" >
 
-      <image slot="icon" src="{{item.avatarUrl}}" 
-        style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;">
+      <image slot="icon" class="avatar"
+        src="{{ (item.avatarUrl)?item.avatarUrl:defaultAvatar }}">
       </image>
 
   </mp-cell>

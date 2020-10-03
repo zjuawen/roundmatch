@@ -58,11 +58,17 @@
 }
 
 .avatar{
-	height: 40px;    
-	width: 40px;    
-	border-radius: 50%;
-	margin: 10rpx;
-	box-shadow: 1px 1px 3px #CCCCCC;
+	margin-right: 32rpx;
+	vertical-align: middle;
+	width: 40rpx; 
+	height: 40rpx;
+}
+
+.search-btn{
+	margin: 32rpx;
+	vertical-align: middle;
+	width: 50rpx; 
+	height: 50rpx;
 }
 
 .player-item-name {

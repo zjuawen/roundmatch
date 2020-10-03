@@ -20,6 +20,9 @@ Page({
     pageNum: 1, //初始页默认值为1
     pageSize: 10,
     noMore: false,
+
+    searchShow: false,
+    defaultAvatar: '/images/user-unlogin.png',
   },
 
   loading: function (value) {
@@ -29,62 +32,52 @@ Page({
   },
 
   loadPlayers: function(clubid) {
-    this.loading(true);
 
-    let func = 'userService';
-    let action = 'list';
-    console.log(func + " " + action);
+    let that = this;
 
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        clubid: clubid,
-        pageNum: this.data.pageNum, 
-        pageSize: this.data.pageSize,
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result);
-        let data = res.result.data;
-        data.forEach(function (item) {
-          item.checked = false;
-          if( item.avatarUrl == null){
-            item.avatarUrl = '/images/user-unlogin.png';
+    APIs.pagedClubPlayers(this, clubid, this.data.pageNum, this.data.pageSize,
+      res => {
+        let players = res;
+        let newPlayers = [];
+        players.forEach(function (player) {
+          let exist = that.isAlreadySelected(player);
+          if( !exist){
+            let index = that.getPlayerIndexFromList(player);
+            if( index < 0 ){
+              newPlayers.push(player);
+            } else {
+              console.log('SKIP player: ' + player.name + ' already in list');
+            }
+          } else {
+            console.log('SKIP player: ' + player.name + ' already in selected');
           }
         });
 
-        let newData = res.result.data;
-        this.setData({
-          noMore: (newData.length < this.data.pageSize)
-        });
-        newData = this.data.players.concat(newData);
+        newPlayers = that.data.players.concat(newPlayers);
 
-        this.setData({
-          players: newData
+        that.setData({
+          noMore: (res.length < that.data.pageSize),
+          players: newPlayers,
         })
-
-        this.loading(false);
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
-        })
-      }
-    })
+      });
   },
 
   onDeselectPlayer: function(event) {
     console.log(event);
 
-    let players = this.data.players;
     let index = event.target.dataset.index;
+    let slot = event.target.dataset.slot;
     
+    this.removePlayerFromSelectedToList(index, slot);
+  },
+
+  removePlayerFromSelectedToList: function(index, slot){
+
+    let players = this.data.players;
     let type = this.data.type;
 
     if( type == 'fixpair'){
       let selectedPlayerPairs = this.data.selectedPlayerPairs;
-      let slot = event.target.dataset.slot;
 
       let player = selectedPlayerPairs[index]['player'+slot];
       if( !player){
@@ -140,8 +133,23 @@ Page({
     console.log(event);
 
     let index = event.target.dataset.index;
+
+    this.movePlayerFromListToSelected(index);
+  },
+
+  movePlayerFromListToSelected: function(index){
     let players = this.data.players;
     let player = players[index];
+
+    let exist = this.isAlreadySelected(player);
+    if( exist ){
+      console.log('already in selected ????');
+      wx.showToast({
+        icon:   'none',
+        title:  '已经在选中的列表中',
+      })
+      return;
+    }
 
     let type = this.data.type;
     if( type == 'fixpair'){
@@ -202,32 +210,33 @@ Page({
         selectCount: count,
         nextDisable: disable
       })
-     }
+    }
   },
 
-  // onSelectPlayer: function(event) {
-  //   console.log(event);
-  //   let data = this.data.players;
-  //   let playerid = event.target.dataset.id;
-  //   for( let i = 0; i<data.length; i++){
-  //     if( data[i]._id == playerid){
-  //       data[i].checked = !data[i].checked;
-  //       let count = this.data.selectedCount;
-  //       if( data[i].checked){
-  //         count++;
-  //       } else {
-  //         count--;
-  //       }
-  //       let disable = (count<4)||(count>8);
-  //       this.setData({ 
-  //         players:data,
-  //         selectedCount: count,
-  //         nextDisable: disable
-  //       });
-  //       return;
-  //     }
-  //   }
-  // },
+  isAlreadySelected: function(player){
+    let id = player._id;
+    let type = this.data.type;
+    if( type == 'fixpair'){
+      let selectedPlayerPairs = this.data.selectedPlayerPairs;
+      for( let i = 0; i < selectedPlayerPairs.length; i++){
+        for( let slot = 1; slot <= 2; slot++){
+          let iPlayer = selectedPlayerPairs[i]['player' + slot];
+          if( iPlayer && iPlayer._id == id){
+            return true;
+          }
+        }
+      }
+    } else {
+      let selectedPlayers = this.data.selectedPlayers;
+      for( let i = 0; i < selectedPlayers.length; i++){
+        let iPlayer = selectedPlayers[i];
+        if( iPlayer && iPlayer._id == id){
+          return true;
+        }
+      }
+    }
+    return false;
+  },
 
   getSelectedPlayers: function() {
     let type = this.data.type;
@@ -258,6 +267,7 @@ Page({
     this.loading(true);
     return this.searchPlayer(value);
   },
+
   searchPlayer: function(keyword) {
     let clubid = this.data.clubid;
     return APIs.searchPlayers(this, clubid, keyword).then (res => {
@@ -266,7 +276,10 @@ Page({
       data.forEach((player) => {
         players.push({
           text: player.name,
-          value: player._id,
+          value: {
+            id: player._id,
+            player: player,
+          },
         })
       })
       this.loading(false);
@@ -274,17 +287,60 @@ Page({
       return players;
     })
   },
-  selectResult: function (e) {
+
+  onSelectResult: function (e) {
     console.log('select result', e.detail);
-    // let clubid = e.detail.item.value;
-    // var param = 'clubid=' + clubid;
-    // if (this.data.login) {
-    //     var userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
-    //     param = param + '&userInfo=' + userInfo;
-    // }
-    // wx.navigateTo({
-    //     url: './detail?action=join&' + param
-    // })
+
+    let players = this.data.players;
+    let player = e.detail.item.value.player;
+
+    let exist = this.isAlreadySelected(player);
+    if( exist ){
+      console.log( player.name + ' already in selected');
+      wx.showToast({
+        icon:   'none',
+        title:  '已经在选中的列表中',
+      })
+      return;
+    }
+
+    let index = this.getPlayerIndexFromList(player);
+    if( index < 0){
+      players.push(player);
+      this.setData({
+        players: players
+      })
+      index = players.length - 1;
+    } else {
+      console.log( player.name + ' already in list, move to selected');
+    }
+    this.movePlayerFromListToSelected(index);
+  },
+
+  onSearchBlur: function(e){
+    console.log(e);
+    this.setData({
+      searchShow: false,
+    })
+  },
+
+  onSwitchSearchBar: function(e){
+   this.setData({
+      searchShow: !this.data.searchShow,
+    })
+  },
+
+  getPlayerIndexFromList: function(player){
+    let id = player._id;
+
+    let players = this.data.players;
+    for (let i = 0; i < players.length; i++){
+      let iPlayer = players[i];
+      if( id == iPlayer._id){
+        return i;
+      }
+    }
+    return -1;
   },
 
   /**
@@ -361,6 +417,9 @@ Page({
     this.loadPlayers(this.data.clubid);
   },
 
+  debug: function(e){
+    console.log(e);
+  },
   /**
    * 用户点击右上角分享
    */

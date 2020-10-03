@@ -162,6 +162,14 @@ function listClubUsers(that, clubid, callback){
     });
 }
 
+function pagedClubPlayers(that, clubid, pageNum, pageSize, callback){
+    commonCallFuction(that, callback, 'userService', 'list', { 
+        clubid: clubid,
+        pageNum: pageNum, 
+        pageSize: pageSize,
+    });
+}
+
 function msgSecCheck(that, content, callback ){
     commonCallFuction(that, callback, 'systemService', 'msgSecCheck', { 
         content:  content
@@ -215,14 +223,15 @@ module.exports = {
   readMatch:                readMatch,
 
 // game api
-  saveGameData:              saveGameData,
+  saveGameData:             saveGameData,
 
 //user api
   listClubUsers:            listClubUsers,
+  pagedClubPlayers:         pagedClubPlayers,
   readUserConfig:           readUserConfig,
   saveUserConfig:           saveUserConfig,
   searchPlayers:            searchPlayers,
-  
+
 //system api
   msgSecCheck:              msgSecCheck,
   imageSecCheck:            imageSecCheck,
