@@ -29,6 +29,7 @@
     <mp-searchbar 
         wx:if="{{searchShow}}"
         class="player-header-search"
+        focus="{{true}}"
         search="{{search}}"
         bindselectresult="onSelectResult" 
         placeholder="{{'搜索队员'}}" >

@@ -50,7 +50,7 @@ Page({
 
     showActionsheet: false,
     gameTypeNames: [
-      { text: '轮转搭档循环', value: 1 },
+      { text: '轮转搭档循环', value: 1, type: 'warn', },
       { text: '固定搭档循环', value: 2 }
     ],
 
