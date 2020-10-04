@@ -539,7 +539,7 @@ listClubGames = async (clubid, date, page = 1) => {
       if( data.length < page_size){
         return data;
       } else {
-        let dataMore = await listClubGames(clubid, page+1);
+        let dataMore = await listClubGames(clubid, date, page+1);
         return data.concat(dataMore);
       }
     })
