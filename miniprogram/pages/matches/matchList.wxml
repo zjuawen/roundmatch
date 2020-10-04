@@ -106,9 +106,33 @@
   <!-- ranking-list -->
   <block wx:else >
 
+    <!-- filter -->
+    <view wx:if="{{filterShow}}" class="statistic-header-container" >
+      <picker 
+          class="filter-date" mode="date"
+          start="2019-01-01"  end="2025-12-31" 
+          bindchange="bindDateFromChange">
+        <view class="filter-text">
+          从: {{dateFrom}}
+        </view>
+      </picker>
+      <picker 
+          class="filter-date" mode="date"
+          start="2019-01-01"  end="2025-12-31" 
+          bindchange="bindDateToChange">
+        <view class="filter-text">
+          到: {{dateTo}}
+        </view>
+      </picker>
+      <image src="/images/send.svg" class="filter-btn"
+        bindtap="onFilter" ></image> 
+    </view>
+
     <!-- header -->
     <view class="statistic-header-container" >
-      <view class="statistic-header-label" style="flex:3;">姓名</view >
+      <image src="/images/calendar.svg" class="filter-switch"
+        bindtap="onSwitchFilter" ></image> 
+      <view class="statistic-header-label" style="flex:2;">姓名</view >
       <view class="statistic-header-label" bindtap="onTapOrder" data-id="pigCount">猪</view>
       <image wx:if="{{orderField=='pigCount'}}"
           class="sort-order-icon" src="{{orderDesc? '/images/asc.svg' : '/images/desc.svg' }}"></image>
@@ -131,7 +155,7 @@
 
       <image class="avatar" 
         data-id="{{item._id}}" catchtap="onSelectPlayer"
-        src="{{item.avatarUrl}}">
+        src="{{ (item.avatarUrl)?item.avatarUrl:defaultAvatar }}" >
         </image>
   
       <view class="statistic-line-column" style="flex:2;">{{item.name}}</view>
@@ -167,3 +191,10 @@
   </view>
 </mp-dialog>
 
+<!--   <picker wx:if="{{datePickerShow}}" mode="date" 
+    value="{{date}}" start="2015-09-01" end="2017-09-01" 
+    bindchange="bindDateChange">
+    <view class="picker">
+      当前选择: {{date}}
+    </view>
+  </picker> -->

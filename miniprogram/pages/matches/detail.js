@@ -203,7 +203,7 @@ Page({
 
     let gamedata = this.data.games[gameIndex];
     let that = this;
-    APIs.saveGameData(this, gamedata.clubid, gamedata, res => {
+    APIs.saveGameData(this, this.data.clubid, gamedata, res => {
       that.statistic();
     })
   },

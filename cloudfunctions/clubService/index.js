@@ -37,7 +37,7 @@ exports.main = async (event, context) => {
   } else if (action == 'update') {
     data = await updateClub(wxContext, event.info, event.userInfo);
   } else if( action == 'statis') {
-     data = await statisUserInClub(event.clubid);
+     data = await statisUserInClub(event.clubid, event.date);
   } else if ( action == 'info') {
     data = await getClubInfo(event.clubid);
   } else if ( action == 'listByOwner') {
@@ -452,7 +452,7 @@ updateClub = async (wxContext, info, userInfo) => {
 
 
 //统计俱乐部成员胜率
-statisUserInClub = async (clubid) => {
+statisUserInClub = async (clubid, date) => {
   return await db.collection('players')
     .where({
       clubid: clubid
@@ -462,21 +462,31 @@ statisUserInClub = async (clubid) => {
     .then( async res =>  {
       console.log(res);
       let players = res.data;
-      let matches = await listClubMatches(clubid);
-      let games = await listClubGames(clubid);
+      let matches = await listClubMatches(clubid, date);
+      let games = await listClubGames(clubid, date);
       let result = startStatisticPlayers(players, matches, games);
       let data = players;
       return data;
     })
 }
 
-//获取该俱乐部所有比赛
-listClubMatches = async (clubid) => {
+//获取该俱乐部某时间段内所有比赛
+listClubMatches = async (clubid, date) => {
+  
+  let condition = {
+    clubid: clubid,
+    delete: _.neq(true),
+  }
+
+  if( date ) {
+    let from = new Date(date.from + ' 00:00:00');
+    let to = new Date(date.to + ' 23:59:59');
+
+    condition.createDate = _.and(_.gt(from), _.lt(to));
+  }
+
   return await db.collection('matches')
-    .where({
-      clubid: clubid,
-      delete: _.neq(true),
-    })
+    .where(condition)
     .get()
     .then(res => {
       console.log("listClubMatches: ");
@@ -487,7 +497,8 @@ listClubMatches = async (clubid) => {
 }
 
 //获取该俱乐部所有场次
-listClubGames = async (clubid, page = 1) => {
+listClubGames = async (clubid, date, page = 1) => {
+
   // let page = 1;
   let page_size = RECORD_MAX_COUNT;
 
@@ -504,11 +515,20 @@ listClubGames = async (clubid, page = 1) => {
     return [];
   }
 
+  let condition = {
+    clubid: clubid,
+    delete: _.neq(true),
+  }
+
+  if( date ) {
+    let from = new Date(date.from + ' 00:00:00');
+    let to = new Date(date.to + ' 23:59:59');
+
+    condition.createDate = _.and(_.gt(from), _.lt(to));
+  }
+
   return await db.collection('games_' + clubid)
-    .where({
-      clubid: clubid,
-      delete: _.neq(true),
-    })
+    .where(condition)
     .skip((page-1)*page_size)
     .get()
     .then(async res => {

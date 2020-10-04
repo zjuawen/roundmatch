@@ -1,5 +1,6 @@
 // miniprogram/pages/matchList/matchList.js
-// var app = getApp();
+var APIs = require('../common/apis.js');
+var Utils = require('../common/utils.js');
 
 Page({
 
@@ -20,6 +21,8 @@ Page({
       text: '删除',
       // src: '/page/weui/cell/icon_love.svg', // icon的路径
     }],
+
+    defaultAvatar: '/images/user-unlogin.png',
 
     orderField: 'notSet',
     orderDesc: 'notSet',
@@ -50,6 +53,10 @@ Page({
       { text: '轮转搭档循环', value: 1 },
       { text: '固定搭档循环', value: 2 }
     ],
+
+    filterShow: false,
+    dateFrom: '2019-01-01',
+    dateTo: Utils.getCurrentDate(),
   },
 
   loading: function (value) {
@@ -183,56 +190,41 @@ Page({
   },
 
   loadPlayersStatistic: function(clubid) {
-    this.loading(true);
+    
+    let that = this;
+    var date = null;
 
-    let func = 'clubService';
-    let action = 'statis';
-    console.log(func + " " + action);
-
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        clubid: clubid
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result);
-        let data = res.result.data;
-        data.forEach(function (item) {
-          if( item.avatarUrl == null){
-            item.avatarUrl = '/images/user-unlogin.png';
-          }
-          // item.pigCount = 0;
-          // item.crownCount = 0;
-          // item.winCount = 1;
-          // item.lostCount = 2;
-          let winrate = item.winCount/(item.lostCount+item.winCount);
-          let rateStr = '0%';
-          if( isNaN(winrate)){
-             winrate = 0;
-             rateStr = '0%';
-          } else {
-            rateStr = (winrate*100).toFixed(2) + '%';
-          }
-          item.winrate = winrate;
-          item.rateStr = rateStr;
-        });
-
-        this.setData({
-          players: data,
-          orderField: 'notSet',
-          orderDesc: 'notSet',
-        });
-
-        this.loading(false);
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
-        })
+    if( this.data.dateFrom && this.data.dateTo) {
+      date = {
+        from: this.data.dateFrom,
+        to: this.data.dateTo
       }
-    })
+    }
+    APIs.statisClub(this, clubid, date, res => {
+      let data = res;
+      data.forEach(function (item) {
+        // item.pigCount = 0;
+        // item.crownCount = 0;
+        // item.winCount = 1;
+        // item.lostCount = 2;
+        let winrate = item.winCount/(item.lostCount+item.winCount);
+        let rateStr = '0%';
+        if( isNaN(winrate)){
+           winrate = 0;
+           rateStr = '0%';
+        } else {
+          rateStr = (winrate*100).toFixed(2) + '%';
+        }
+        item.winrate = winrate;
+        item.rateStr = rateStr;
+      });
+
+      this.setData({
+        players: data,
+        orderField: 'notSet',
+        orderDesc: 'notSet',
+      });
+    });
   },
 
   onTapOrder: function(e){
@@ -379,33 +371,16 @@ Page({
   },
 
   deleteMatch: function (clubid, matchid) {
-    let func = 'matchService';
-    let action = 'delete';
 
-    console.log(func + " " + action);
-
-    return wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        clubid: clubid,
-        matchid: matchid
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result);
-        this.setData({
-          matches: [],
-          pageNum: 1,
-          noMore: false
-        }); 
-        this.loadMatches(this.data.clubid);
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
-        })
-      }
+    let that = this;
+    
+    APIs.deleteMatch(this, clubid, matchid, res => {
+      that.setData({
+        matches: [],
+        pageNum: 1,
+        noMore: false
+      }); 
+      that.loadMatches(that.data.clubid);
     })
   },
 
@@ -418,7 +393,7 @@ Page({
     });
   },
 
-  reorderPlayers: function(data, field, desc){
+  reorderPlayers: function(data, field, desc) {
     data.sort(function (player1, player2){
       let value1 = player1[field];
       let value2 = player2[field];
@@ -428,6 +403,29 @@ Page({
         return value1 - value2;
       }
     })
+  },
+
+  onSwitchFilter: function(e) {
+    this.setData({
+      filterShow: !this.data.filterShow,
+    })
+  },
+
+  bindDateFromChange: function(e) {
+    this.setData({
+      dateFrom: e.detail.value
+    })
+  },
+
+  bindDateToChange: function(e) {
+    this.setData({
+      dateTo: e.detail.value
+    })
+  },
+
+  onFilter: function(e){
+    console.log(e);
+    this.loadPlayersStatistic(this.data.clubid);
   },
 
   /**

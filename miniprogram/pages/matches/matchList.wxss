@@ -125,6 +125,31 @@
 	color: grey;
 }
 
+.filter-switch {
+	margin: 10rpx;
+	vertical-align: middle;
+	width: 50rpx; 
+	height: 50rpx;
+}
+
+.filter-btn {
+	margin: 10rpx;
+	vertical-align: middle;
+	width: 40rpx; 
+	height: 40rpx;
+}
+
+.filter-date {
+	flex: 1;
+	background-color: white;
+	margin: 20rpx;
+}
+
+.filter-text {
+	margin-left: 20rpx;
+	margin-right: 20rpx;
+}
+
 .statistic-line {
 	display: flex;
 	flex-direction: row;

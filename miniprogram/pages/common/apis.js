@@ -101,6 +101,13 @@ function readMatch(that, clubid, matchid, callback) {
     });
 }
 
+function deleteMatch(that, clubid, matchid, callback) {
+    commonCallFuction(that, callback, 'matchService', 'delete', { 
+        clubid: clubid,
+        matchid: matchid
+    });
+}
+
 function saveNewMatch(that, matchdata, playerCount, clubid, callback) {
     commonCallFuction(that, callback, 'matchService', 'save', {
         matchdata: matchdata,
@@ -170,6 +177,13 @@ function pagedClubPlayers(that, clubid, pageNum, pageSize, callback){
     });
 }
 
+function statisClub(that, clubid, date, callback){
+    commonCallFuction(that, callback, 'clubService', 'statis', { 
+        clubid: clubid,
+        date: date,
+    });
+}
+
 function msgSecCheck(that, content, callback ){
     commonCallFuction(that, callback, 'systemService', 'msgSecCheck', { 
         content:  content
@@ -216,11 +230,13 @@ module.exports = {
   createClub:               createClub,
   updateClub:               updateClub,
   checkCreateClubEnable:    checkCreateClubEnable,
+  statisClub:               statisClub,
 
 // match api
   createNewMatch:           createNewMatch,
   saveNewMatch:             saveNewMatch,
   readMatch:                readMatch,
+  deleteMatch:              deleteMatch,
 
 // game api
   saveGameData:             saveGameData,
