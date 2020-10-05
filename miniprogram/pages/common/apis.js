@@ -108,8 +108,9 @@ function deleteMatch(that, clubid, matchid, callback) {
     });
 }
 
-function saveNewMatch(that, matchdata, playerCount, clubid, callback) {
+function saveNewMatch(that, type, matchdata, playerCount, clubid, callback) {
     commonCallFuction(that, callback, 'matchService', 'save', {
+        type: type,
         matchdata: matchdata,
         playerCount: playerCount,
         clubid: clubid,

@@ -12,6 +12,8 @@ Page({
 
     navBackDelta: 1,
 
+    type: 'nonefix',
+
     saved: false,
     matches: [],
     games: [],
@@ -438,11 +440,12 @@ Page({
 
   onSaveMatch: function (event) {
     let that = this;
+    let type = this.data.type;
     let matchdata = this.data.games;
     let playerCount = this.data.matchPlayers.length;
     let clubid = this.data.clubid;
 
-    APIs.saveNewMatch(this, matchdata, playerCount, clubid, res => {
+    APIs.saveNewMatch(this, type, matchdata, playerCount, clubid, res => {
         let matchid = res.matchid;
         that.setData({
           matchid: matchid
@@ -512,6 +515,7 @@ Page({
         action: options.action,
         clubid: options.clubid,
         matchid: options.matchid,
+        type: options.type,
         saved: true,
         vsBtnDisable: false
       });
@@ -541,6 +545,14 @@ Page({
       this.data.type,
       res => {
         let data = res;
+        if( !data || data.length == 0 ){
+          wx.showToast({
+            icon: 'none',
+            title: '暂时未开放该情况下的排阵规则，请修改参加人数',
+            duration: 2000,
+          });
+          return;
+        }
         that.setData({
           matchArray: data,
           vsBtnDisable: true

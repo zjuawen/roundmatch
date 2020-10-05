@@ -1,4 +1,5 @@
 <!--miniprogram/pages/matches/detail.wxml-->
+<wxs module="utils" src="../common/utils.wxs"></wxs>
 
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}" delta="{{navBackDelta}}"></mp-navigation-bar>
 
@@ -134,16 +135,16 @@
         wx:for-index="index" 
         class="statistic-line">
 
-        <image wx:if="{{(matchDone && (index==0))}}" 
+        <image wx:if="{{( matchDone && ((type=='fixpair')?(index<2):(index==0)) )}}" 
           src="/images/crown.png" mode="aspectFit"
           class="statistic-icon">
           </image>
-        <image wx:elif="{{(matchDone && (index==matchPlayers.length-1))}}" 
+        <image wx:elif="{{( matchDone && ((type=='fixpair')?(index>=matchPlayers.length-2) :(index==matchPlayers.length-1)) )}}" 
           src="/images/pighead.png" mode="aspectFit"
           class="statistic-icon">
           </image>
         <view wx:else
-          class="statistic-line-column" >{{index+1}}</view>
+          class="statistic-line-column" >{{ (type=='fixpair')? (utils.numberToFixed((index+1)/2,0)):(index+1) }}</view>
 
         <image class="avatar" 
           src="{{ (item.avatarUrl)?item.avatarUrl:defaultAvatar }}" >

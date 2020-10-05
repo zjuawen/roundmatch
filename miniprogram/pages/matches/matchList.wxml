@@ -28,6 +28,7 @@
       bindbuttontap="onClickMatchCellButton"
       bind:tap="onClickMatchCell"
       data-matchid="{{ item._id }}"
+      data-index="{{ index }}"
       style="width: 100%; background-color: red;">
 
     <view 

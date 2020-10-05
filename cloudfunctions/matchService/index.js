@@ -28,7 +28,7 @@ exports.main = async (event, context) => {
     let pageSize = (event.pageSize==null)? 10: event.pageSize;
     data = await listMatch(wxContext.OPENID, event.clubid, pageNum, pageSize);
   } else if (action == 'save') {
-    data = await saveMatchData(wxContext.OPENID, event.clubid, 
+    data = await saveMatchData(wxContext.OPENID, event.type, event.clubid, 
       event.matchdata, event.playerCount);
   } else if (action == 'read') {
     data = await readMatch(event.clubid, event.matchid);
@@ -70,7 +70,7 @@ updateMatch = async (match) => {
 }
 
 //保存新增的比赛数据
-saveMatchData = async (owner, clubid, games, playerCount, remark="") => {
+saveMatchData = async (owner, type, clubid, games, playerCount, remark="") => {
   return await db.collection('matches')
     .add({
       // data 字段表示需新增的 JSON 数据
@@ -81,6 +81,7 @@ saveMatchData = async (owner, clubid, games, playerCount, remark="") => {
         total: games.length,
         finish: 0,
         playerCount: playerCount,
+        type: type,
         delete: false,
         owner: owner,
         remark: remark,
@@ -398,6 +399,7 @@ listMatch = async (owner, clubid, pageNum, pageSize) => {
       // id: true,
       clubid: true,
       name: true,
+      type: true,
       total: true,
       finish: true,
       playerCount: true,

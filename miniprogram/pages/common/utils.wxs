@@ -1,0 +1,11 @@
+// 支持es4语法
+var utils = {
+	numberToFixed: function(value, bits){
+		return value.toFixed(bits)
+	}
+}
+
+// 导出对外暴露的属性
+module.exports = {
+	numberToFixed: utils.numberToFixed
+}

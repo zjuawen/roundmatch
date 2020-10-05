@@ -388,8 +388,17 @@ Page({
     console.log(event);
     let clubid = this.data.clubid;
     let matchid = event.currentTarget.dataset.matchid;
+
+    let url = '../matches/detail?action=old&clubid=' + clubid + '&matchid=' + matchid;
+    
+    let index = event.currentTarget.dataset.index;
+    let type = this.data.matches[index].type;
+    if( type ){
+      url = url + '&type=' + type;
+    }
+
     wx.navigateTo({
-      url: '../matches/detail?action=old&clubid=' + clubid + '&matchid=' + matchid,
+      url: url
     });
   },
 
