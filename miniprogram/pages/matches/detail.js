@@ -442,7 +442,12 @@ Page({
     let that = this;
     let type = this.data.type;
     let matchdata = this.data.games;
-    let playerCount = this.data.matchPlayers.length;
+    let playerCount = 0;
+    if( type == 'fixpair'){
+      playerCount = this.data.selectedPlayers.length * 2;
+    } else {
+      playerCount = this.data.selectedPlayers.length;
+    }
     let clubid = this.data.clubid;
 
     APIs.saveNewMatch(this, type, matchdata, playerCount, clubid, res => {
@@ -521,7 +526,10 @@ Page({
       });
       this.loadMatchData(this.data.clubid, this.data.matchid);
     } else if (action == 'new') {
-      let type = options.type;
+      let type = this.data.type;
+      if(options.type){
+        type = options.type;
+      }
       let selectedPlayers = JSON.parse(options.players);
       // var matchdata = JSON.parse(options.data);
       this.setData({
