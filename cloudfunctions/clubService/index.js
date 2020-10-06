@@ -482,7 +482,7 @@ listClubMatches = async (clubid, date) => {
     let from = new Date(date.from + ' 00:00:00');
     let to = new Date(date.to + ' 23:59:59');
 
-    condition.createDate = _.and(_.gt(from), _.lt(to));
+    condition.createDate = _.and(_.gte(from), _.lte(to));
   }
 
   return await db.collection('matches')
@@ -635,6 +635,14 @@ statisticPigAndCrown = (players, matches, games) => {
     let realLast = findPlayerById(players,last._id);
     realFirst.crownCount++;
     realLast.pigCount++;
+    if( match.type && match.type == 'fixpair'){
+      let second = playerArray[1];
+      let lastSecond = playerArray[playerArray.length-2];
+      let realSecond = findPlayerById(players, second._id);
+      let realLastSecond = findPlayerById(players,lastSecond._id);
+      realSecond.crownCount++;
+      realLastSecond.pigCount++;
+    }
   });
 }
 
