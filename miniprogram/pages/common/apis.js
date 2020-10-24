@@ -185,6 +185,10 @@ function statisClub(that, clubid, date, callback){
     });
 }
 
+function isAuditing(that, callback) {
+    commonCallFuction(that, callback, 'systemService', 'auditing');
+}
+
 function msgSecCheck(that, content, callback ){
     commonCallFuction(that, callback, 'systemService', 'msgSecCheck', { 
         content:  content
@@ -252,6 +256,7 @@ module.exports = {
 //system api
   msgSecCheck:              msgSecCheck,
   imageSecCheck:            imageSecCheck,
+  isAuditing:               isAuditing,
 }
 
 

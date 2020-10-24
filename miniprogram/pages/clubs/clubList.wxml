@@ -62,7 +62,7 @@
 </View>
 
 <button 
-      wx:if="{{(createClubEnable)}}"
+      wx:if="{{(!auditing && createClubEnable)}}"
       class="weui-btn" type="default" size="default" plain="false"
       bindtap="onCreateClub"
       style="margin-Top: 40rpx; margin-bottom: 40rpx; font-size: 36rpx;">

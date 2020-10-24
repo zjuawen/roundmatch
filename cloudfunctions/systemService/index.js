@@ -29,6 +29,10 @@ exports.main = async (event, context) => {
     data = await msgSecCheck( wxContext.OPENID, event.param);
   } else if (action == 'imgSecCheck') {
     data = await imgSecCheck( event);
+  } else if (action == 'auditing') {
+    data = {
+      auditing: true
+    }
   }
 
   return {
