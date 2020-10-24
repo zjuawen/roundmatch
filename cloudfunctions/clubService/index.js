@@ -159,7 +159,7 @@ isVipUser = async (wxContext) => {
 
 //查找所有已创建的俱乐部
 listOwnClub = async (wxContext) => {
-  let vip = isVipUser(wxContext);
+  let vip = await isVipUser(wxContext);
   let clubs = await db.collection('clubs')
     .where({
       creator: wxContext.OPENID,
@@ -327,7 +327,7 @@ addUserToClub = async (clubid, openid, userInfo) => {
 }
 
 checkOwnedClub = async (wxContext) => {
-  let vip = isVipUser(wxContext);
+  let vip = await isVipUser(wxContext);
   if( vip){
     return false;
   }

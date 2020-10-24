@@ -215,11 +215,11 @@
     </view>    
     <view style="display: flex; flex-direction: row; justify-content: center;">  
       <view style="flex: 4" >
-        <text>{{games[clickIndex].playerInfo1.name}} {{games[clickIndex].playerInfo2.name}}</text>
+        <text>{{games[clickIndex].player1.name}} {{games[clickIndex].player2.name}}</text>
       </view>
       <text style="flex: 1" >/</text>
       <view style="flex: 4" >
-        <text>{{games[clickIndex].playerInfo3.name}} {{games[clickIndex].playerInfo4.name}}</text>
+        <text>{{games[clickIndex].player3.name}} {{games[clickIndex].player4.name}}</text>
       </view>
     </view>
   </view>
