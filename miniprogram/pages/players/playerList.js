@@ -52,14 +52,34 @@ Page({
             console.log('SKIP player: ' + player.name + ' already in selected');
           }
         });
-
+        
         newPlayers = that.data.players.concat(newPlayers);
-
+        
         that.setData({
           noMore: (res.length < that.data.pageSize),
           players: newPlayers,
         })
+
+        if( !that.data.noMore ){
+          that.autoLoadPlayers(that);
+        }
       });
+  },
+
+  autoLoadPlayers(that){
+    const query = wx.createSelectorQuery();
+    query.select('#'+'footer').boundingClientRect();
+
+    query.exec((res) => {
+        console.log(res);
+        let bottom = res[0].bottom;
+        var SystemInfo = wx.getSystemInfoSync();
+        console.log(SystemInfo);
+        let windowHeight = SystemInfo.windowHeight;
+        if( bottom <= windowHeight){
+          that.onReachBottom();
+        }
+    });
   },
 
   onDeselectPlayer: function(event) {
