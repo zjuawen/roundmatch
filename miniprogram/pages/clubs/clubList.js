@@ -39,7 +39,7 @@ Page({
         // inputShowed: false,
         // inputVal: "",
         notice: "新版本又上线！俱乐部的创建者可以向左滑动，修改俱乐部信息，并上传俱乐部自定义LOGO图片了！加入俱乐部的用户可以向右滑动，打开隐藏的查看按钮，点击查看俱乐部详细信息。",
-        auditing: false,
+        auditing: true,
 
         debug: false,
     },
