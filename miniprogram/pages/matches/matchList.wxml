@@ -9,7 +9,7 @@
 
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
-<view style="margin-bottom: 140rpx;">
+<view style="margin-bottom: 140rpx; width: 100%; overflow-x:hidden;">
 
   <!-- start of match-list -->
   <block wx:if="{{tabIndex==0}}">
