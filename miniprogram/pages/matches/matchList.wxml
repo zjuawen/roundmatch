@@ -24,7 +24,7 @@
     <mp-slideview
       wx:for="{{ matches }}"
       wx:key="{{ _id }}"
-      buttons="{{ (item.owner && (item.finish < item.total))? slideButtonOne : [] }}" 
+      buttons="{{ (item.owner )? slideButtonOne : [] }}" 
       bindbuttontap="onClickMatchCellButton"
       bind:tap="onClickMatchCell"
       data-matchid="{{ item._id }}"
