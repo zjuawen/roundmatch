@@ -9,6 +9,24 @@
 
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
+<!-- 公告 -->
+<view wx:if='{{(msgList.length>0)}}' class="noticebar-container">
+  <!-- <text class='swiper-notice'>公告：</text> -->
+  <image class='swiper-notice' mode="aspectFit"
+      src="/images/speaker.svg" >
+    </image>
+  <swiper class='swiper-container' autoplay='true' vertical='true' circular='true' interval='3000'>
+      <block wx:for='{{msgList}}'>
+          <!-- <navigator url='/pages/notice/notice?title={{item.url}}' open-type='navigate'> -->
+              <swiper-item>
+                  <view class='swiper-item'>{{item.title}}</view>
+              </swiper-item>
+          <!-- </navigator> -->
+      </block>
+  </swiper>
+</view>
+<!-- 公告 end -->
+
 <view style="margin-bottom: 140rpx; width: 100%; overflow-x:hidden;">
 
   <!-- start of match-list -->
@@ -19,7 +37,7 @@
         bindtap="onNewGame" ></image> 
     </view>
 
-    <view style="margin-top: 40rpx;"></view>
+    <view style="margin-top: 30rpx;"></view>
 
     <mp-slideview
       wx:for="{{ matches }}"

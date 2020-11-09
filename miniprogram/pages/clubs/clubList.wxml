@@ -2,13 +2,23 @@
 
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" title="{{title}}" background="{{'white'}}" back="{{false}}" ></mp-navigation-bar>
 
-<van-notice-bar
-  scrollable="{{ true }}"
-  text="{{notice}}"
-  mode="closeable"
-  speed="{{10}}"
-  left-icon="volume-o"
-/>
+<!-- 公告 -->
+<view wx:if='{{(msgList.length>0)}}' class="noticebar-container">
+  <!-- <text class='swiper-notice'>公告：</text> -->
+  <image class='swiper-notice' mode="aspectFit"
+      src="/images/speaker.svg" >
+    </image>
+  <swiper class='swiper-container' autoplay='true' vertical='true' circular='true' interval='3000'>
+      <block wx:for='{{msgList}}'>
+          <!-- <navigator url='/pages/notice/notice?title={{item.url}}' open-type='navigate'> -->
+              <swiper-item>
+                  <view class='swiper-item'>{{item.title}}</view>
+              </swiper-item>
+          <!-- </navigator> -->
+      </block>
+  </swiper>
+</view>
+<!-- 公告 end -->
 
 <view class="page__bd">
   <mp-searchbar 

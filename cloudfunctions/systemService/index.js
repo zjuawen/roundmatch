@@ -23,15 +23,15 @@ exports.main = async (event, context) => {
 
   let action = event.action;
   let data;
-  if (action == 'getNotice') {
-    data = await getNotice( wxContext.OPENID, event.param);
+  if (action == 'notices') {
+    data = await getNotices( wxContext.OPENID, event.page);
   } else if (action == 'msgSecCheck') {
     data = await msgSecCheck( wxContext.OPENID, event.param);
   } else if (action == 'imgSecCheck') {
     data = await imgSecCheck( event);
   } else if (action == 'auditing') {
     data = {
-      auditing: true
+      auditing: true  //false
     }
   }
 
@@ -183,12 +183,23 @@ requestAccessToken = async () => {
 }
 
 //读取公告信息
-getNotice = async (openid, param) => {
+getNotices = async (openid, page) => {
   return await db.collection('notices')
-    .get()
+    .aggregate()
+    .match({
+      page: page,
+      enable: _.neq(false),
+    })
+    .sort({
+      'order': -1
+    })
+    .project({
+      title: '$content',
+    })
+    .end()
     .then( async res => {
       console.log(res);
-      let data = res.data;
+      let data = res.list;
       return data;
     });
 }

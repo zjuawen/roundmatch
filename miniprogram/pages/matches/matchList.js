@@ -57,6 +57,8 @@ Page({
     filterShow: false,
     dateFrom: '2019-01-01',
     dateTo: Utils.getCurrentDate(),
+
+    msgList: [],
   },
 
   loading: function (value) {
@@ -437,6 +439,16 @@ Page({
     this.loadPlayersStatistic(this.data.clubid);
   },
 
+  readNotices: function(){
+      let that = this;
+      APIs.getNotices(this, "matchList", res => {
+          console.log(res);
+          that.setData({
+              msgList: res,
+          })
+      })
+  },
+
   /**
  * 生命周期函数--监听页面加载
  */
@@ -447,6 +459,7 @@ Page({
     getApp().globalData.clubid = this.data.clubid;
     this.getClubInfo(this.data.clubid);
     wx.hideShareMenu({});
+    this.readNotices();
     // this.loadMatches(this.data.clubid);
     // this.loadPlayers(this.data.clubid);
   },

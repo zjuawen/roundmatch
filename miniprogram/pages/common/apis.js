@@ -185,6 +185,12 @@ function statisClub(that, clubid, date, callback){
     });
 }
 
+function getNotices(that, page, callback){
+    commonCallFuction(that, callback, 'systemService', 'notices', { 
+        page:  page
+    });
+}
+
 function isAuditing(that, callback) {
     commonCallFuction(that, callback, 'systemService', 'auditing');
 }
@@ -257,6 +263,7 @@ module.exports = {
   msgSecCheck:              msgSecCheck,
   imageSecCheck:            imageSecCheck,
   isAuditing:               isAuditing,
+  getNotices:               getNotices,
 }
 
 

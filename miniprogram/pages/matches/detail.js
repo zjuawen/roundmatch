@@ -54,6 +54,8 @@ Page({
     expand: true,
 
     defaultAvatar: '/images/user-unlogin.png',
+
+    msgList: [],
   },
 
   loading: function (value) {
@@ -509,6 +511,16 @@ Page({
   //   console.log(e);
   // },
 
+  readNotices: function(){
+      let that = this;
+      APIs.getNotices(this, "matchDetail", res => {
+          console.log(res);
+          that.setData({
+              msgList: res,
+          })
+      })
+  },
+  
   /**
    * 生命周期函数--监听页面加载
    */
@@ -543,7 +555,8 @@ Page({
       });
       this.createNewMatch();
     }
-    this.readUserConfig()
+    this.readUserConfig();
+    this.readNotices();
   },
 
   createNewMatch: function(){

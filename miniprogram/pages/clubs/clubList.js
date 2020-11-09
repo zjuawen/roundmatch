@@ -41,6 +41,8 @@ Page({
         notice: "新版本又上线！俱乐部的创建者可以向左滑动，修改俱乐部信息，并上传俱乐部自定义LOGO图片了！加入俱乐部的用户可以向右滑动，打开隐藏的查看按钮，点击查看俱乐部详细信息。",
         auditing: true,
 
+        msgList: [],    //[ {title: 'test1'}, {title: 'test3'} ],
+
         debug: false,
     },
     loading: function(value) {
@@ -344,6 +346,15 @@ Page({
             url: './detail?action=join&' + param
         })
     },
+    readNotices: function(){
+        let that = this;
+        APIs.getNotices(this, "clubList", res => {
+            console.log(res);
+            that.setData({
+                msgList: res,
+            })
+        })
+    },
     /**
      * 生命周期函数--监听页面加载
      */
@@ -352,6 +363,7 @@ Page({
         this.getOpenid();
         this.loadUserinfo();
         this.isAuditing();
+        this.readNotices();
         let action = options.action;
         if (action == 'sharejoin') {
             let clubid = options.clubid;
