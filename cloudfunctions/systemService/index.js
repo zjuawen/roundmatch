@@ -31,7 +31,7 @@ exports.main = async (event, context) => {
     data = await imgSecCheck( event);
   } else if (action == 'auditing') {
     data = {
-      auditing: true  //false
+      auditing: false
     }
   }
 

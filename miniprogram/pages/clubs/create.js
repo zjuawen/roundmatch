@@ -21,6 +21,7 @@ Page({
     publicInfo: '不允许被其他人搜索到',
     fileList: [],
     loading: false,
+    auditing: true,
   },
 
   loading: function (value) {
@@ -252,6 +253,15 @@ Page({
     });
   },
 
+  isAuditing: async function() {
+      let that = this; 
+      await APIs.isAuditing(this, async res => {
+          that.setData({
+              auditing: res.auditing
+          });
+      })
+  },
+  
   /**
    * 生命周期函数--监听页面加载
    */
@@ -259,6 +269,7 @@ Page({
     console.log(options);
     var userInfoObject = JSON.parse(decodeURIComponent(options.userInfo));
     console.log(userInfoObject);
+    this.isAuditing();
     if( options.action == 'create'){
       this.setData({
         userInfo: userInfoObject,
