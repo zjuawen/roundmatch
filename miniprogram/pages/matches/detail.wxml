@@ -33,7 +33,7 @@
       id="game:{{ item._id }}"
       class="{{ expand? 'detail-block' : 'detail-block-shrink' }}"
       style="background-color: {{(item.score1>=0 && item.score2>=0)? '#DDFFDD' : 'white' }};" >
-
+      
       <view class="detail-title">
         <image wx:if="{{(item.score1>=0 && item.score2>=0)}}"
           class="detail-title-icon" 
@@ -58,30 +58,38 @@
           {{(index+1)}}
         </label> -->
 
-        <!-- column1 -->
+        <!-- player1 -->
         <view class="detail-content-column">
           <view wx:if="{{expand}}" class="detail-content-avatars">
-            <image class="avatar" data-id="{{item.player1}}" bindtap="onTapPlayer"
+            <image class="avatar" data-id="{{item.player1._id}}" bindtap="onTapPlayer"
               src="{{ (item.player1.avatarUrl)?item.player1.avatarUrl:defaultAvatar }}" >
               </image>
-            <image class="avatar" data-id="{{item.player2}}" bindtap="onTapPlayer"
+          </view>
+          <view class="detail-content-names">
+            <view data-id="{{item.player1._id}}" bindtap="onTapPlayer"
+              class="{{ utils.contains(highlights, item.player1._id) ? 'detail-content-name-highlight' : 'detail-content-name'}}" >
+              {{item.player1.name}}
+            </view>  
+          </view>
+        </view>
+
+         <!-- player2 -->
+        <view class="detail-content-column">
+          <view wx:if="{{expand}}" class="detail-content-avatars">
+            <image class="avatar" data-id="{{item.player2._id}}" bindtap="onTapPlayer"
               src="{{ (item.player2.avatarUrl)?item.player2.avatarUrl:defaultAvatar }}" >
               </image> 
           </view>
           <view class="detail-content-names">
-            <view data-id="{{item.player1}}" bindtap="onTapPlayer"
-              class="{{item.player1 == highlight? 'detail-content-name-highlight' : 'detail-content-name'}}" >
-              {{item.player1.name}}
-            </view>
-            <view data-id="{{item.player2}}" bindtap="onTapPlayer"
-              class="{{item.player2 == highlight? 'detail-content-name-highlight' : 'detail-content-name'}}" >
+            <view data-id="{{item.player2._id}}" bindtap="onTapPlayer"
+              class="{{ utils.contains(highlights, item.player2._id) ? 'detail-content-name-highlight' : 'detail-content-name'}}" >
               {{item.player2.name}}
             </view>        
           </view>
         </view>
 
-        <!-- column2 -->
-        <view class="detail-content-column">
+        <!-- score -->
+        <view class="detail-content-column-score">
           <view 
             wx:if="{{(item.score1<0 || item.score2<0)}}"
             data-id="{{item._id}}" 
@@ -101,23 +109,31 @@
           </view>
         </view>
         
-        <!-- column3 -->
+        <!-- player3 -->
         <view class="detail-content-column">
           <view wx:if="{{expand}}" class="detail-content-avatars">
-             <image class="avatar" data-id="{{item.player3}}" bindtap="onTapPlayer"
+             <image class="avatar" data-id="{{item.player3._id}}" bindtap="onTapPlayer"
               src="{{ (item.player3.avatarUrl)?item.player3.avatarUrl:defaultAvatar }}" >
               </image>
-             <image class="avatar" data-id="{{item.player4}}" bindtap="onTapPlayer"
+          </view>
+          <view class="detail-content-names">
+            <view data-id="{{item.player3._id}}" bindtap="onTapPlayer" 
+              class="{{ utils.contains(highlights, item.player3._id) ? 'detail-content-name-highlight' : 'detail-content-name'}}" >
+              {{item.player3.name}}
+            </view>
+          </view>
+        </view>
+
+        <!-- player4 -->
+        <view class="detail-content-column">
+          <view wx:if="{{expand}}" class="detail-content-avatars">
+             <image class="avatar" data-id="{{item.player4._id}}" bindtap="onTapPlayer"
               src="{{ (item.player4.avatarUrl)?item.player4.avatarUrl:defaultAvatar }}" >
               </image> 
           </view>
           <view class="detail-content-names">
-            <view data-id="{{item.player3}}" bindtap="onTapPlayer" 
-              class="{{item.player3 == highlight? 'detail-content-name-highlight' : 'detail-content-name'}}" >
-              {{item.player3.name}}
-            </view>
-            <view data-id="{{item.player4}}" bindtap="onTapPlayer"
-              class="{{item.player4 == highlight? 'detail-content-name-highlight' : 'detail-content-name'}}">
+            <view data-id="{{item.player4._id}}" bindtap="onTapPlayer"
+              class="{{ utils.contains(highlights, item.player4._id) ? 'detail-content-name-highlight' : 'detail-content-name'}}">
               {{item.player4.name}}
             </view>        
           </view>

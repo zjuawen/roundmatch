@@ -89,18 +89,32 @@
 	display: flex;
 	flex-direction: row;
 	height: 200rpx;
-	width: 100%;
+	width: 90%;
+	margin-right: 5%;
+    margin-left: 5%;
 }
 
 .detail-content-shrink {
 	display: flex;
 	flex-direction: row;
 	height: 80rpx;
-	width: 100%;
+	width: 90%;
+	margin-right: 5%;
+    margin-left: 5%;
 }
 
 .detail-content-column {
 	flex: 2;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	margin-top: 30rpx;
+	margin-bottom: 30rpx;
+}
+
+.detail-content-column-score {
+	flex: 3;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -148,9 +162,9 @@
 	text-align: center;
 	font-size: 16px;
 	width: 60px;
-	color: white;
+	color: red; 
 	font-weight: bold;
-	background-color: red;
+	/*background-color: red;*/
 }
 
 .detail-content-score {

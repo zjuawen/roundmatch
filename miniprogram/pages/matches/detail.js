@@ -21,7 +21,7 @@ Page({
     matchDone: false,
     
     //高亮
-    highlight: "",
+    highlights: [],
     
     //dialog
     clickIndex: 0,
@@ -114,11 +114,15 @@ Page({
   onTapPlayer: function(e) {
     console.log(e);
     let id = e.target.dataset.id;
-    if( id == this.data.highlight){
-      id = "";
+    let highlights = this.data.highlights;
+    let index = highlights.indexOf(id);
+    if( index >= 0){
+      highlights.splice(index, 1);
+    } else {
+      highlights.push(id);
     }
     this.setData({
-      highlight: id
+      highlights: highlights
     });
   },
 
@@ -700,7 +704,7 @@ Page({
       this.initWatch();
     }
     this.setData({
-      highlight: ''
+      highlights: []
     })
   },
 

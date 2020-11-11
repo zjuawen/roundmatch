@@ -3,9 +3,17 @@ var utils = {
 	numberToFixed: function(value, bits){
 		return value.toFixed(bits)
 	}
+
+	contains: function(arrayObject, item){
+		if( arrayObject == null || item == null || arrayObject.length == 0){
+			return false;
+		}
+		return (arrayObject.indexOf(item) >= 0);
+	}
 }
 
 // 导出对外暴露的属性
 module.exports = {
-	numberToFixed: utils.numberToFixed
+	numberToFixed: utils.numberToFixed,
+	contains:      utils.contains,
 }
