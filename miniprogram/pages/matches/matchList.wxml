@@ -56,7 +56,7 @@
       <view class="match-date">
         {{item.name}}
           <image wx:if="{{(item.owner)}}" src="/images/edit.svg" class="img-edit"
-            data-index="{{index}}" bindtap="onEditMatchTitle" ></image> 
+            data-index="{{index}}" catchtap="onEditMatchTitle" ></image> 
         </view>
     	  
         <view class="match-progress-block">
