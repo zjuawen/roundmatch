@@ -9,9 +9,8 @@ Page({
     takeSession: false,
     requestResult: ''
   },
-  
-  onLoad: function() {
-    //debug
+
+  redirect: function(){
     wx.redirectTo({
       url: '../clubs/clubList',
       // url: '../clubs/create',
@@ -20,8 +19,10 @@ Page({
       // url: '/pages/players/playerList?clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0&action=new&type=fixpair',
     })
     return;
-    //end of debug
+  },
   
+  onLoad: function() {
+
     if (!wx.cloud) {
       wx.redirectTo({
         url: '../chooseLib/chooseLib',
@@ -39,13 +40,20 @@ Page({
               this.setData({
                 avatarUrl: res.userInfo.avatarUrl,
                 userInfo: res.userInfo
-              })
+              });
+              this.redirect();
+            },
+            fail: err => {
+              this.redirect();
             }
           })
         }
       }
     })
 
+    //debug
+    this.redirect();
+    //end of debug
 
     // this.onTest();
   },

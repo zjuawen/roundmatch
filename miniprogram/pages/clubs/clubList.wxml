@@ -74,9 +74,9 @@
 <button 
       wx:if="{{(!auditing && createClubEnable)}}"
       class="weui-btn" type="default" size="default" plain="false"
-      bindtap="onCreateClub"
-      style="margin-Top: 40rpx; margin-bottom: 40rpx; font-size: 36rpx;">
-        创建俱乐部
+      bindtap="onClickCreateClub"
+      style="margin-Top: 40rpx; margin-bottom: 40rpx; font-size: {{vip?'36rpx':'30rpx'}};">
+        {{vip?'创建俱乐部':'看广告,创建俱乐部'}}
 </button>
 
 <button 

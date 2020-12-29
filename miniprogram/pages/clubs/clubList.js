@@ -2,6 +2,8 @@
 // var app = getApp();
 
 var APIs = require('../common/apis.js');
+// 在页面中定义激励视频广告
+let videoAd = null
 
 Page({
     /**
@@ -264,23 +266,33 @@ Page({
             }
         })
     },
-    onCreateClub: function(e) {
-        console.log("onCreateClub");
+    onClickCreateClub: function(e){
+        console.log("onClickCreateClub");
         if (this.data.login) {
-            var userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
-            wx.navigateTo({
-                url: '../clubs/create?action=create&userInfo=' + userInfo,
-            })
+            this.showAD();
+            // if( this.data.vip){
+            //     this.gotoCreateClubPage();
+            // } else {
+            //     this.showAD();
+            // }
         } else {
             this.showAuthDialog(true, "创建俱乐部需要用户昵称，头像等信息");
         }
+    },
+    gotoCreateClubPage: function() {
+        console.log("gotoCreateClubPage");
+        var userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
+        wx.navigateTo({
+            url: '../clubs/create?action=create&userInfo=' + userInfo,
+        })
     },
     checkCreateClubEnable: function() {
         let that = this;
         APIs.checkCreateClubEnable( this, res => {
             console.log(res);
             let data = res;
-            let createClubEnable = data.vip || (data.clubs && (data.clubs.length <= 0));
+            // let createClubEnable = data.vip || (data.clubs && (data.clubs.length <= 0));
+            let createClubEnable = true;
             that.setData({
                 vip: data.vip,
                 createClubEnable: createClubEnable,
@@ -354,6 +366,47 @@ Page({
             })
         })
     },
+    createAD: function(){
+        // 在页面onLoad回调事件中创建激励视频广告实例
+        if (wx.createRewardedVideoAd) {
+            videoAd = wx.createRewardedVideoAd({
+            adUnitId: 'adunit-0db63c1d84e9cd9c'
+            })
+            videoAd.onLoad(() => {
+                console.log('videoAd.onLoad')
+            })
+            videoAd.onError((err) => {
+                console.log('videoAd.onError');
+                console.log(err);
+            })
+            videoAd.onClose((res) => {
+                // 用户点击了【关闭广告】按钮
+                if (res && res.isEnded) {
+                    // 正常播放结束，可以下发游戏奖励
+                    this.gotoCreateClubPage();
+                } else {
+                    // 播放中途退出，不下发游戏奖励
+                    wx.showToast({
+                      title: '请播放完成后关闭',
+                      icon: 'none',
+                    });
+                }
+            })
+        }
+    },
+    showAD: function(){
+        // 用户触发广告后，显示激励视频广告
+        if (videoAd) {
+            videoAd.show().catch(() => {
+            // 失败重试
+            videoAd.load()
+                .then(() => videoAd.show())
+                .catch(err => {
+                    console.log('激励视频 广告显示失败')
+                })
+            })
+        }
+    },
     /**
      * 生命周期函数--监听页面加载
      */
@@ -380,7 +433,10 @@ Page({
                 this.onJoinClub(clubid);
             }
         }
-        this.checkCreateClubEnable();
+        this.createAD();
+        if( !this.data.isAuditing){
+            this.checkCreateClubEnable();
+        }
         this.setData({
             search: this.search.bind(this)
         })
@@ -424,3 +480,8 @@ Page({
         // this.doUpload();
     },
 })
+
+
+
+
+

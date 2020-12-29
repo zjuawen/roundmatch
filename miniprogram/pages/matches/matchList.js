@@ -58,6 +58,7 @@ Page({
     dateFrom: '2019-01-01',
     dateTo: Utils.getCurrentDate(),
 
+    adShow: true,
     msgList: [],
   },
 
@@ -447,6 +448,20 @@ Page({
               msgList: res,
           })
       })
+  },
+
+  adClose: function(){
+    console.log('adClose');
+    this.setData({
+      adShow: false
+    })
+  },
+
+  adError: function(err){
+    console.log('Banner 广告加载失败', err);
+    this.setData({
+      adShow: false
+    })
   },
 
   /**

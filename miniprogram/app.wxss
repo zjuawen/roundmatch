@@ -20,6 +20,9 @@ button::after{
   border: none;
 }
 
+.adContainer {
+  width: 100%;
+}
 
 page {
   background: #f6f6f6;
