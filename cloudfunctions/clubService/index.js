@@ -729,17 +729,21 @@ comparePlayer = (player1, player2) => {
 }
 
 checkMatchCount = async (clubid) => {
-  let maxMatchCountAllow = await db.collection('clubs')
+  let data = await db.collection('clubs')
     .doc(clubid)
     .get()
     .then( res => {
-      let data = res.data;
-      if( data && data.maxMatchAllow ){
-        return data.maxMatchAllow;
-      } else {
-        return 10;
-      }
+      return res.data;
     });
+
+  if( data && data.vip){
+    return false;
+  }
+
+  let maxMatchCountAllow = 10;
+  if( data && data.maxMatchAllow ){
+    maxMatchCountAllow = data.maxMatchAllow;
+  } 
 
   let currentMatchCount =  await db.collection('matches')
     .where({
