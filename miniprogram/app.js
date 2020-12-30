@@ -16,6 +16,8 @@ App({
       })
     }
  
-    this.globalData = {}
+    this.globalData = {
+      adShow1: true
+    }
   }
 })

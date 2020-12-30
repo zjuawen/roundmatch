@@ -215,6 +215,11 @@
   </view>
 </mp-dialog>
 
+<mp-dialog title="需要您的支持" show="{{dialogAdPrompt}}" 
+  bindbuttontap="tapAdPromptDialogButton" buttons="{{adPromptDialogButtons}}">
+    <view>通过观看广告解锁更多10场比赛的创建</view>
+</mp-dialog>
+
 <!--   <picker wx:if="{{datePickerShow}}" mode="date" 
     value="{{date}}" start="2015-09-01" end="2017-09-01" 
     bindchange="bindDateChange">

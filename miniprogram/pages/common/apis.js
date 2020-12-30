@@ -87,6 +87,18 @@ function checkCreateClubEnable(that, callback) {
     commonCallFuction(that, callback, 'clubService', 'listByOwner');
 }
 
+function needUnlockMatchCount(that, clubid, callback){
+    commonCallFuction(that, callback, 'clubService', 'checkMatchCount', { 
+        clubid: clubid,
+    });
+}
+
+function unlockMatchCount(that, clubid, callback) {
+    commonCallFuction(that, callback, 'clubService', 'incMatchCountAllow', { 
+        clubid: clubid,
+    });
+}
+
 function createNewMatch(that, players, type, callback) {
     commonCallFuction(that, callback, 'matchService', 'create', { 
         type: type,
@@ -178,6 +190,12 @@ function pagedClubPlayers(that, clubid, pageNum, pageSize, callback){
     });
 }
 
+function isVip(that, clubid, callback){
+    commonCallFuction(that, callback, 'userService', 'isVip', {
+        clubid:  clubid
+    })
+}
+
 function statisClub(that, clubid, date, callback){
     commonCallFuction(that, callback, 'clubService', 'statis', { 
         clubid: clubid,
@@ -232,6 +250,7 @@ module.exports = {
 // user api
   updateUserInfo:           updateUserInfo,
   getOpenid:                getOpenid,
+  isVip:                    isVip,
 
 // club api
   getClubInfo:              getClubInfo,
@@ -242,6 +261,8 @@ module.exports = {
   updateClub:               updateClub,
   checkCreateClubEnable:    checkCreateClubEnable,
   statisClub:               statisClub,
+  needUnlockMatchCount:     needUnlockMatchCount,
+  unlockMatchCount:         unlockMatchCount,
 
 // match api
   createNewMatch:           createNewMatch,

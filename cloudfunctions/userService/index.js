@@ -47,6 +47,8 @@ exports.main = async (event, context) => {
   // } else if( action == 'info') {
   //   let key = event.key;
   //   data = await readPlayerInfo(event.openid);
+  } else if( action == 'isVip'){
+    data = await isUserVip(wxContext.OPENID);
   }
 
 
@@ -243,7 +245,13 @@ updateUserConfig = async (openid, key, value) => {
   }
 }
 
-
+isUserVip = async (openid) => {
+  let vip = await readUserConfig(openid, 'vip');
+  if( vip == null){
+    vip = false;
+  }
+  return vip;
+}
 
 
 

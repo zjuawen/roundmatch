@@ -269,12 +269,12 @@ Page({
     onClickCreateClub: function(e){
         console.log("onClickCreateClub");
         if (this.data.login) {
-            this.showAD();
-            // if( this.data.vip){
-            //     this.gotoCreateClubPage();
-            // } else {
-            //     this.showAD();
-            // }
+            // this.showAD();
+            if( this.data.vip){
+                this.gotoCreateClubPage();
+            } else {
+                this.showAD();
+            }
         } else {
             this.showAuthDialog(true, "创建俱乐部需要用户昵称，头像等信息");
         }
@@ -366,7 +366,7 @@ Page({
             })
         })
     },
-    createAD: function(){
+    createVideoAd: function(){
         // 在页面onLoad回调事件中创建激励视频广告实例
         if (wx.createRewardedVideoAd) {
             videoAd = wx.createRewardedVideoAd({
@@ -433,7 +433,7 @@ Page({
                 this.onJoinClub(clubid);
             }
         }
-        this.createAD();
+        this.createVideoAd();
         if( !this.data.isAuditing){
             this.checkCreateClubEnable();
         }

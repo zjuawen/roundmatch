@@ -44,7 +44,11 @@ exports.main = async (event, context) => {
     data = await listOwnClub(wxContext);
   } else if ( action == 'search') {
     data = await searchClub(event.keyword);
-  } 
+  } else if ( action == 'checkMatchCount') {
+    data = await checkMatchCount(event.clubid);
+  } else if ( action == 'incMatchCountAllow'){
+    data = await incMatchCountAllow(event.clubid);
+  }
 
   return {
     data,
@@ -722,6 +726,74 @@ comparePlayer = (player1, player2) => {
   if( total1 != total2){
     return total2 - total1;
   }
+}
+
+checkMatchCount = async (clubid) => {
+  let maxMatchCountAllow = await db.collection('clubs')
+    .doc(clubid)
+    .get()
+    .then( res => {
+      let data = res.data;
+      if( data && data.maxMatchAllow ){
+        return data.maxMatchAllow;
+      } else {
+        return 10;
+      }
+    });
+
+  let currentMatchCount =  await db.collection('matches')
+    .where({
+      clubid: clubid,
+      delete: _.neq(true),
+    })
+    .count()
+    .then( res => {
+      if( res.total){
+        return res.total;
+      } else {
+        return 0;
+      }
+    });
+
+    return (currentMatchCount > maxMatchCountAllow);
+}
+
+incMatchCountAllow = async (clubid) => {
+  let currentMatchCount =  await db.collection('matches')
+    .where({
+      clubid: clubid,
+      delete: _.neq(true),
+    })
+    .count()
+    .then( res => {
+      if( res.total){
+        return res.total;
+      } else {
+        return 0;
+      }
+    });
+
+  return await db.collection('clubs')
+    .doc(clubid)
+    .update({
+      // data 字段表示需新增的 JSON 数据
+      data: {
+        // id: _.inc(1),
+        maxMatchAllow: currentMatchCount + 10,
+      }
+    })
+    .then( res => {
+      console.log(res);
+      if( res.stats && res.stats.updated == 1){
+        return {
+          success: true
+        }
+      }
+      return {
+        success: false,
+        errMsg: res.errMsg
+      };
+    });
 }
 
 

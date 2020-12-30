@@ -1,6 +1,9 @@
 // miniprogram/pages/matchList/matchList.js
 var APIs = require('../common/apis.js');
 var Utils = require('../common/utils.js');
+const app = getApp()
+// 在页面中定义激励视频广告
+let videoAd = null
 
 Page({
 
@@ -58,7 +61,10 @@ Page({
     dateFrom: '2019-01-01',
     dateTo: Utils.getCurrentDate(),
 
-    adShow: true,
+    adShow: app.globalData.adShow1, //true,
+    dialogAdPrompt: false,
+    adPromptDialogButtons: [{text: '这次不看'}, {text: '支持一下'}],
+
     msgList: [],
   },
 
@@ -143,19 +149,112 @@ Page({
     })
   },
 
-  onNewGame: function(gameType) {
+  showActionsheet: function(value){
     this.setData({
-      showActionsheet: true
+      showActionsheet: value
     })
-    
+  },
+
+  onNewGame: function(gameType) {
+    // this.showAdPromptDialog();
+    // return;
+    let that = this;
+    let clubid = this.data.clubid;
+    APIs.isVip(this, clubid, res => {
+      let vip = res;
+      // let vip = data.vip;
+      if(vip){
+        this.showActionsheet(true);
+      } else {
+        APIs.needUnlockMatchCount(this, clubid, res => {
+          let needUnlock = res;
+          if( needUnlock){
+            this.showAdPromptDialog();
+            // this.showVideoAd();
+          } else {
+            this.showActionsheet(true);
+          }
+        });
+      }
+    });    
+  },
+
+  showAdPromptDialog: function(){
+    this.setData({
+      dialogAdPrompt: true
+    })
+  },
+
+  tapAdPromptDialogButton: function(e){
+    let index = e.detail.index;
+    this.setData({
+      dialogAdPrompt: false
+    })
+    if( index == 0){  //拒绝观看
+      this.showActionsheet(true);
+    } else {
+      this.showVideoAd();
+    }
+  },
+
+  createVideoAd: function(){
+    // 在页面onLoad回调事件中创建激励视频广告实例
+    if (wx.createRewardedVideoAd) {
+      videoAd = wx.createRewardedVideoAd({
+        adUnitId: 'adunit-8027a5ffe9d6c3c3'
+      })
+      videoAd.onLoad(() => {})
+      videoAd.onError((err) => {})
+      videoAd.onClose((res) => {
+        // 用户点击了【关闭广告】按钮
+        if (res && res.isEnded) {
+            // 正常播放结束，可以下发游戏奖励
+            let clubid = this.data.clubid;
+            APIs.unlockMatchCount(this, clubid, res => {
+              console.log('unlockMatchCount', res)
+              if(res.success){
+                wx.showToast({
+                  title: '解锁成功，感谢支持',
+                  icon: 'none',
+                });
+              } else {
+                 wx.showToast({
+                  title: '解锁失败，' + res.errMsg,
+                  icon: 'none',
+                });
+              }
+            });
+        } else {
+            // 播放中途退出，不下发游戏奖励
+            wx.showToast({
+              title: '请播放完成后关闭才可以获得解锁',
+              icon: 'none',
+            });
+        }
+        this.showActionsheet(true);
+      })
+    }
+  },
+
+  showVideoAd: function(){
+    if (videoAd) {
+      videoAd.show().catch(() => {
+        // 失败重试
+        videoAd.load()
+          .then(() => videoAd.show())
+          .catch(err => {
+            console.log('激励视频 广告显示失败')
+            this.showActionsheet(true);
+            // APIs.unlockMatchCount(this, clubid);
+          })
+      })
+    }
   },
 
   onActionSheetClick: function(event){
     console.log(event);
     let value = event.detail.value;
-    this.setData({
-      showActionsheet: false
-    })
+    this.showActionsheet(false);
     this.goPlayerList(value);
   },
 
@@ -257,7 +356,7 @@ Page({
     this.openDialog(index);
   },
 
-  //输入比分1
+  //输入比赛名称
   inputNewName: function(e) {
     console.log(e);
     let value = e.detail.value;
@@ -268,7 +367,7 @@ Page({
     })
   },
 
-  //比分输入框按钮
+  //比赛名称输入框按钮
   tapDialogButton(e) {
     if( e.detail.index === 1){
       this.loading(true);
@@ -455,6 +554,8 @@ Page({
     this.setData({
       adShow: false
     })
+    app.globalData.adShow1 = false;
+    console.log("app.globalData.adShow1 set to ", app.globalData.adShow1);
   },
 
   adError: function(err){
@@ -468,10 +569,13 @@ Page({
  * 生命周期函数--监听页面加载
  */
   onLoad: function (options) {
+    this.createVideoAd();
+    // console.log("app.globalData.adShow1", app.globalData.adShow1);
     this.setData({ 
-      clubid: options.clubid 
+      clubid: options.clubid,
+      adShow: app.globalData.adShow1,
     });
-    getApp().globalData.clubid = this.data.clubid;
+    app.globalData.clubid = this.data.clubid;
     this.getClubInfo(this.data.clubid);
     wx.hideShareMenu({});
     this.readNotices();
