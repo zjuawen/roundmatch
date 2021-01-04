@@ -118,7 +118,7 @@ Page({
         let that = this;
         APIs.loadClubs( this, res => {
             that.setData({
-                // clubs: res.private,
+                clubs: res.private,
                 publicClubs: [], //data.public
             })
         })
