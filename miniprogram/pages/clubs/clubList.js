@@ -15,6 +15,9 @@ Page({
         openid: '',
         avatarUrl: '/images/user-unlogin.png',
         loading: false,
+
+        clubs: [],
+        
         buttons: [{
             text: '取消'
         }, {
@@ -115,7 +118,7 @@ Page({
         let that = this;
         APIs.loadClubs( this, res => {
             that.setData({
-                clubs: res.private,
+                // clubs: res.private,
                 publicClubs: [], //data.public
             })
         })

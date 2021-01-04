@@ -1,7 +1,7 @@
 <!--miniprogram/pages/clubs/create.wxml-->
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
-<view wx:if="{{auditing}}" class="unopened">
+<view wx:if="{{auditing}}" class="empty">
   暂未开放
 </view>
 

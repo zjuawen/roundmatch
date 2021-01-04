@@ -5,13 +5,6 @@
 	right: 20rpx;
 }
 
-.unopened {
-	display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin: 50rpx;
-}
-
 /*
 .title-mandatory {
 	color: red;

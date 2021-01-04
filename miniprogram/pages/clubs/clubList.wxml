@@ -4,110 +4,114 @@
 
 <!-- 公告 -->
 <view wx:if='{{(msgList.length>0)}}' class="noticebar-container">
-  <!-- <text class='swiper-notice'>公告：</text> -->
-  <image class='swiper-notice' mode="aspectFit"
-      src="/images/speaker.svg" >
-    </image>
-  <swiper class='swiper-container' autoplay='true' vertical='true' circular='true' interval='3000'>
-      <block wx:for='{{msgList}}'>
-          <!-- <navigator url='/pages/notice/notice?title={{item.url}}' open-type='navigate'> -->
-              <swiper-item>
-                  <view class='swiper-item'>{{item.title}}</view>
-              </swiper-item>
-          <!-- </navigator> -->
-      </block>
-  </swiper>
+	<!-- <text class='swiper-notice'>公告：</text> -->
+	<image class='swiper-notice' mode="aspectFit"
+			src="/images/speaker.svg" >
+		</image>
+	<swiper class='swiper-container' autoplay='true' vertical='true' circular='true' interval='3000'>
+			<block wx:for='{{msgList}}'>
+					<!-- <navigator url='/pages/notice/notice?title={{item.url}}' open-type='navigate'> -->
+							<swiper-item>
+									<view class='swiper-item'>{{item.title}}</view>
+							</swiper-item>
+					<!-- </navigator> -->
+			</block>
+	</swiper>
 </view>
 <!-- 公告 end -->
 
 <view class="page__bd">
-  <mp-searchbar 
-    bindselectresult="selectResult" 
-    search="{{search}}"
-    placeholder="{{'搜索俱乐部'}}" >
-    </mp-searchbar>
+	<mp-searchbar 
+		bindselectresult="selectResult" 
+		search="{{search}}"
+		placeholder="{{'搜索俱乐部'}}" >
+		</mp-searchbar>
 </view>
 
 <View class="page-body" >
 
-  <mp-cells wx:if="{{(clubs.length>0)}}" title="已加入的俱乐部" >
+	<View wx:if="{{(clubs.length<=0)}}" class="empty" >
+		还未加入任何俱乐部。请从上方搜索自己的俱乐部加入，或从队友分享的邀请链接中点击加入。
+		</View>
 
-    <mp-slideview
-      wx:for="{{ clubs }}"
-      wx:key="{{ _id }}"
-      buttons="{{ item.owner? slideButtonTwo: slideButtonOne }}" 
-      bindbuttontap="onClickClubCell"
-      bind:tap="onClickClubCell"
-      data-clubid="{{ item._id }}"
-      style="width: 100%;">
+	<mp-cells wx:if="{{(clubs.length>0)}}" title="已加入的俱乐部" >
 
-      <view style="display: flex; align-items: center; margin-left: 40rpx;">
-        <!-- 
-        <image slot="icon" mode="aspectFit" src="{{ item.logo ? item.logo: '/images/default-club-logo.svg'}}" style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;"></image> -->
-        <image class='avatar' mode="aspectFit"
-          src="{{ item.logo ? item.logo: '/images/default-club-logo.svg'}}" >
-        </image>
+		<mp-slideview
+			wx:for="{{ clubs }}"
+			wx:key="{{ _id }}"
+			buttons="{{ item.owner? slideButtonTwo: slideButtonOne }}" 
+			bindbuttontap="onClickClubCell"
+			bind:tap="onClickClubCell"
+			data-clubid="{{ item._id }}"
+			style="width: 100%;">
 
-        <image wx:if="{{item.vip}}" class='vip' 
-          src="{{ '/images/vip.svg'}}" mode="aspectFit">
-        </image>
-        
-        <text class="club-name" >{{item.wholeName}}</text>
-        <text class="club-shortname" style="margin-right: {{item.owner?'20rpx':'80rpx'}};" >[{{" " + item.shortName + " "}}]</text>
+			<view style="display: flex; align-items: center; margin-left: 40rpx;">
+				<!-- 
+				<image slot="icon" mode="aspectFit" src="{{ item.logo ? item.logo: '/images/default-club-logo.svg'}}" style="margin-right: 16px;vertical-align: middle;width:20px; height: 20px;"></image> -->
+				<image class='avatar' mode="aspectFit"
+					src="{{ item.logo ? item.logo: '/images/default-club-logo.svg'}}" >
+				</image>
 
-        <image wx:if="{{item.owner}}" class='owner' 
-          src="{{ '/images/owner.svg'}}" mode="aspectFit">
-        </image>
+				<image wx:if="{{item.vip}}" class='vip' 
+					src="{{ '/images/vip.svg'}}" mode="aspectFit">
+				</image>
+				
+				<text class="club-name" >{{item.wholeName}}</text>
+				<text class="club-shortname" style="margin-right: {{item.owner?'20rpx':'80rpx'}};" >[{{" " + item.shortName + " "}}]</text>
 
-      </view>
+				<image wx:if="{{item.owner}}" class='owner' 
+					src="{{ '/images/owner.svg'}}" mode="aspectFit">
+				</image>
 
-      <view style="background-color: lightgrey; height: 1rpx; width: 96%; margin-left: 2%;" />
+			</view>
 
-    </mp-slideview>
+			<view style="background-color: lightgrey; height: 1rpx; width: 96%; margin-left: 2%;" />
 
-  <!-- </view> -->
+		</mp-slideview>
+
+	<!-- </view> -->
 
 </mp-cells>
 
 </View>
 
 <button 
-      wx:if="{{(!auditing && createClubEnable)}}"
-      class="weui-btn" type="default" size="default" plain="false"
-      bindtap="onClickCreateClub"
-      style="margin-Top: 40rpx; margin-bottom: 40rpx; font-size: {{vip?'36rpx':'30rpx'}};">
-        {{vip?'创建俱乐部':'看广告,创建俱乐部'}}
+			wx:if="{{(!auditing && createClubEnable)}}"
+			class="weui-btn" type="default" size="default" plain="false"
+			bindtap="onClickCreateClub"
+			style="margin-Top: 40rpx; margin-bottom: 40rpx; font-size: {{vip?'36rpx':'30rpx'}};">
+				{{vip?'创建俱乐部':'看广告,创建俱乐部'}}
 </button>
 
 <button 
-      wx:if="{{(debug)}}"
-      class="weui-btn" type="primary" 
-      bindtap="onClickDebug"
-      style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
-      测试
+			wx:if="{{(debug)}}"
+			class="weui-btn" type="primary" 
+			bindtap="onClickDebug"
+			style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
+			测试
 </button>
 
 
 <mp-dialog title="获取授权" show="{{authDialogShow}}" bindbuttontap="onCancelAuthDialog" buttons="{{[{text: '取消'}]}}">
-  <view style="margin: 40rpx;" >{{authDialogMessage}}</view>
-  <button 
-    class="weui-btn" type="primary" size="default"
-    open-type="getUserInfo" 
-    bindgetuserinfo="onGetUserInfo">
-    点击授权
-    </button>
+	<view style="margin: 40rpx;" >{{authDialogMessage}}</view>
+	<button 
+		class="weui-btn" type="primary" size="default"
+		open-type="getUserInfo" 
+		bindgetuserinfo="onGetUserInfo">
+			点击授权
+		</button>
 </mp-dialog>
 
 <mp-dialog title="加入俱乐部" show="{{joinDialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
-  <block wx:if="{{!selected.locked}}">
-    <view>确定要加入"{{selected.wholeName}}"?</view>
-  </block>
-  <block wx:else >
-    <view class="dialog-content-container">
-      <view>请输入"{{selected.wholeName}}"密码：</view>
-      <input class="dialog-input" type="password" 
-        bindinput="onInputPassword" bindchange="onInputPassword"></input>
-    </view>
-  </block>
+	<block wx:if="{{!selected.locked}}">
+		<view>确定要加入"{{selected.wholeName}}"?</view>
+	</block>
+	<block wx:else >
+		<view class="dialog-content-container">
+			<view>请输入"{{selected.wholeName}}"密码：</view>
+			<input class="dialog-input" type="password" 
+				bindinput="onInputPassword" bindchange="onInputPassword"></input>
+		</view>
+	</block>
 </mp-dialog>
 

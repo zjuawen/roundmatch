@@ -44,6 +44,10 @@
 
     <view style="margin-top: 30rpx;"></view>
 
+    <View wx:if="{{(matches.length<=0)}}" class="empty" >
+      该俱乐部还没有比赛，\n请从右下方创建按钮开始。
+      </View>
+
     <mp-slideview
       wx:for="{{ matches }}"
       wx:key="{{ _id }}"
