@@ -2,97 +2,97 @@
 <mp-navigation-bar loading="{{loading}}" show="{{true}}" animated="{{animated}}" color="{{/*'red'*/}}" background="{{'white'}}" title="{{title}}" back="{{true}}"></mp-navigation-bar>
 
 <view wx:if="{{auditing}}" class="empty">
-  暂未开放
+	暂未开放
 </view>
 
 <view wx:if="{{!auditing}}" class="page-body">
 
-  <view class="page-section">
+	<view class="page-section">
 
-    <view class="weui-cells__title">
-      <Span style="color: red;font-size: 20px;vertical-align: middle;padding: 10rpx;">*</Span>
-      每个用户仅可以创建一个俱乐部，请谨慎填写
-    </view>
+		<view class="weui-cells__title">
+			<Span style="color: red;font-size: 20px;vertical-align: middle;padding: 10rpx;">*</Span>
+			每个用户仅可以免费创建一个俱乐部，请谨慎填写
+		</view>
 
-    <View style="flex-direction: row;display: flex;" >
+		<View style="flex-direction: row;display: flex;" >
 
-      <View style="flex: 1;">
-        <view class="weui-cells__title">创建人</view>
-        <view class="weui-cells weui-cells_after-title">
-          <view class="weui-cell" >
-            <input value="{{creator}}" disabled="true"/>
-          </view>
-        </view>
-      </View>
+			<View style="flex: 1;">
+				<view class="weui-cells__title">创建人</view>
+				<view class="weui-cells weui-cells_after-title">
+					<view class="weui-cell" >
+						<input value="{{creator}}" disabled="true"/>
+					</view>
+				</view>
+			</View>
 
-      <View style="flex: 1;align-items: center;display: flex;flex-direction: row;margin-bottom: -80rpx;" >
-        <view class="weui-cells__title" style="flex: 2;margin: 40rpx 0rpx 40rpx 40rpx;">请上传俱乐部LOGO</view>
-        <view class="weui-cells_after-title" style="flex: 2; margin: 20rpx 40rpx 20rpx 0rpx;" >
-          <mp-uploader
-            title="{{''}}"
-            max-count="1" 
-            files="{{ fileList }}"
-            max-size="{{ 204800 }}"
-            delete="true"
-            binddelete="onDeleteLogo"
-            bindselect="onSelectLogo" 
-            bindfail="onFailLogo" />
-        </view>
-      </View>
+			<View style="flex: 1;align-items: center;display: flex;flex-direction: row;margin-bottom: -80rpx;" >
+				<view class="weui-cells__title" style="flex: 2;margin: 40rpx 0rpx 40rpx 40rpx;">请上传俱乐部LOGO</view>
+				<view class="weui-cells_after-title" style="flex: 2; margin: 20rpx 40rpx 20rpx 0rpx;" >
+					<mp-uploader
+						title="{{''}}"
+						max-count="1" 
+						files="{{ fileList }}"
+						max-size="{{ 204800 }}"
+						delete="true"
+						binddelete="onDeleteLogo"
+						bindselect="onSelectLogo" 
+						bindfail="onFailLogo" />
+				</view>
+			</View>
 
-    </View>
+		</View>
 
-    <view class="weui-cells__title">名称<Span style="color: red;font-size: 20px;vertical-align: middle;padding: 10rpx;">*</Span></view>
-    <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell">
-        <input auto-focus placeholder="请输入俱乐部名称"
-        	style="width: 100%;" bindinput="onInputWholdName" value="{{wholeName}}"/>
-      </view>
-    </view>
+		<view class="weui-cells__title">名称<Span style="color: red;font-size: 20px;vertical-align: middle;padding: 10rpx;">*</Span></view>
+		<view class="weui-cells weui-cells_after-title">
+			<view class="weui-cell">
+				<input auto-focus placeholder="请输入俱乐部名称"
+					style="width: 100%;" bindinput="onInputWholdName" value="{{wholeName}}"/>
+			</view>
+		</view>
 
-    <view class="weui-cells__title">缩写<Span style="color: red;font-size: 20px;vertical-align: middle;padding: 10rpx;">*</Span></view>
-    <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell">
-        <input placeholder="请输入俱乐部缩写"
-        	style="width: 100%;" bindinput="onInputShortName" value="{{shortName}}"/>
-      </view>
-    </view>
+		<view class="weui-cells__title">缩写<Span style="color: red;font-size: 20px;vertical-align: middle;padding: 10rpx;">*</Span></view>
+		<view class="weui-cells weui-cells_after-title">
+			<view class="weui-cell">
+				<input placeholder="请输入俱乐部缩写"
+					style="width: 100%;" bindinput="onInputShortName" value="{{shortName}}"/>
+			</view>
+		</view>
 
-    <view class="weui-cells__title">是否公开</view>
-    <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell" style="color: grey" >
-        <View style="flex:9;">{{publicInfo}}</View>
-        <switch type="switch" bindchange="onSwitchPublic" value="{{public}}"/>
-      </view>
-    </view>
-    <view class="weui-cells__title" style="margin-top: 5rpx;color: orange;" >
-      注意：非公开的俱乐部不会在搜索结果中出现，只可以通过其他成员分享邀请方式加入。
-    </view>
+		<view class="weui-cells__title">是否公开</view>
+		<view class="weui-cells weui-cells_after-title">
+			<view class="weui-cell" style="color: grey" >
+				<View style="flex:9;">{{publicInfo}}</View>
+				<switch type="switch" bindchange="onSwitchPublic" value="{{public}}"/>
+			</view>
+		</view>
+		<view class="weui-cells__title" style="margin-top: 5rpx;color: orange;" >
+			注意：非公开的俱乐部不会在搜索结果中出现，只可以通过其他成员分享邀请方式加入。
+		</view>
 
-    <view class="weui-cells__title">密码（可选填）</view>
-    <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell">
-        <input password type="text" placeholder="设置密码" 
-          style="width: 100%;" bindinput="onInputPassword" />
-      </view>
-    </view>
-    <view class="weui-cells weui-cells_after-title">
-      <view class="weui-cell">
-        <input password type="text" placeholder="重复输入密码"
-          style="width: 100%;" bindinput="onReinputPassword" />
-      </view>
-    </view>
+		<view class="weui-cells__title">密码（可选填）</view>
+		<view class="weui-cells weui-cells_after-title">
+			<view class="weui-cell">
+				<input password type="text" placeholder="设置密码" 
+					style="width: 100%;" bindinput="onInputPassword" />
+			</view>
+		</view>
+		<view class="weui-cells weui-cells_after-title">
+			<view class="weui-cell">
+				<input password type="text" placeholder="重复输入密码"
+					style="width: 100%;" bindinput="onReinputPassword" />
+			</view>
+		</view>
 
-  </view>
+	</view>
 
-  <button 
-    class="weui-btn" type="primary" 
-    size="normal"
-    loading="{{loading}}"
-    style="margin-top: 50rpx; margin-bottom: 50rpx;" 
-    bindtap="onOkButton">
-    {{btnText}}
-  </button>
+	<button 
+		class="weui-btn" type="primary" 
+		size="normal"
+		loading="{{loading}}"
+		style="margin-top: 50rpx; margin-bottom: 50rpx;" 
+		bindtap="onOkButton">
+		{{btnText}}
+	</button>
 
 </view>
 

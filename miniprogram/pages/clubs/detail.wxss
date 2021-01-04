@@ -5,19 +5,19 @@
 	right: 20rpx;
 }
 .password-input {
-    background-color: lightgrey;
-    margin-top: 20rpx;
-    height: 60rpx;
-    width: 300rpx;
+	background-color: lightgrey;
+	margin-top: 20rpx;
+	height: 60rpx;
+	width: 300rpx;
 }
 .dialog-content-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
 }
 .logo {
-    width: 80rpx;
-    height: 80rpx;
+	width: 80rpx;
+	height: 80rpx;
 }
 /*
 .title-mandatory {
