@@ -525,6 +525,13 @@ Page({
       })
   },
   
+  getClubInfo: function (clubid) {
+    let clubinfo = getApp().globalData.clubinfo;
+    this.setData({
+      clubinfo: clubinfo
+    });
+  },
+
   /**
    * 生命周期函数--监听页面加载
    */
@@ -561,6 +568,7 @@ Page({
     }
     this.readUserConfig();
     this.readNotices();
+    this.getClubInfo();
   },
 
   createNewMatch: function(){

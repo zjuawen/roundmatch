@@ -99,6 +99,14 @@ function unlockMatchCount(that, clubid, callback) {
     });
 }
 
+function listMatch(clubid, pageNum, pageSize, that, callback) {
+    commonCallFuction(that, callback, 'matchService', 'list', { 
+        clubid: clubid,
+        pageNum: pageNum,
+        pageSize: pageSize
+    });
+}
+
 function createNewMatch(that, players, type, callback) {
     commonCallFuction(that, callback, 'matchService', 'create', { 
         type: type,
@@ -265,6 +273,7 @@ module.exports = {
   unlockMatchCount:         unlockMatchCount,
 
 // match api
+  listMatch:                listMatch,
   createNewMatch:           createNewMatch,
   saveNewMatch:             saveNewMatch,
   readMatch:                readMatch,

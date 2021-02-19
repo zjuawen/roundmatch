@@ -170,11 +170,11 @@
         class="statistic-line">
 
         <image wx:if="{{( matchDone && ((type=='fixpair')?(index<2):(index==0)) )}}" 
-          src="/images/crown.png" mode="aspectFit"
+          src="{{ (clubinfo.crownAvatar)? clubinfo.crownAvatar:'/images/crown.png'}}" mode="aspectFit"
           class="statistic-icon">
           </image>
         <image wx:elif="{{( matchDone && ((type=='fixpair')?(index>=matchPlayers.length-2) :(index==matchPlayers.length-1)) )}}" 
-          src="/images/pighead.png" mode="aspectFit"
+          src="{{ (clubinfo.pigheadAvatar)? clubinfo.pigheadAvatar:'/images/pighead.png'}}" mode="aspectFit"
           class="statistic-icon">
           </image>
         <view wx:else

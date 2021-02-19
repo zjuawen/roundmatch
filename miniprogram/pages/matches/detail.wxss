@@ -232,8 +232,8 @@
 }
 
 .statistic-icon {
-	height: 50rpx; 
-	width: 50rpx; 
+	height: 60rpx; 
+	width: 60rpx; 
 	flex: 1;
 }
 

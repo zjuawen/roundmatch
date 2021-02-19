@@ -61,7 +61,7 @@ Page({
     dateFrom: '2019-01-01',
     dateTo: Utils.getCurrentDate(),
 
-    adShow: app.globalData.adShow1, //true,
+    adShow: false,  //app.globalData.adShow1, //true,
     dialogAdPrompt: false,
     adPromptDialogButtons: [{text: '这次不看'}, {text: '支持一下'}],
 
@@ -77,75 +77,46 @@ Page({
   loadMatches: function (clubid) {
     this.loading(true);
 
-    let func = 'matchService';
-    let action = 'list';
-    console.log(func + " " + action);
+    let that = this; 
+    let pageNum = this.data.pageNum;
+    let pageSize = this.data.pageSize;
 
-    wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        clubid: clubid,
-        pageNum: this.data.pageNum, 
-        pageSize: this.data.pageSize,
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result.data);
-        let newData = res.result.data;
+    APIs.listMatch(clubid, pageNum, pageSize, this, res => {
+        let newData = res;
         newData.forEach((item) => {
           if( !item.name){
             item.name = item.createDate;
           }
         });
-        this.setData({
-          noMore: (newData.length < this.data.pageSize)
+        that.setData({
+          noMore: (newData.length < that.data.pageSize)
         });
-        newData = this.data.matches.concat(newData);
-        this.setData({
+        newData = that.data.matches.concat(newData);
+        that.setData({
           matches: newData
         })
-        this.loading(false);
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
+        //delay show ad
+        that.setData({
+          adShow: app.globalData.adShow1
         })
-      }
+        that.loading(false);
     })
   },
 
   getClubInfo: function (clubid) {
     this.loading(true);
 
-    let func = 'clubService';
-    let action = 'info';
-    console.log(func + " " + action);
-
-    return wx.cloud.callFunction({
-      name: func,
-      data: {
-        action: action,
-        clubid: clubid
-      },
-      success: res => {
-        console.log('[云函数] ' + func + ' return: ', res.result.data);
-        let clubinfo = res.result.data;
-        this.setData({
+    let that = this;
+    APIs.getClubInfo(clubid, this, res => {
+      let clubinfo = res;
+        that.setData({
           clubinfo: clubinfo,
           title: clubinfo.wholeName,
         });
         getApp().globalData.clubinfo = clubinfo;
         wx.showShareMenu({});
-        this.loading(false);
-        return clubinfo;
-      },
-      fail: err => {
-        console.error('[云函数] ' + func + ' 调用失败', err)
-        wx.navigateTo({
-          url: '../error/deployFunctions',
-        })
-      }
+        that.loading(false);
+        // return clubinfo;
     })
   },
 
@@ -573,7 +544,7 @@ Page({
     // console.log("app.globalData.adShow1", app.globalData.adShow1);
     this.setData({ 
       clubid: options.clubid,
-      adShow: app.globalData.adShow1,
+      // adShow: app.globalData.adShow1,
     });
     app.globalData.clubid = this.data.clubid;
     this.getClubInfo(this.data.clubid);
