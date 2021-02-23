@@ -231,21 +231,32 @@ createMatchData = async (type, playerArray) => {
     typeValue = 'none';
   }
 
-  playerArray = shuffleArray(playerArray);
-  console.log('after shuffle: ' + playerArray);
+  let count = playerArray.length;
 
   if( type == 'fixpair'){
-    playerArray = flatPlayerArray(playerArray);
+    var playerArrayFlat = flatPlayerArray(playerArray);
+    count = playerArrayFlat.length;
   }
+  
+  // let count = playerArray.length;
+  var orderArraies = await loadOrders(count, typeValue);
+  // {orderArraies, nosort} = orders;
 
-  let count = playerArray.length;
-  orderArraies = await loadOrders(count, typeValue);
+  //save clone array 
+  var playerArraySave = JSON.parse(JSON.stringify(playerArray));
 
   let allgames = [];
   for( let n = 0; n < orderArraies.length; n++){
     let games = [];
     let value = orderArraies[n].value;
     let orderArray = JSON.parse(value);
+    let nosort = [];
+    if(orderArraies[n].nosort != undefined){
+      nosort = JSON.parse(orderArraies[n].nosort);
+    }
+    playerArray = shuffleArray(playerArraySave, nosort);
+    console.log('after shuffle: ' + playerArray);
+
     for (let i = 0; i < orderArray.length; i++) {
       let game = {
         order: i+1,
@@ -421,12 +432,30 @@ listMatch = async (owner, clubid, pageNum, pageSize) => {
     })
 }
 
-shuffleArray = (array) => {
+shuffleArray = (arraySaved, skiparray) => {
+  let array = JSON.parse(JSON.stringify(arraySaved));
+  let returnArray = [];
+  for( let n = 0; n<skiparray.length; n++){
+    let index = skiparray[n];
+    returnArray[index] = array[index];
+    array[index] = null;
+  }
   for (let i = array.length; i; i--) {
     let j = Math.floor(Math.random() * i);
     [array[i - 1], array[j]] = [array[j], array[i - 1]];
   }
-  return array;
+  var i=0;
+  for( let n = 0; n<arraySaved.length && i<arraySaved.length; n++){
+    if( returnArray[n] == null){
+      while(array[i] == null && i<arraySaved.length){
+        i++;
+      }
+      returnArray[n] = array[i];
+      i++;
+    }
+  }
+
+  return returnArray;
 }
 
 // //保持一对
