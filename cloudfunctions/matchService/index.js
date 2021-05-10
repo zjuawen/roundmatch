@@ -254,7 +254,12 @@ createMatchData = async (type, playerArray) => {
     if(orderArraies[n].nosort != undefined){
       nosort = JSON.parse(orderArraies[n].nosort);
     }
-    playerArray = shuffleArray(playerArraySave, nosort);
+    if( type == 'fixpair'){
+      var playerArrayFlat = flatPlayerArray(playerArraySave);
+      playerArray = shuffleArray(playerArrayFlat, nosort);
+    } else {
+      playerArray = shuffleArray(playerArraySave, nosort);
+    }
     console.log('after shuffle: ' + playerArray);
 
     for (let i = 0; i < orderArray.length; i++) {
