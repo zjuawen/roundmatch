@@ -85,35 +85,6 @@ Page({
                 }
             }
         })
-
-        //     await wx.getSetting({
-        //         success: async res => {
-        //             console.log(res);
-        //             if (res.authSetting['scope.userInfo']) {
-        //                 // 已经授权，可以直接调用 getUserInfo 获取头像昵称，不会弹框
-        //                 await wx.getUserInfo({
-        //                     success: async res => {
-        //                         console.log(res.userInfo);
-        //                         getApp().globalData.userInfo = res.userInfo;
-        //                         that.setData({
-        //                             avatarUrl: res.userInfo.avatarUrl,
-        //                             userInfo: res.userInfo,
-        //                             login: true
-        //                         })
-        //                         that.updateUserInfo(res.userInfo);
-        //                         if (that.data.sharejoin) {
-        //                             wx.hideLoading();
-        //                             that.onJoinClub(that.data.sharedclubid);
-        //                         }
-        //                     }
-        //                 })
-        //             } else {
-        //                 console.log("Unauthrorized: authSetting['scope.userInfo'] null");
-                        
-        //             }
-        //         }
-        //     })
-        // }
     },
     //更新用户信息
     updateUserInfo: function(userInfo) {
@@ -296,6 +267,13 @@ Page({
         }
     },
     onJoinClub: function(clubid) {
+        if( !this.data.login) {
+             wx.showToast({
+                title: '请先授权',
+                icon: 'error'
+            })
+            return
+        }
         wx.showLoading({
             title: '获取俱乐部信息',
             mask: true
@@ -398,8 +376,15 @@ Page({
             return clubs;
         })
     },
-    selectResult: function (e) {
+    onTapSearchResult: function (e) {
         console.log('select result', e.detail);
+        if( !this.data.login) {
+             wx.showToast({
+                title: '请先授权',
+                icon: 'error'
+            })
+            return
+        }
         let clubid = e.detail.item.value;
         var param = 'clubid=' + clubid;
         if (this.data.login) {

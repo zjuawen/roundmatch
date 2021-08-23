@@ -19,11 +19,11 @@
 </view>
 <!-- 公告 end -->
 
-<view class="page__bd" style="display: flex; align-items: center;">
+<view class="page__bd" style="display: flex; align-items: top;">
 	<image class='avatar-user' bindtap="onTapUser" mode="aspectFit" src="{{avatarUrl}}" />
 	<mp-searchbar 
 		style="flex: 10;"
-		bindselectresult="selectResult" 
+		bindselectresult="onTapSearchResult" 
 		search="{{search}}"
 		placeholder="{{'搜索俱乐部'}}" >
 		</mp-searchbar>
