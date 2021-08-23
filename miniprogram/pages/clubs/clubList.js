@@ -45,6 +45,9 @@ Page({
         }],
         // inputShowed: false,
         // inputVal: "",
+        videoAd: false,
+        videoAdError: false,
+
         auditing: true,
 
         msgList: [],    //[ {title: 'test1'}, {title: 'test3'} ],
@@ -70,9 +73,9 @@ Page({
                     login: true
                 })
                 that.updateUserInfo(res.userInfo);
+                this.showAuthDialog(false);
                 if (that.data.sharejoin) {
                     wx.hideLoading();
-                    this.showAuthDialog(false);
                     that.onJoinClub(that.data.sharedclubid);
                 }
             },
@@ -314,7 +317,20 @@ Page({
             if( this.data.vip){
                 this.gotoCreateClubPage();
             } else {
-                this.showAD();
+                if( this.data.videoAd){
+                    this.showAD();
+                } else if( this.data.videoAdError ) {
+                    wx.showToast({ 
+                        title: '广告加载失败',
+                        icon: 'error',
+                    })
+                    this.gotoCreateClubPage();
+                } else {
+                    wx.showToast({
+                        title: '广告努力加载中',
+                        icon: 'loading',
+                    })
+                }
             }
         } else {
             this.showAuthDialog(true, "创建俱乐部需要用户昵称，头像等信息");
@@ -423,10 +439,16 @@ Page({
             })
             videoAd.onLoad(() => {
                 console.log('videoAd.onLoad')
+                this.setData({
+                    videoAd: true
+                })
             })
             videoAd.onError((err) => {
                 console.log('videoAd.onError');
                 console.log(err);
+                 this.setData({
+                    videoAdError: true
+                })
             })
             videoAd.onClose((res) => {
                 // 用户点击了【关闭广告】按钮
