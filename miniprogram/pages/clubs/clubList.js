@@ -72,6 +72,7 @@ Page({
                 that.updateUserInfo(res.userInfo);
                 if (that.data.sharejoin) {
                     wx.hideLoading();
+                    this.showAuthDialog(false);
                     that.onJoinClub(that.data.sharedclubid);
                 }
             },
@@ -124,6 +125,15 @@ Page({
                     this.setData({
                         login: true
                     })
+                    if( this.data.sharejoin){
+                        wx.hideLoading();
+                        this.onJoinClub(this.data.sharedclubid);
+                    }
+                } else {
+                    if( this.data.sharejoin){
+                        wx.hideLoading();
+                        this.showAuthDialog(true, '需要授权获取用户昵称，头像等信息');
+                    }
                 }
             }
             that.loadClubs();
@@ -379,10 +389,11 @@ Page({
     onTapSearchResult: function (e) {
         console.log('select result', e.detail);
         if( !this.data.login) {
-             wx.showToast({
-                title: '请先授权',
-                icon: 'error'
-            })
+            //  wx.showToast({
+            //     title: '请先授权',
+            //     icon: 'error'
+            // })
+            this.showAuthDialog(true)
             return
         }
         let clubid = e.detail.item.value;
@@ -484,6 +495,7 @@ Page({
     onReady: function() {
         // this.getUserDetail();
         // this.loadUserinfo();
+        this.loadClubs();
         this.createVideoAd();
     },
     /**
@@ -491,16 +503,26 @@ Page({
      */
     onShow: function() {
         console.log("onShow");
-        this.loadClubs();
     },
     /**
      * 生命周期函数--监听页面隐藏
      */
-    onHide: function() {},
+    onHide: function() {
+        console.log("onHide");
+        /* 
+         * 一旦离开页面，就不再检查邀请加入的动作，
+         * 以免页面刷新或其他授权回调后的重新弹出邀请界面
+         */
+        this.setData({
+            sharejoin: false
+        })
+    },
     /**
      * 生命周期函数--监听页面卸载
      */
-    onUnload: function() {},
+    onUnload: function() {
+        console.log("onUnload");
+    },
     /**
      * 页面相关事件处理函数--监听用户下拉动作
      */

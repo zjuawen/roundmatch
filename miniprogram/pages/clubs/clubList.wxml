@@ -93,13 +93,12 @@
 </button>
 
 
-<mp-dialog title="获取授权" show="{{authDialogShow}}" bindbuttontap="onCancelAuthDialog" buttons="{{[{text: '取消'}]}}">
+<mp-dialog title="用户授权" show="{{authDialogShow}}" bindbuttontap="onCancelAuthDialog" buttons="{{[{text: '取消'}]}}">
 	<view style="margin: 40rpx;" >{{authDialogMessage}}</view>
 	<button 
 		class="weui-btn" type="primary" size="default"
-		open-type="getUserInfo" 
-		bindgetuserinfo="onGetUserInfo">
-			点击授权
+		bindtap="loadUserInfo">
+			点击获取授权
 		</button>
 </mp-dialog>
 
