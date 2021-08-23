@@ -2,6 +2,8 @@
 // var app = getApp();
 
 var APIs = require('../common/apis.js');
+var Utils = require('../common/utils.js');
+
 // 在页面中定义激励视频广告
 let videoAd = null
 
@@ -54,42 +56,64 @@ Page({
             loading: value
         });
     },
-    loadUserinfo: async function() {
+    loadUserInfo: async function() {
         // 获取用户信息
         let that = this;
-        await wx.getSetting({
+        
+        Utils.getUserDetail({
             success: async res => {
-                console.log(res);
-                if (res.authSetting['scope.userInfo']) {
-                    // 已经授权，可以直接调用 getUserInfo 获取头像昵称，不会弹框
-                    await wx.getUserInfo({
-                        success: async res => {
-                            console.log(res.userInfo);
-                            getApp().globalData.userInfo = res.userInfo;
-                            that.setData({
-                                avatarUrl: res.userInfo.avatarUrl,
-                                userInfo: res.userInfo,
-                                login: true
-                            })
-                            that.updateUserInfo(res.userInfo);
-                            if (that.data.sharejoin) {
-                                wx.hideLoading();
-                                that.onJoinClub(that.data.sharedclubid);
-                            }
-                        }
-                    })
-                } else {
-                    console.log("Unauthrorized: authSetting['scope.userInfo'] null");
-                    that.setData({
-                        login: false
-                    })
-                    if (that.data.sharejoin) {
-                        wx.hideLoading();
-                        that.showAuthDialog(true, "加入俱乐部需要用户昵称，头像等信息");
-                    }
+                console.log(res.userInfo);
+                getApp().globalData.userInfo = res.userInfo;
+                that.setData({
+                    avatarUrl: res.userInfo.avatarUrl,
+                    userInfo: res.userInfo,
+                    login: true
+                })
+                that.updateUserInfo(res.userInfo);
+                if (that.data.sharejoin) {
+                    wx.hideLoading();
+                    that.onJoinClub(that.data.sharedclubid);
+                }
+            },
+            error: res =>{
+                that.setData({
+                    login: false
+                })
+                if (that.data.sharejoin) {
+                    wx.hideLoading();
+                    that.showAuthDialog(true, "需要用户昵称，头像等信息以进行下一步操作");
                 }
             }
         })
+
+        //     await wx.getSetting({
+        //         success: async res => {
+        //             console.log(res);
+        //             if (res.authSetting['scope.userInfo']) {
+        //                 // 已经授权，可以直接调用 getUserInfo 获取头像昵称，不会弹框
+        //                 await wx.getUserInfo({
+        //                     success: async res => {
+        //                         console.log(res.userInfo);
+        //                         getApp().globalData.userInfo = res.userInfo;
+        //                         that.setData({
+        //                             avatarUrl: res.userInfo.avatarUrl,
+        //                             userInfo: res.userInfo,
+        //                             login: true
+        //                         })
+        //                         that.updateUserInfo(res.userInfo);
+        //                         if (that.data.sharejoin) {
+        //                             wx.hideLoading();
+        //                             that.onJoinClub(that.data.sharedclubid);
+        //                         }
+        //                     }
+        //                 })
+        //             } else {
+        //                 console.log("Unauthrorized: authSetting['scope.userInfo'] null");
+                        
+        //             }
+        //         }
+        //     })
+        // }
     },
     //更新用户信息
     updateUserInfo: function(userInfo) {
@@ -104,13 +128,33 @@ Page({
             });
         })
     },
-
     getOpenid: async function() {
         let that = this; 
         APIs.getOpenid(this, res => {
             that.setData({
                 openid: res.openid
             });
+            that.loadClubs();
+        })
+    },
+    getUserDetail: async function() {
+        let that = this; 
+        APIs.getUserDetail(this, res => {
+            if( res != null){ 
+                that.setData({
+                    userInfo: res,
+                });
+                if( res.avatarUrl ){
+                    that.setData({
+                        avatarUrl: res.avatarUrl,
+                    });
+                }
+                if( res.name && res.avatarUrl){
+                    this.setData({
+                        login: true
+                    })
+                }
+            }
             that.loadClubs();
         })
     },
@@ -122,6 +166,12 @@ Page({
                 publicClubs: [], //data.public
             })
         })
+    },
+    onTapUser: function(e){
+        if( this.data.login){
+            return;
+        }
+        this.loadUserInfo();
     },
     onClickPublicClub: function(e) {
         console.log(e);
@@ -373,7 +423,7 @@ Page({
         // 在页面onLoad回调事件中创建激励视频广告实例
         if (wx.createRewardedVideoAd) {
             videoAd = wx.createRewardedVideoAd({
-            adUnitId: 'adunit-0db63c1d84e9cd9c'
+                adUnitId: 'adunit-0db63c1d84e9cd9c'
             })
             videoAd.onLoad(() => {
                 console.log('videoAd.onLoad')
@@ -416,7 +466,7 @@ Page({
     onLoad: function(options) {
         console.log("clublist onload");
         this.getOpenid();
-        this.loadUserinfo();
+        this.getUserDetail();
         this.isAuditing();
         this.readNotices();
         let action = options.action;
@@ -436,7 +486,6 @@ Page({
                 this.onJoinClub(clubid);
             }
         }
-        this.createVideoAd();
         if( !this.data.isAuditing){
             this.checkCreateClubEnable();
         }
@@ -447,7 +496,11 @@ Page({
     /**
      * 生命周期函数--监听页面初次渲染完成
      */
-    onReady: function() {},
+    onReady: function() {
+        // this.getUserDetail();
+        // this.loadUserinfo();
+        this.createVideoAd();
+    },
     /**
      * 生命周期函数--监听页面显示
      */

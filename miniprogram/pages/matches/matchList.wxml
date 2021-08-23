@@ -27,10 +27,10 @@
 </view>
 <!-- 公告 end -->
 
-<view wx:if='{{(adShow)}}' class="adContainer">
+<!-- <view wx:if='{{(adShow)}}' class="adContainer">
   <ad unit-id="adunit-abae57bfcc1b09e1" ad-intervals="60" 
     binderror="adError" bindclose="adClose" />
-</view>
+</view> -->
 
 <view style="margin-bottom: 140rpx; width: 100%; overflow-x:hidden;">
 

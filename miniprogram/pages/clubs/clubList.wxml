@@ -6,8 +6,7 @@
 <view wx:if='{{(msgList.length>0)}}' class="noticebar-container">
 	<!-- <text class='swiper-notice'>公告：</text> -->
 	<image class='swiper-notice' mode="aspectFit"
-			src="/images/speaker.svg" >
-		</image>
+			src="/images/speaker.svg" />
 	<swiper class='swiper-container' autoplay='true' vertical='true' circular='true' interval='3000'>
 			<block wx:for='{{msgList}}'>
 					<!-- <navigator url='/pages/notice/notice?title={{item.url}}' open-type='navigate'> -->
@@ -20,8 +19,10 @@
 </view>
 <!-- 公告 end -->
 
-<view class="page__bd">
+<view class="page__bd" style="display: flex; align-items: center;">
+	<image class='avatar-user' bindtap="onTapUser" mode="aspectFit" src="{{avatarUrl}}" />
 	<mp-searchbar 
+		style="flex: 10;"
 		bindselectresult="selectResult" 
 		search="{{search}}"
 		placeholder="{{'搜索俱乐部'}}" >

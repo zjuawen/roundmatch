@@ -3,16 +3,22 @@
 
   <!-- 用户 openid -->
   <view class="userinfo">
-    <button 
-      open-type="getUserInfo" 
-      bindgetuserinfo="onGetUserInfo"
-      class="userinfo-avatar"
-      style="background-image: url({{avatarUrl}})"
-      size="default"
-    />
-    <view class="userinfo-nickname-wrapper">
-      <button class="userinfo-nickname" bindtap="onGetOpenid">点击允许授权读取用户识别号后进入</button>
-    </view>
+    <block wx:if="{{!hasUserInfo}}">
+      <button wx:if="{{canIUseGetUserProfile}}" bindtap="getUserProfile">点击授权允许读取用户头像昵称</button>
+      <button 
+        wx:else 
+        open-type="getUserInfo" 
+        bindgetuserinfo="onGetUserInfo"
+        class="userinfo-avatar"
+        style="background-image: url({{avatarUrl}})"
+        size="default"
+      />
+      <!-- <button wx:else open-type="getUserInfo" bindgetuserinfo="getUserInfo"> 获取头像昵称 </button> -->
+    </block>
+    
+    <!-- <view class="userinfo-nickname-wrapper">
+      <button class="userinfo-nickname" bindtap="onGetUserInfo">点击允许授权读取用户识别号后进入</button>
+    </view> -->
   </view>
 
   <!-- 测试入口 -->

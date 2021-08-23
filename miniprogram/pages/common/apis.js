@@ -64,7 +64,7 @@ function joinClub(clubid, userInfo, password, that, callback) {
 }
 
 function updateUserInfo(userInfo, that, callback) {
-    commonCallFuction(that, callback, 'userService', 'info', { 
+    commonCallFuction(that, callback, 'userService', 'update', { 
         userInfo: userInfo,
     });
 }
@@ -77,6 +77,10 @@ function getClubInfo(clubid, that, callback) {
 
 function getOpenid(that, callback) {
     commonCallFuction(that, callback, 'userService', 'login');
+}
+
+function getUserDetail(that, callback){
+    commonCallFuction(that, callback, 'userService', 'detail');
 }
 
 function loadClubs(that, callback) {
@@ -258,6 +262,7 @@ module.exports = {
 // user api
   updateUserInfo:           updateUserInfo,
   getOpenid:                getOpenid,
+  getUserDetail:            getUserDetail,
   isVip:                    isVip,
 
 // club api

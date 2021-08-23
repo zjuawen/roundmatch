@@ -26,7 +26,13 @@
 	margin: 10rpx;
 	box-shadow: 1px 1px 3px #CCCCCC;
 }
-
+.avatar-user {
+	height: 40px;
+	width: 40px;
+	border-radius: 50%;
+	margin-left: 40rpx;
+	margin-right: 20rpx;
+}
 .club-name {
 	flex:7; 
 	margin: 20rpx;

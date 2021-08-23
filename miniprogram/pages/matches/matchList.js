@@ -540,7 +540,7 @@ Page({
  * 生命周期函数--监听页面加载
  */
   onLoad: function (options) {
-    this.createVideoAd();
+    // this.createVideoAd();
     // console.log("app.globalData.adShow1", app.globalData.adShow1);
     this.setData({ 
       clubid: options.clubid,

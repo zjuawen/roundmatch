@@ -209,3 +209,5 @@ page {
 	color: grey;
 	/*white-space: pre-wrap;*/
 }
+
+@import 'app-wxa-auto-dark.wxss'

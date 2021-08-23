@@ -1,7 +1,7 @@
 // 云函数入口文件
 const cloud = require('wx-server-sdk')
 
-var debug = false;
+var debug = true; // false;
 
 const env = debug ? 'test-roundmatch' : "roundmatch";
 cloud.init({
@@ -24,6 +24,8 @@ exports.main = async (event, context) => {
   let data;
   if (action == 'login') {
     data = await saveUserData(wxContext);
+  } else if (action == 'detail') {
+    data = await readUserDetail(wxContext);
   } else if( action == 'list') {
     let pageNum = (event.pageNum==null)? 1: event.pageNum;
     let pageSize = (event.pageSize==null)? 10: event.pageSize;
@@ -77,6 +79,23 @@ saveUserData = async (context) => {
   	})
 }
 
+readUserDetail = async (context) => {
+  let dt = db.serverDate();
+  return await db.collection('users')
+    .where({
+      openid: context.OPENID
+    })
+    .get()
+    .then(res => {
+      console.log(res);
+      if( res.data.length > 0){
+        return res.data[0];
+      } 
+      else {
+        return {};
+      }
+    })
+}
 
 //添加用户信息
 addUserData = async (context) => {
@@ -147,14 +166,24 @@ searchUserInClub = async (clubid, keyword) => {
 
 //更新用户微信信息
 updateUserInfo = async (openid, userInfo) => {
-   return await db.collection('players')
+  let dt = db.serverDate();
+  return await db.collection('users')
     .where({
       openid: openid
     })
     .update({
-      data:{
+      data: {
+        name: userInfo.nickName,
         avatarUrl: userInfo.avatarUrl,
+        gender: userInfo.gender,
+        country: userInfo.country,
+        province: userInfo.province,
+        city: userInfo.city,
+        createDate: dt
       }
+      // data:{
+      //   avatarUrl: userInfo.avatarUrl,
+      // }
     })
     .then(res => {
       console.log(res);
