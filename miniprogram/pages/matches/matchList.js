@@ -64,6 +64,10 @@ Page({
     adShow: false,  //app.globalData.adShow1, //true,
     dialogAdPrompt: false,
     adPromptDialogButtons: [{text: '这次不看'}, {text: '支持一下'}],
+    
+    videoAdLoaded: false,
+    videoAdError: false,
+    videoAdClosed: false,
 
     msgList: [],
   },
@@ -131,12 +135,15 @@ Page({
     // return;
     let that = this;
     let clubid = this.data.clubid;
+    // this.showAdPromptDialog();
+    // return
     APIs.isVip(this, clubid, res => {
       let vip = res;
       // let vip = data.vip;
       if(vip){
         this.showActionsheet(true);
       } else {
+        // this.showAdPromptDialog();
         APIs.needUnlockMatchCount(this, clubid, res => {
           let needUnlock = res;
           if( needUnlock){
@@ -164,19 +171,57 @@ Page({
     if( index == 0){  //拒绝观看
       this.showActionsheet(true);
     } else {
-      this.showVideoAd();
+      wx.showLoading({
+        title: '广告努力加载中',
+      })
+      if( !this.data.videoAdLoaded){
+        this.createVideoAd({
+          success: this.showVideoAd,
+          error: this.showActionsheet,
+          param: true
+        })
+      } else {
+        this.showVideoAd()
+      }
+      // this.showVideoAd();
     }
   },
 
-  createVideoAd: function(){
+  createVideoAd: function({success, error, param}){
     // 在页面onLoad回调事件中创建激励视频广告实例
     if (wx.createRewardedVideoAd) {
       videoAd = wx.createRewardedVideoAd({
         adUnitId: 'adunit-8027a5ffe9d6c3c3'
       })
-      videoAd.onLoad(() => {})
-      videoAd.onError((err) => {})
+      videoAd.onLoad(() => {
+        console.log('videoAd.onLoad')
+        wx.hideLoading()
+        this.setData({
+            videoAdLoaded: true
+        })
+
+        if( success && !this.data.videoAdClosed){
+            success();
+        }
+        this.setData({
+            videoAdClosed: false
+        })
+      })
+      videoAd.onError((err) => {
+        console.log('videoAd.onError');
+        console.log(err);
+        wx.hideLoading()
+         this.setData({
+            videoAdError: true
+        })
+        if( error){
+            error(param);
+        }
+      })
       videoAd.onClose((res) => {
+        this.setData({
+          videoAdClosed: true
+        })
         // 用户点击了【关闭广告】按钮
         if (res && res.isEnded) {
             // 正常播放结束，可以下发游戏奖励
@@ -202,7 +247,7 @@ Page({
               icon: 'none',
             });
         }
-        this.showActionsheet(true);
+        // this.showActionsheet(true);
       })
     }
   },

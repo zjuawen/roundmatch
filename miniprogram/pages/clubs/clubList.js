@@ -14,6 +14,7 @@ Page({
     data: {
         title: "俱乐部",
         login: false,
+        detailPedding: false,
         openid: '',
         avatarUrl: '/images/user-unlogin.png',
         loading: false,
@@ -45,7 +46,7 @@ Page({
         }],
         // inputShowed: false,
         // inputVal: "",
-        videoAd: false,
+        videoAdLoaded: false,
         videoAdError: false,
         videoAdClosed: false,
 
@@ -117,6 +118,9 @@ Page({
     },
     getUserDetail: async function() {
         let that = this; 
+        this.setData({
+            detailPedding: true
+        })
         APIs.getUserDetail(this, res => {
             if( res != null){ 
                 that.setData({
@@ -142,6 +146,9 @@ Page({
                     }
                 }
             }
+            this.setData({
+                detailPedding: false
+            })
             // that.loadClubs();
         })
     },
@@ -152,6 +159,9 @@ Page({
                 clubs: res.private,
                 publicClubs: [], //data.public
             })
+            if( this.data.clubs.length > 0 && !this.data.login && !this.data.detailPedding){
+                this.showAuthDialog(true, "微信修改授权机制，需要重新授权获取用户信息")
+            }
         })
     },
     onTapUser: function(e){
@@ -323,7 +333,7 @@ Page({
         if( this.data.vip){
             this.gotoCreateClubPage();
         } else {
-            if( this.data.videoAd){
+            if( this.data.videoAdLoaded){
                 this.showAD();
             } else if( this.data.videoAdError ) {
                 wx.showToast({ 
@@ -332,9 +342,8 @@ Page({
                 })
                 this.gotoCreateClubPage();
             } else {
-                wx.showToast({
+                wx.showLoading({
                     title: '广告努力加载中',
-                    icon: 'loading',
                 })
                 this.createVideoAd({
                     success: this.showAD,
@@ -446,8 +455,9 @@ Page({
             })
             videoAd.onLoad(() => {
                 console.log('videoAd.onLoad')
+                wx.hideLoading()
                 this.setData({
-                    videoAd: true
+                    videoAdLoaded: true
                 })
                 if( success && !this.data.videoAdClosed){
                     success();
@@ -459,6 +469,7 @@ Page({
             videoAd.onError((err) => {
                 console.log('videoAd.onError');
                 console.log(err);
+                wx.hideLoading()
                  this.setData({
                     videoAdError: true
                 })
