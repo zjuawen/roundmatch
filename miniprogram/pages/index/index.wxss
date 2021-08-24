@@ -153,5 +153,3 @@ page {
   line-height: 36rpx;
   word-break: break-all;
 }
-
-@import 'index-wxa-auto-dark.wxss'
