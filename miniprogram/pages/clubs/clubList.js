@@ -47,6 +47,7 @@ Page({
         // inputVal: "",
         videoAd: false,
         videoAdError: false,
+        videoAdClosed: false,
 
         auditing: true,
 
@@ -86,6 +87,8 @@ Page({
                 if (that.data.sharejoin) {
                     wx.hideLoading();
                     that.showAuthDialog(true, "需要用户昵称，头像等信息以进行下一步操作");
+                } else {
+                    this.showAuthDialog(false);
                 }
             }
         })
@@ -109,7 +112,7 @@ Page({
             that.setData({
                 openid: res.openid
             });
-            that.loadClubs();
+            // that.loadClubs();
         })
     },
     getUserDetail: async function() {
@@ -139,7 +142,7 @@ Page({
                     }
                 }
             }
-            that.loadClubs();
+            // that.loadClubs();
         })
     },
     loadClubs: function() {
@@ -312,28 +315,32 @@ Page({
     },
     onClickCreateClub: function(e){
         console.log("onClickCreateClub");
-        if (this.data.login) {
-            // this.showAD();
-            if( this.data.vip){
+        if (!this.data.login) {
+            this.showAuthDialog(true, "创建俱乐部需要用户昵称，头像等信息");
+            return;
+        }
+        // this.showAD();
+        if( this.data.vip){
+            this.gotoCreateClubPage();
+        } else {
+            if( this.data.videoAd){
+                this.showAD();
+            } else if( this.data.videoAdError ) {
+                wx.showToast({ 
+                    title: '广告加载失败',
+                    icon: 'error',
+                })
                 this.gotoCreateClubPage();
             } else {
-                if( this.data.videoAd){
-                    this.showAD();
-                } else if( this.data.videoAdError ) {
-                    wx.showToast({ 
-                        title: '广告加载失败',
-                        icon: 'error',
-                    })
-                    this.gotoCreateClubPage();
-                } else {
-                    wx.showToast({
-                        title: '广告努力加载中',
-                        icon: 'loading',
-                    })
-                }
+                wx.showToast({
+                    title: '广告努力加载中',
+                    icon: 'loading',
+                })
+                this.createVideoAd({
+                    success: this.showAD,
+                    error: this.gotoCreateClubPage,
+                })
             }
-        } else {
-            this.showAuthDialog(true, "创建俱乐部需要用户昵称，头像等信息");
         }
     },
     gotoCreateClubPage: function() {
@@ -431,7 +438,7 @@ Page({
             })
         })
     },
-    createVideoAd: function(){
+    createVideoAd: function({success, error}){
         // 在页面onLoad回调事件中创建激励视频广告实例
         if (wx.createRewardedVideoAd) {
             videoAd = wx.createRewardedVideoAd({
@@ -442,6 +449,12 @@ Page({
                 this.setData({
                     videoAd: true
                 })
+                if( success && !this.data.videoAdClosed){
+                    success();
+                }
+                this.setData({
+                    videoAdClosed: false
+                })
             })
             videoAd.onError((err) => {
                 console.log('videoAd.onError');
@@ -449,8 +462,14 @@ Page({
                  this.setData({
                     videoAdError: true
                 })
+                if( error){
+                    error();
+                }
             })
             videoAd.onClose((res) => {
+                this.setData({
+                    videoAdClosed: true
+                })
                 // 用户点击了【关闭广告】按钮
                 if (res && res.isEnded) {
                     // 正常播放结束，可以下发游戏奖励
@@ -518,7 +537,7 @@ Page({
         // this.getUserDetail();
         // this.loadUserinfo();
         this.loadClubs();
-        this.createVideoAd();
+        // this.createVideoAd();
     },
     /**
      * 生命周期函数--监听页面显示
