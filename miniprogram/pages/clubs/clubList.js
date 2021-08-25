@@ -46,6 +46,7 @@ Page({
         }],
         // inputShowed: false,
         // inputVal: "",
+        adShow: false,  // banner广告
         videoAdLoaded: false,
         videoAdError: false,
         videoAdClosed: false,
@@ -508,6 +509,13 @@ Page({
             })
         }
     },
+    getBannerADHeight: function () {  
+        var query = wx.createSelectorQuery()  
+        query.select('#bannerAD').boundingClientRect(function (res) {  
+            console.log(res);  
+        }).exec();  
+    }, 
+
     /**
      * 生命周期函数--监听页面加载
      */
@@ -549,6 +557,7 @@ Page({
         // this.loadUserinfo();
         this.loadClubs();
         // this.createVideoAd();
+        setTimeout( this.getBannerADHeight, 2000);
     },
     /**
      * 生命周期函数--监听页面显示

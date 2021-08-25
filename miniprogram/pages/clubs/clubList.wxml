@@ -8,32 +8,38 @@
 	<image class='swiper-notice' mode="aspectFit"
 			src="/images/speaker.svg" />
 	<swiper class='swiper-container' autoplay='true' vertical='true' circular='true' interval='3000'>
-			<block wx:for='{{msgList}}'>
-					<!-- <navigator url='/pages/notice/notice?title={{item.url}}' open-type='navigate'> -->
-							<swiper-item>
-									<view class='swiper-item'>{{item.title}}</view>
-							</swiper-item>
-					<!-- </navigator> -->
-			</block>
+		<block wx:for='{{msgList}}'>
+			<!-- <navigator url='/pages/notice/notice?title={{item.url}}' open-type='navigate'> -->
+			<swiper-item>
+				<view class='swiper-item'>{{item.title}}</view>
+			</swiper-item>
+			<!-- </navigator> -->
+		</block>
 	</swiper>
 </view>
 <!-- 公告 end -->
 
-<view class="page__bd" style="display: flex; align-items: top;">
+<view id="bannerAD" wx:if='{{(adShow)}}' style="position:fixed; left: 0; bottom: 0; z-index: 100; width: 100%;" >
+  <ad unit-id="adunit-7c53f95bd86f3b59" ad-intervals="60" 
+    binderror="adError" bindclose="adClose" />
+</view>
+
+
+<view class="page__bd" style="display: flex; align-items: top; margin-right: 5rpx">
 	<image class='avatar-user' bindtap="onTapUser" mode="aspectFit" src="{{avatarUrl}}" />
 	<mp-searchbar 
 		style="flex: 10;"
 		bindselectresult="onTapSearchResult" 
 		search="{{search}}"
 		placeholder="{{'搜索俱乐部'}}" >
-		</mp-searchbar>
+	</mp-searchbar>
 </view>
 
-<View class="page-body" >
+<View class="page_body">
 
 	<View wx:if="{{(clubs.length<=0)}}" class="empty" >
 		还未加入任何俱乐部。请从上方搜索自己的俱乐部加入，或从队友分享的邀请链接中点击加入。
-		</View>
+	</View>
 
 	<mp-cells wx:if="{{(clubs.length>0)}}" title="已加入的俱乐部" >
 
@@ -70,26 +76,24 @@
 
 		</mp-slideview>
 
-	<!-- </view> -->
-
-</mp-cells>
+	</mp-cells>
 
 </View>
 
 <button 
-			wx:if="{{(!auditing && createClubEnable)}}"
-			class="weui-btn" type="default" size="default" plain="false"
-			bindtap="onClickCreateClub"
-			style="margin-Top: 40rpx; margin-bottom: 40rpx; font-size: {{vip?'36rpx':'30rpx'}};">
-				{{vip?'创建俱乐部':'看广告,创建俱乐部'}}
+	wx:if="{{(!auditing && createClubEnable)}}"
+	class="weui-btn" type="default" size="default" plain="false"
+	bindtap="onClickCreateClub"
+	style="margin-Top: 40rpx; margin-bottom: {{adShow? 280: 40}}rpx; font-size: {{vip?'36rpx':'30rpx'}};">
+		{{vip?'创建俱乐部':'看广告,创建俱乐部'}}
 </button>
 
 <button 
-			wx:if="{{(debug)}}"
-			class="weui-btn" type="primary" 
-			bindtap="onClickDebug"
-			style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
-			测试
+	wx:if="{{(debug)}}"
+	class="weui-btn" type="primary" 
+	bindtap="onClickDebug"
+	style="flex:1; margin-Top: 40rpx; margin-left: 40rpx; margin-right: 40rpx; font-size: 36rpx;"  >
+	测试
 </button>
 
 
