@@ -1,14 +1,14 @@
 {
   "pages": [
-    "pages/index/index",
-    "pages/deployFunctions/deployFunctions",
+    "pages/clubs/clubList",
+    "pages/clubs/create",
+    "pages/clubs/detail",
     "pages/matches/matchList",
     "pages/matches/detail",
     "pages/players/playerList",
     "pages/players/detail",
-    "pages/clubs/clubList",
-    "pages/clubs/create",
-    "pages/clubs/detail"
+    "pages/deployFunctions/deployFunctions",
+    "pages/index/index"
   ],
   "entryPagePath": "pages/clubs/clubList",
   "window": {

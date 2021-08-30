@@ -59,6 +59,8 @@ async function getUserDetail({success, error}) {
       success: (res) => {
         console.log("getUserDetail->getUserProfile return ==>")
         console.log(res);
+        if( res.userInfo.nickName)
+          res.userInfo.name = res.userInfo.nickName
         if( success != null)
           success(res)
       },
@@ -76,7 +78,9 @@ async function getUserDetail({success, error}) {
                 success: async res => {
                   console.log("getUserDetail->getUserInfo return ==>")
                   console.log(res);
-                    // console.log(res.userInfo);
+                  // console.log(res.userInfo);
+                  if( res.userInfo.nickName)
+                    res.userInfo.name = res.userInfo.nickName
                   if( success != null)
                     success(res)
                 }
