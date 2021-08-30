@@ -254,21 +254,23 @@ createMatchData = async (type, playerArray) => {
     if(orderArraies[n].nosort != undefined){
       nosort = JSON.parse(orderArraies[n].nosort);
     }
+    var playerArrayOnce = shuffleArray(playerArraySave, nosort);
     if( type == 'fixpair'){
-      var playerArrayFlat = flatPlayerArray(playerArraySave);
-      playerArray = shuffleArray(playerArrayFlat, nosort);
-    } else {
-      playerArray = shuffleArray(playerArraySave, nosort);
+      // var playerArrayFlat = flatPlayerArray(playerArraySave);
+      // playerArray = shuffleArray(playerArrayFlat, nosort);
+      playerArrayOnce = flatPlayerArray(playerArrayOnce);
+    // } else {
+    //   playerArray = shuffleArray(playerArraySave, nosort);
     }
-    console.log('after shuffle: ' + playerArray);
+    console.log('after shuffle: ' + playerArrayOnce);
 
     for (let i = 0; i < orderArray.length; i++) {
       let game = {
         order: i+1,
-        player1: playerArray[orderArray[i][0][0]],
-        player2: playerArray[orderArray[i][0][1]],
-        player3: playerArray[orderArray[i][1][0]],
-        player4: playerArray[orderArray[i][1][1]],
+        player1: playerArrayOnce[orderArray[i][0][0]],
+        player2: playerArrayOnce[orderArray[i][0][1]],
+        player3: playerArrayOnce[orderArray[i][1][0]],
+        player4: playerArrayOnce[orderArray[i][1][1]],
         score1: -1,
         score2: -1,
       };
