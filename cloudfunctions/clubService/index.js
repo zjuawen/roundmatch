@@ -307,7 +307,7 @@ addUserToClub = async (clubid, openid, userInfo) => {
   			clubid: clubid,
         enable: true,
         order: 1,
-        name: userInfo.nickName,
+        name: userInfo.name,
         avatarUrl: userInfo.avatarUrl,
         gender: userInfo.gender,
   			createDate: dt

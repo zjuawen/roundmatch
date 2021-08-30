@@ -273,7 +273,7 @@ Page({
 		if( options.action == 'create'){
 			this.setData({
 				userInfo: userInfoObject,
-				creator: userInfoObject.nickName,
+				creator: userInfoObject.name,
 				action: options.action,
 				btnText: '创建',
 				title: '创建俱乐部',
@@ -281,7 +281,7 @@ Page({
 		} else if( options.action == 'edit'){
 			this.setData({
 				userInfo: userInfoObject,
-				creator: userInfoObject.nickName,
+				creator: userInfoObject.name,
 				action: options.action,
 				btnText: '确定',
 				title: '修改俱乐部',

@@ -173,7 +173,7 @@ updateUserInfo = async (openid, userInfo) => {
     })
     .update({
       data: {
-        name: userInfo.nickName,
+        name: userInfo.name,
         avatarUrl: userInfo.avatarUrl,
         gender: userInfo.gender,
         country: userInfo.country,
