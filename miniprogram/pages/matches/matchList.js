@@ -592,8 +592,8 @@ Page({
       // adShow: app.globalData.adShow1,
     });
     app.globalData.clubid = this.data.clubid;
-    this.getClubInfo(this.data.clubid);
     wx.hideShareMenu({});
+    this.getClubInfo(this.data.clubid);
     this.readNotices();
     // this.loadMatches(this.data.clubid);
     // this.loadPlayers(this.data.clubid);
@@ -668,7 +668,7 @@ Page({
     let shareUrl = '/pages/clubs/clubList?action=sharejoin&clubid=' + this.data.clubid;
     console.log(shareUrl)
     return ({
-      title: player.nickName + "邀请你加入" + clubinfo.wholeName,
+      title: player.name + "邀请你加入\"" + clubinfo.wholeName + "\"",
       imageUrl: '/images/background.jpg',
       path: shareUrl,
     })

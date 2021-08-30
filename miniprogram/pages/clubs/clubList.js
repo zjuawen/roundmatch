@@ -136,6 +136,7 @@ Page({
                     this.setData({
                         login: true
                     })
+                    getApp().globalData.userInfo = res;
                     if( this.data.sharejoin){
                         wx.hideLoading();
                         this.onJoinClub(this.data.sharedclubid);
@@ -554,7 +555,7 @@ Page({
      */
     onReady: function() {
         // this.getUserDetail();
-        // this.loadUserinfo();
+        // this.loadUserInfo();
         this.loadClubs();
         // this.createVideoAd();
         setTimeout( this.getBannerADHeight, 2000);
