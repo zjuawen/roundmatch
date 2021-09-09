@@ -354,6 +354,7 @@ readMatch = async (clubid, matchid) => {
       player3: $.arrayElemAt(["$player3", 0]),
       player4: $.arrayElemAt(["$player4", 0]),
     })
+    .limit(64)
     .sort({
       'order': 1
     })
