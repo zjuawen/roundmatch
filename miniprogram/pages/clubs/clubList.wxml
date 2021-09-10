@@ -26,7 +26,7 @@
 
 
 <view class="page__bd" style="display: flex; align-items: top; margin-right: 5rpx">
-	<image class='avatar-user' bindtap="onTapUser" mode="aspectFit" src="{{avatarUrl}}" />
+	<image class='avatar-user' bindtap="onTapUser" bindlongpress="onLongTapUser" mode="aspectFit" src="{{avatarUrl}}" />
 	<mp-searchbar 
 		style="flex: 10;"
 		bindselectresult="onTapSearchResult" 

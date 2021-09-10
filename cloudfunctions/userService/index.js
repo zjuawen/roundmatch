@@ -185,11 +185,40 @@ updateUserInfo = async (openid, userInfo) => {
       //   avatarUrl: userInfo.avatarUrl,
       // }
     })
-    .then(res => {
+    .then(async res => {
       console.log(res);
       // return res.data;
       let data = res.errMsg;
-      return data;
+      let count = await updatePlayerInfo(openid, userInfo);
+      return {
+        msg: data, 
+        count: count
+      };
+    })
+}
+
+updatePlayerInfo = async (openid, userInfo) => {
+  let dt = db.serverDate();
+  return await db.collection('players')
+    .where({
+      openid: openid
+    })
+    .update({
+      data: {
+        name: userInfo.name,
+        avatarUrl: userInfo.avatarUrl,
+        gender: userInfo.gender,
+        updatedDate: dt
+      }
+      // data:{
+      //   avatarUrl: userInfo.avatarUrl,
+      // }
+    })
+    .then(res => {
+      console.log(res);
+      // return res.data;
+      let count = res.stats.updated;
+      return count;
     })
 }
 

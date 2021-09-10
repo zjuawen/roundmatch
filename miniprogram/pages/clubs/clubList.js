@@ -97,7 +97,22 @@ Page({
     },
     //更新用户信息
     updateUserInfo: function(userInfo) {
-        APIs.updateUserInfo(userInfo, this);
+        APIs.updateUserInfo(userInfo, this, this.updateUserInfoCb);
+    },
+
+    updateUserInfoCb: function(data){
+        console.log(data)
+        if( data.msg == "collection.update:ok"){
+            wx.showToast({
+                title: '更新信息成功',
+                icon: 'success'
+            })
+        } else {
+             wx.showToast({
+                title: data.msg,
+                icon: 'none'
+            })
+        }    
     },
 
     isAuditing: async function() {
@@ -171,6 +186,10 @@ Page({
             return;
         }
         this.loadUserInfo();
+    },
+    onLongTapUser: function(e){
+        this.showAuthDialog(true, "重新授权获取用户信息");
+        return;        
     },
     onClickPublicClub: function(e) {
         console.log(e);
