@@ -60,6 +60,7 @@ Page({
     filterShow: false,
     dateFrom: '2019-01-01',
     dateTo: Utils.getCurrentDate(),
+    filterNum: 1,
 
     adShow: false,  //app.globalData.adShow1, //true,
     dialogAdPrompt: false,
@@ -318,7 +319,7 @@ Page({
         to: this.data.dateTo
       }
     }
-    APIs.statisClub(this, clubid, date, res => {
+    APIs.statisClub(this, clubid, date, this.data.filterNum, res => {
       let data = res;
       data.forEach(function (item) {
         // item.pigCount = 0;
@@ -547,6 +548,26 @@ Page({
   bindDateToChange: function(e) {
     this.setData({
       dateTo: e.detail.value
+    })
+  },
+
+  bindFilterNumInput: function(e){
+    console.log(e)
+    this.setData({
+      filterNum: e.detail.value
+    })
+  },
+  bindFilterNumMinus: function(e){
+    if( this.data.filterNum <= 0){
+      return
+    }
+    this.setData({
+      filterNum: this.data.filterNum - 1 
+    })
+  },
+  bindFilterNumPlus: function(e){
+    this.setData({
+      filterNum: this.data.filterNum + 1
     })
   },
 

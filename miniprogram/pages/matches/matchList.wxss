@@ -220,3 +220,39 @@
 	margin: 10rpx;
 	margin-left: -20rpx;
 }
+
+.stepper {
+	display: flex;
+	flex-direction: row;
+	width:100px;
+	height:26px;
+	margin: 0 auto;
+	/*border: 1px solid #ccc;*/
+	border-radius: 3px;
+}
+
+.stepper text {
+	float: left;
+	width: 32px;
+	line-height: 26px;
+	text-align: center;
+}
+
+.stepper image{
+	width:22px;
+	height:22px;
+	margin: 0 auto;
+	/*border: 1px solid #ccc;*/
+	border-radius: 3px;
+}
+
+.stepper input {
+	width: 40px;
+	height: 26px;
+	float: left;
+	margin: 0 auto;
+	text-align: center;
+	font-size: 12px;
+	/*border-left: 1px solid #ccc;*/
+	/*border-right: 1px solid #ccc;*/
+}

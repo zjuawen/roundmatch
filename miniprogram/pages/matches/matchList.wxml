@@ -136,6 +136,18 @@
 
     <!-- filter -->
     <view wx:if="{{filterShow}}" class="statistic-header-container" >
+      <label style="padding-left: 30rpx;" >最少参加次数:</label>
+      <view class='stepper'>
+        <image class='stepper-button' mode="aspectFit" 
+          bindtap='bindFilterNumMinus' src="/images/minus.svg" >
+        </image>
+        <input bindinput='bindFilterNumInput' value='{{filterNum}}'></input>
+        <image class='stepper-button' mode="aspectFit" 
+          bindtap='bindFilterNumPlus' src="/images/plus.svg" >
+        </image>
+      </view>
+    </view>
+    <view wx:if="{{filterShow}}" class="statistic-header-container" >
       <picker 
           class="filter-date" mode="date"
           start="2019-01-01"  end="2025-12-31" 

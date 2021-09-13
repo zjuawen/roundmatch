@@ -37,7 +37,7 @@ exports.main = async (event, context) => {
   } else if (action == 'update') {
     data = await updateClub(wxContext, event.info, event.userInfo);
   } else if( action == 'statis') {
-     data = await statisUserInClub(event.clubid, event.date);
+     data = await statisUserInClub(event.clubid, event.date, event.minMatchCount);
   } else if ( action == 'info') {
     data = await getClubInfo(event.clubid);
   } else if ( action == 'listByOwner') {
@@ -456,7 +456,11 @@ updateClub = async (wxContext, info, userInfo) => {
 
 
 //统计俱乐部成员胜率
-statisUserInClub = async (clubid, date) => {
+statisUserInClub = async (clubid, date, minMatchCount) => {
+  if( minMatchCount == null ){
+    minMatchCount = 0;
+  }
+
   return await db.collection('players')
     .where({
       clubid: clubid
@@ -469,7 +473,9 @@ statisUserInClub = async (clubid, date) => {
       let matches = await listClubMatches(clubid, date);
       let games = await listClubGames(clubid, date);
       let result = startStatisticPlayers(players, matches, games);
-      let data = players;
+      let playerFiltered = filterPlayerMatchCount(players, matches, games, minMatchCount);
+      playerFiltered.sort(billboardOrder);
+      let data = playerFiltered;
       return data;
     })
 }
@@ -662,15 +668,64 @@ isAllGamesDone = (games) => {
   return done;
 }
 
+//过滤最少比赛次数
+filterPlayerMatchCount = (players, matches, games, minMatchCount) => {
+  if( minMatchCount < 1){
+    return players;
+  }
+
+  players.forEach(function (player){
+    player.matchCount = 0;
+  });
+
+  matches.forEach(function (match){
+
+    let gameArray = getGamesInMatch(match, games);
+    if( gameArray.length == 0){
+      return;
+    }
+
+    if( !isAllGamesDone(gameArray)){
+      return;
+    }
+
+    let playersClone = JSON.parse(JSON.stringify(players));
+    let playerArray = getPlayersInMatch(gameArray, playersClone);
+    playerArray.forEach(function (playerA){
+      let player = findPlayerById(players, playerA._id);
+      if( player != null)
+        player.matchCount++;
+    });
+
+  });
+
+  let playersReturn = [];
+  players.forEach(function (player, index){
+    if( player.matchCount >= minMatchCount){
+      playersReturn.push(player);
+    } else {
+      console.log("remove: " + player.name);
+    }
+  });
+
+  return playersReturn;
+
+}
+
 //获取该比赛所有场次
 getGamesInMatch = (match, games) =>{
   let gameArray = [];
-  games.forEach(function (game) {
-    if( game.matchid == match._id){
-      gameArray.push(game);
-    }
-  });
+  try{
+    games.forEach(function (game) {
+      if( game.matchid == match._id){
+        gameArray.push(game);
+      }
+    });
+  } catch(e){
+    console.log(e)
+  }
   return gameArray;
+
 }
 
 //获取该比赛所有人员
@@ -726,6 +781,20 @@ comparePlayer = (player1, player2) => {
   if( total1 != total2){
     return total2 - total1;
   }
+
+  return 0;
+}
+
+//按参加次数排序
+billboardOrder = (player1, player2) => {
+  //比较总参与局数
+  let count1 = (player1.winCount+player1.lostCount);
+  let count2 = (player2.winCount+player2.lostCount);
+  if( count1 != count2){
+    return count2 - count1;
+  }
+
+  return comparePlayer(player1, player2);
 }
 
 checkMatchCount = async (clubid) => {

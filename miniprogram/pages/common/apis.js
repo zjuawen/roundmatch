@@ -208,10 +208,11 @@ function isVip(that, clubid, callback){
     })
 }
 
-function statisClub(that, clubid, date, callback){
+function statisClub(that, clubid, date, minMatchCount, callback){
     commonCallFuction(that, callback, 'clubService', 'statis', { 
         clubid: clubid,
         date: date,
+        minMatchCount: minMatchCount,
     });
 }
 
