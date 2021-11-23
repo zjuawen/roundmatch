@@ -14,7 +14,7 @@
         </image>
 
       <view style=" flex: 1;color: grey; display: flex; justify-content: center; " >
-        请选择4～8{{type=='fixpair'?'对':'人'}}后继续:（ {{selectCount}} ）
+          {{selectInfo}}:（ {{selectCount}} ）
         </view>
         
       <button 
@@ -42,8 +42,8 @@
 <view wx:if="{{!searchShow}}" style="height: 120rpx" />
 <view wx:if="{{searchShow}}" style="height: 200rpx" />
 
-<mp-cells title="已选择" >
-  <view wx:if="{{type=='fixpair'}}" >
+<view wx:if="{{type=='fixpair'}}" >
+  <mp-cells title="已选择" >
     <view style="display: flex;" 
       wx:for="{{selectedPlayerPairs}}" 
       wx:key="{{item._id}}">
@@ -68,9 +68,47 @@
         </image>
     </mp-cell>
     </view>
-  </view> 
+  </mp-cells>
+</view> 
 
-  <view wx:if="{{type!='fixpair'}}" >
+<view wx:if="{{type=='group'}}" >
+  
+  <mp-cells title="已选择" >
+    <view style="display: flex;"  >
+      <label class="group-header-A" >
+        A组
+        </label>
+      <label class="group-header-B" >
+        B组
+        </label>
+    </view>
+    <view style="display: flex;" 
+      wx:for="{{selectedPlayerPairs}}" 
+      wx:key="{{item._id}}">
+    <mp-cell class="group-A" 
+      value="{{item.player1.name}}" 
+      data-index="{{index}}" 
+      data-slot="{{1}}" 
+      bindtap="onDeselectPlayer" >
+        <image wx:if="{{item.player1}}" slot="icon" class="avatar"
+          src="{{ (item.player1.avatarUrl)?item.player1.avatarUrl:defaultAvatar }}" >
+        </image>
+    </mp-cell>
+    <mp-cell class="group-B"
+      data-index="{{index}}" 
+      value="{{item.player2.name}}" 
+      data-slot="{{2}}" 
+      bindtap="onDeselectPlayer" >
+        <image wx:if="{{item.player2}}"  slot="icon" class="avatar"
+          src="{{ (item.player2.avatarUrl)?item.player2.avatarUrl:defaultAvatar }}" >
+        </image>
+    </mp-cell>
+    </view>
+  </mp-cells>
+</view> 
+
+<view wx:if="{{type=='nonefix'}}" >
+  <mp-cells title="已选择" >
     <mp-cell class="player-list-cell"
       wx:for="{{selectedPlayers}}" wx:key="{{item._id}}"
       data-index="{{index}}" value="{{item.name}}" 
@@ -79,9 +117,8 @@
           src="{{ (item.avatarUrl)?item.avatarUrl:defaultAvatar }}" >
         </image>
     </mp-cell>
-  </view>
-
-</mp-cells>
+  </mp-cells>
+</view>
 
 <view style="height: 50rpx" />
 

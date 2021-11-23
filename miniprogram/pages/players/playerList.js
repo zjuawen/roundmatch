@@ -18,11 +18,12 @@ Page({
     nextDisable: true,
 
     pageNum: 1, //初始页默认值为1
-    pageSize: 10,
+    pageSize: 20,
     noMore: false,
 
     searchShow: false,
     defaultAvatar: '/images/user-unlogin.png',
+    selectInfo: '请选择4～8人后继续',
   },
 
   loading: function (value) {
@@ -96,7 +97,7 @@ Page({
     let players = this.data.players;
     let type = this.data.type;
 
-    if( type == 'fixpair'){
+    if( type == 'fixpair' || type == 'group'){
       let selectedPlayerPairs = this.data.selectedPlayerPairs;
 
       let player = selectedPlayerPairs[index]['player'+slot];
@@ -172,7 +173,7 @@ Page({
     }
 
     let type = this.data.type;
-    if( type == 'fixpair'){
+    if( type == 'fixpair' ||  type == 'group'){
       let selectedPlayerPairs = this.data.selectedPlayerPairs;
 
       let done = false;
@@ -260,7 +261,7 @@ Page({
 
   getSelectedPlayers: function() {
     let type = this.data.type;
-    if( type == 'fixpair'){
+    if( type == 'fixpair' ||  type == 'group'){
       return this.data.selectedPlayerPairs;
     } else {
       return this.data.selectedPlayers;
@@ -367,6 +368,7 @@ Page({
    * 生命周期函数--监听页面加载
    */
   onLoad: function (options) {
+
     this.setData({
       clubid: options.clubid,
       action: options.action,
@@ -378,6 +380,15 @@ Page({
       pageNum: 1,
       noMore: false
     });
+    if( this.data.type == 'fixpair'){
+      this.setData({
+        selectInfo: '请选择4～8对后继续'
+      });
+    } else if( this.data.type = 'group'){
+      this.setData({
+        selectInfo: '请选择AB组人员后继续'
+      });
+    }
     this.loadPlayers(this.data.clubid);
     this.setData({
         search: this.search.bind(this)

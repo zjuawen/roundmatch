@@ -227,13 +227,15 @@ createMatchData = async (type, playerArray) => {
   var typeValue = 'none';
   if( type == 'fixpair'){
     typeValue = 'fix';
+  } else if( type == 'group'){
+    typeValue = 'group';
   } else {
     typeValue = 'none';
   }
 
   let count = playerArray.length;
 
-  if( type == 'fixpair'){
+  if( type == 'fixpair' ||  type == 'group'){
     var playerArrayFlat = flatPlayerArray(playerArray);
     count = playerArrayFlat.length;
   }
@@ -254,14 +256,17 @@ createMatchData = async (type, playerArray) => {
     if(orderArraies[n].nosort != undefined){
       nosort = JSON.parse(orderArraies[n].nosort);
     }
-    var playerArrayOnce = shuffleArray(playerArraySave, nosort);
-    if( type == 'fixpair'){
-      // var playerArrayFlat = flatPlayerArray(playerArraySave);
-      // playerArray = shuffleArray(playerArrayFlat, nosort);
-      playerArrayOnce = flatPlayerArray(playerArrayOnce);
-    // } else {
-    //   playerArray = shuffleArray(playerArraySave, nosort);
+    var playerArrayOnce = null;
+    if( type == 'group'){
+      sortgroups = JSON.parse(orderArraies[n].sortgroups);
+      playerArrayOnce = shuffleArrayGroup(playerArraySave, sortgroups);
+    } else {
+      playerArrayOnce = shuffleArray(playerArraySave, nosort);
+      if( type == 'fixpair' ){
+        playerArrayOnce = flatPlayerArray(playerArrayOnce);
+      }
     }
+    
     console.log('after shuffle: ' + playerArrayOnce);
 
     for (let i = 0; i < orderArray.length; i++) {
@@ -300,6 +305,8 @@ loadOrders = async (playerNum, typeValue) => {
   var key = 'ORDERS_' + playerNum;
   if( typeValue == 'fix'){
     key = 'PAIR_ORDERS_' + playerNum;
+  } if( typeValue == 'group'){
+    key = 'GROUP_ORDERS_' + playerNum;
   }
   return await db.collection('systemconfig')
     .where({
@@ -438,6 +445,21 @@ listMatch = async (owner, clubid, pageNum, pageSize) => {
       console.log(res.list)
       return res.list;
     })
+}
+
+shuffleArrayGroup = (arraySaved, groups) => {
+  let array = flatPlayerArray(arraySaved);
+  for( let n = 0; n<groups.length; n++){
+    let group = groups[n];
+    for (let i = group.length; i; i--) {
+      let j = Math.floor(Math.random() * group.length);
+      // console.log("swap: " + array[group[i-1]].name + "-" + array[group[j]].name);
+      let t = array[group[i-1]];
+      array[group[i-1]] = array[group[j]];
+      array[group[j]] = t;
+    }
+  }
+  return array;
 }
 
 shuffleArray = (arraySaved, skiparray) => {

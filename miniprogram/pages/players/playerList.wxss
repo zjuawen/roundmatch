@@ -48,6 +48,30 @@
 	padding-left: 20rpx;
 }
 
+.group-header-A {
+  width: 50%; 
+  padding:10rpx; 
+  padding-left: 50rpx; 
+  background-color: salmon;
+}
+
+.group-A {
+  width: 50%; 
+  background-color: lightsalmon;
+}
+
+.group-header-B {
+  width: 50%; 
+  padding:10rpx; 
+  padding-left: 50rpx; 
+  background-color: deepskyblue;
+}
+
+.group-B {
+  width: 50%; 
+  background-color: lightskyblue;
+}
+
 .checkbox {
   margin: 10rpx;
   height: 16px;
