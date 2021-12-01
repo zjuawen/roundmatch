@@ -237,7 +237,7 @@ Page({
   isAlreadySelected: function(player){
     let id = player._id;
     let type = this.data.type;
-    if( type == 'fixpair'){
+    if( type == 'fixpair' || type == 'group'){
       let selectedPlayerPairs = this.data.selectedPlayerPairs;
       for( let i = 0; i < selectedPlayerPairs.length; i++){
         for( let slot = 1; slot <= 2; slot++){
@@ -384,7 +384,7 @@ Page({
       this.setData({
         selectInfo: '请选择4～8对后继续'
       });
-    } else if( this.data.type = 'group'){
+    } else if( this.data.type == 'group'){
       this.setData({
         selectInfo: '请选择AB组人员后继续'
       });
