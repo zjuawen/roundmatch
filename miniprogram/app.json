@@ -7,7 +7,6 @@
     "pages/matches/detail",
     "pages/players/playerList",
     "pages/players/detail",
-    "pages/deployFunctions/deployFunctions",
     "pages/index/index"
   ],
   "entryPagePath": "pages/clubs/clubList",

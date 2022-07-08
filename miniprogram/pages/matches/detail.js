@@ -553,6 +553,7 @@ Page({
       if(options.type){
         type = options.type;
       }
+      console.log(options.players)
       let selectedPlayers = JSON.parse(options.players);
       // var matchdata = JSON.parse(options.data);
       this.setData({
