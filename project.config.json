@@ -37,7 +37,7 @@
   },
   "appid": "wxf3f6462195815590",
   "projectname": "roundmatch",
-  "libVersion": "2.19.1",
+  "libVersion": "2.17.0",
   "simulatorType": "wechat",
   "simulatorPluginLibVersion": {},
   "compileType": "miniprogram",

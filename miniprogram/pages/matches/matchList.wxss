@@ -8,7 +8,7 @@
 	flex-direction: column;
 	align-items: flex-start;
 	box-sizing: border-box;
-	box-shadow: 1px 1px 3px #CCCCCC;
+	box-shadow: 3px 2px 3px #758792;
 	background-color: white;
 	margin-left: 30rpx;
 	margin-right: 30rpx;
@@ -75,7 +75,26 @@
 	flex: 1;
 	display: flex;
 	flex-direction: column;
-	border-top: 1px solid #E5E5E5;
+	border-top: 2px solid #FFFFFF;
+}
+
+.match-info-seperator {
+  margin-left: 3%;
+  margin-right: 3%;
+  width: 94%;
+  height: 1px;
+  margin-top: -5px;
+  /* margin-bottom: 5px; */
+  background-color: white;
+}
+
+.match-info-finish {
+	flex: 1;
+	display: flex;
+  flex-direction: row;
+  color:#0a68ff;
+  margin-left: 10px;
+	/* border-top: 2px solid #FFFFFF; */
 }
 
 .match-info-title {
@@ -89,7 +108,9 @@
 	display: flex;
 	flex-direction: column;
 	align-items: center;
-	margin-bottom: 20rpx;
+  margin: 20rpx;
+  margin-right: 40px;
+  /* margin-bottom: 20rpx; */
 }
 
 .player-list-item {
@@ -211,6 +232,16 @@
 	float: right;
 	/*position: relative;*/
 	/*right: 50rpx; */
+	/*border: 1px;*/
+}
+
+.img-finish {
+	height: 100rpx; 
+	width: 100rpx;
+  margin-left: -20rpx;
+  margin-right: 20rpx;
+  margin-top: -20rpx;
+	margin-bottom: 10rpx;
 	/*border: 1px;*/
 }
 

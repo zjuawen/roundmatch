@@ -128,6 +128,7 @@ listUserInClub = async (clubid, pageNum, pageSize) => {
    return await db.collection('players')
     .where({
       clubid: clubid,
+      enable: true,
     })
     .orderBy('order', 'desc')
     .skip(pageSize*(pageNum-1))
