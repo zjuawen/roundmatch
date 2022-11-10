@@ -4,7 +4,8 @@ const bodyParser = require("body-parser");
 const fileupload = require("express-fileupload");
 const cors = require("cors");
 const server = express();
-// const db = require("./models");
+const db = require("./models");
+const utils = require("./utils/json.importer");
 
 const corsSettings = {
 	origin: true,
@@ -47,5 +48,9 @@ server.listen(port, () => {
 
 // Run following function if you want drop existing tables and re-sync database
 // db.dropRestApiTable();
+
+// Run following function if you want import all data 
+let count = utils.process('./exported/', 'clubs');
+console.log('processed: ' + count)
 
 // db.databaseConf.sync();

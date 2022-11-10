@@ -5,7 +5,7 @@
  * Date: 05/04/2020
  * Time: 01:45
  **/
-// const dummy = require("../controllers/Dummy");
+const dummy = require("../controllers/dummy");
 
 // const admin = require("../controllers/Adminuser");
 // const doctor = require("../controllers/Doctor");
@@ -19,9 +19,9 @@
 const express = require("express");
 const router = express.Router();
 
-// // debug
-// // router.post("/api/test", dummy.test);
-// router.get("/api/test", dummy.test);
+// debug
+// router.post("/api/test", dummy.test);
+router.get("/api/test", dummy.test);
 
 // // admin users
 // router.post("/api/admin/login", admin.login);
