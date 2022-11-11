@@ -1,0 +1,54 @@
+// const DataTypes = require('./data-types');
+// ErrorCode.DataTypes = DataTypes;
+
+const ErrorCode = module.exports = {
+
+// success
+  SUCCESS:                         0,
+
+//general
+  ERROR_NEED_LOGIN:                -1,
+  ERROR_WECHATAPI:                 -2,
+
+//admin user
+  ERROR_USER_NOT_EXIST:            -1001,
+  ERROR_PASSWORD_ERROR:            -1002,
+  ERROR_USER_ALREADY_EXIST:        -1003,
+  ERROR_USERNAME_REQUIRED:         -1004,
+  ERROR_USER_NOTHING_MODIFIED:     -1005,
+
+// doctor
+  ERROR_DOCTOR_NAME_REQUIRED:      -2001,
+  ERROR_DOCTOR_UID_REQUIRED:       -2002,
+  ERROR_DOCTOR_UID_NOTFOUND:       -2003,
+  ERROR_UID_CODE_REQUIRED:         -2004,
+  ERROR_CODE_REQUIRED:             -2005,
+  ERROR_DOCTOR_NOT_FOUND:          -2006,
+  ERROR_DATA_CONTENT_REQUIRED:     -2007,
+  ERROR_DOCTOR_UPDATE_FAIL:        -2008,
+  ERROR_DOCTOR_ALREADY_BIND:       -2009,
+  ERROR_DOCTOR_NOTHING_MODIFIED:   -2010,
+
+// patient
+  ERROR_PATIENT_UID_NOT_FOUND:     -3001,
+  ERROR_DOCTOR_AND_CODE_REQUIRED:  -3002,
+  ERROR_DOCTOR_UID_REQUIRED:       -3003,
+  ERROR_PATIENT_NOTHING_MODIFIED:  -3004,
+  ERROR_PATIENT_UID_REQUIRED:      -3005,
+
+// data
+  ERROR_DATA_NOT_EXIST:            -4001,
+  ERROR_DATA_ID_REQUIRED:          -4002,
+  ERROR_DATA_ID_CANNOT_BE_PRESENT: -4003, 
+  ERROR_DATA_CANNOT_GOBACK:        -4004,
+
+// dict & oss
+  ERROR_DICT_NAME_REQUIRED:        -5001,
+  ERROR_OBJECT_NAME_REQUIRED:      -5002,
+  ERROR_OSS_URL_REQUIRED:          -5003,
+
+// last error
+  ERROR_NEED_AWEN:                 -9999,
+  ERROR_NEED_OK:                   -9999,
+
+};

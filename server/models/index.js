@@ -25,7 +25,7 @@ const database = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
         typeCast: true
     },
     timezone: '+08:00',
-    logging: false
+    // logging: false
 });
 
 const db = {};
@@ -56,5 +56,9 @@ db.dropRestApiTable = () => {
 //     let count = importer.process('clubs');
 //     console.log('imported records: ' + count);
 // };
+
+db.collection = (tableName) => {
+    return db[tableName];
+};
 
 module.exports = db;

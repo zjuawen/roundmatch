@@ -1,8 +1,20 @@
+const db = require("../models");
+const Op = require("sequelize").Op;
+// utils
+const paginate = require("../utils/util").paginate;
+const md5String = require("../utils/util").md5String;
+const queryLike = require("../utils/util").queryLike;
+const validateSession = require("../utils/util").validateSession;
+const sequelizeExecute = require("../utils/util").sequelizeExecute;
+const successResponse = require("../utils/util").successResponse;
+const errorResponse = require("../utils/util").errorResponse;
+
+
 // 云函数入口函数
 exports.main = async (request, result) => {
   // const wxContext = context;// cloud.getWXContext()
   let event = request.query;
-  
+
   console.log(event);
   // console.log(cloud.DYNAMIC_CURRENT_ENV);
 
@@ -10,9 +22,9 @@ exports.main = async (request, result) => {
   // console.log("action: " + action);
   let data;
   if (action == 'join') {
-    data = await joinClub( wxContext, event);
+    data = await joinClub(wxContext, event);
   } else if (action == 'list') {
-    let private = await listPrivateClub( wxContext );
+    let private = await listPrivateClub(wxContext);
     // let public = await listPublicClub( wxContext );
     data = {
       private, //public
@@ -21,60 +33,55 @@ exports.main = async (request, result) => {
     data = await createClub(wxContext, event.info, event.userInfo);
   } else if (action == 'update') {
     data = await updateClub(wxContext, event.info, event.userInfo);
-  } else if( action == 'statis') {
-     data = await statisUserInClub(event.clubid, event.date, event.minMatchCount);
-  } else if ( action == 'info') {
+  } else if (action == 'statis') {
+    data = await statisUserInClub(event.clubid, event.date, event.minMatchCount);
+  } else if (action == 'info') {
     data = await getClubInfo(event.clubid);
-  } else if ( action == 'listByOwner') {
+  } else if (action == 'listByOwner') {
     data = await listOwnClub(wxContext);
-  } else if ( action == 'search') {
+  } else if (action == 'search') {
     data = await searchClub(event.keyword);
-  } else if ( action == 'checkMatchCount') {
+  } else if (action == 'checkMatchCount') {
     data = await checkMatchCount(event.clubid);
-  } else if ( action == 'incMatchCountAllow'){
+  } else if (action == 'incMatchCountAllow') {
     data = await incMatchCountAllow(event.clubid);
   }
 
-  return {
-    data,
-    openid: wxContext.OPENID,
-    appid: wxContext.APPID,
-    unionid: wxContext.UNIONID,
-  }
+  // console.log(data);
+  successResponse(result, {data});
+  // return {
+  //   data,
+  //   // openid: wxContext.OPENID,
+  //   // appid: wxContext.APPID,
+  //   // unionid: wxContext.UNIONID,
+  // }
 }
 
 //查找包含关键字的俱乐部
 searchClub = async (keyword) => {
-  let regex = '.*' + keyword;
-  return await db.collection('clubs')
-    .aggregate()
-    .project({
-      wholeName: true,
-      shortName: true,
+  return await db.collection('clubs').findAll({
+    where: {
+      ...queryLike(keyword, ['shortName', 'wholeName']),
       public: true,
-      length: $.strLenBytes( '$password'),
-      full: $.concat(['$shortName', ' ', '$wholeName'])
+      delete: false
+    }
+  }).then((data) => {
+    console.log(data)
+    // successResponse(result, {
+    // totalCount,
+    // list: 
+    data.map(function(item, index, array) {
+      console.log(item)
+      delete item.password;
+      return item;
+      // return {
+      //     id: item.id,
+      //     username: item.username,
+      //     createtime: item.createdAt
+      // };
     })
-    .project({
-      wholeName: true,
-      shortName: true,
-      public: true,
-      locked: $.gt(['$length', 0]),
-      full: true,
-    })
-    .match({
-      full: {
-        $regex: regex
-      },
-      public: _.neq(false),
-    })
-    .project({
-      public:false,
-      full: false,
-    })
-    .end()
-    .then(async res => {
-      console.log(res);
-      return res.list;
-    });
+    // });
+    // console.log(data)
+    return data;
+  });
 }
