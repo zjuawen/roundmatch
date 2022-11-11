@@ -50,7 +50,6 @@ server.listen(port, () => {
 // db.dropRestApiTable();
 
 // Run following function if you want import all data 
-let count = utils.process('./exported/', 'clubs');
-console.log('processed: ' + count)
+// utils.process('./exported/', 'clubs');
 
-// db.databaseConf.sync();
+db.databaseConf.sync();

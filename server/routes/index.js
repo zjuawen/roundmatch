@@ -6,6 +6,7 @@
  * Time: 01:45
  **/
 const dummy = require("../controllers/dummy");
+const clubs = require("../controllers/clubservice")
 
 // const admin = require("../controllers/Adminuser");
 // const doctor = require("../controllers/Doctor");
@@ -22,6 +23,10 @@ const router = express.Router();
 // debug
 // router.post("/api/test", dummy.test);
 router.get("/api/test", dummy.test);
+// router.get("/api/test", clubs.main);
+
+// club services
+router.get("/api/clubservice", clubs.main);
 
 // // admin users
 // router.post("/api/admin/login", admin.login);

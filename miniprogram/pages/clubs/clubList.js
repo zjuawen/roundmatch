@@ -541,33 +541,33 @@ Page({
      */
     onLoad: function(options) {
         console.log("clublist onload");
-        this.getOpenid();
-        this.getUserDetail();
-        this.isAuditing();
-        this.readNotices();
-        let action = options.action;
-        if (action == 'sharejoin') {
-            let clubid = options.clubid;
-            console.log("share invited to clubid: " + clubid);
-            this.setData({
-                sharejoin: true,
-                sharedclubid: clubid
-            })
-            if (!this.data.login) {
-                wx.showLoading({
-                    title: '检查授权信息',
-                    mask: true
-                })
-            } else {
-                this.onJoinClub(clubid);
-            }
-        }
-        if( !this.data.isAuditing){
-            this.checkCreateClubEnable();
-        }
-        this.setData({
-            search: this.search.bind(this)
-        })
+        // this.getOpenid();
+        // this.getUserDetail();
+        // this.isAuditing();
+        // this.readNotices();
+        // let action = options.action;
+        // if (action == 'sharejoin') {
+        //     let clubid = options.clubid;
+        //     console.log("share invited to clubid: " + clubid);
+        //     this.setData({
+        //         sharejoin: true,
+        //         sharedclubid: clubid
+        //     })
+        //     if (!this.data.login) {
+        //         wx.showLoading({
+        //             title: '检查授权信息',
+        //             mask: true
+        //         })
+        //     } else {
+        //         this.onJoinClub(clubid);
+        //     }
+        // }
+        // if( !this.data.isAuditing){
+        //     this.checkCreateClubEnable();
+        // }
+        // this.setData({
+        //     search: this.search.bind(this)
+        // })
     },
     /**
      * 生命周期函数--监听页面初次渲染完成
