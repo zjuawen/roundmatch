@@ -26,7 +26,10 @@ exports.queryLike = (keyword, likeColumns) => {
             }
         })
     }
-    console.log(query)
+    query = {
+        [Op.or]: query
+    };
+    // console.log(query)
     return query;
 };
 
@@ -72,13 +75,12 @@ exports.errorResponse = (result, errorCode, errorMsg) => {
         msg: message,
     });
 };
-exports.sequelizeExecute = (result, execFn, thenFn) => {
-    // console.log(queryFn);
-    execFn.then((data) => thenFn(data)).catch(err => {
+exports.sequelizeExecute = async (execFn, thenFn) => {
+    // console.log(execFn);
+    return await execFn.then((data) => {
+        return thenFn(data)
+    }).catch(err => {
         console.log(err);
-        result.status(500).send({
-            message: err.message || "未知错误，请反馈联系开发人员."
-        });
     });
 };
 
