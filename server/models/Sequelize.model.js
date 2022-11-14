@@ -38,7 +38,7 @@ module.exports.clubs = (database, Sequelize) => {
         createDate: {
             type: Sequelize.DATE,
             set(value) {
-                if( value instanceof String){
+                if (value instanceof String) {
                     this.setDataValue('createDate', hash(value));
                 } else {
                     // console.log(value['$date'])
@@ -50,42 +50,54 @@ module.exports.clubs = (database, Sequelize) => {
         freezeTableName: true
     });
 };
-// module.exports.doctor = (database, Sequelize) => {
-//     return database.define("doctor", {
-//         openid: {
-//             type: Sequelize.STRING
-//         },
-//         name: {
-//             type: Sequelize.STRING
-//         },
-//         hospital: {
-//             type: Sequelize.STRING
-//         },
-//         depart: {
-//             type: Sequelize.STRING
-//         },
-//         mobile: {
-//             type: Sequelize.STRING
-//         },
-//         avatar: {
-//             type: Sequelize.STRING
-//         },
-//         bindQrcode: {
-//             type: Sequelize.STRING
-//         },
-//         inviteQrcode: {
-//             type: Sequelize.JSON
-//         },
-//         latestSign: {
-//             type: Sequelize.STRING
-//         },
-//         sex: {
-//             type: Sequelize.INTEGER
-//         }
-//     }, {
-//         freezeTableName: true
-//     });
-// };
+module.exports.users = (database, Sequelize) => {
+    return database.define("users", {
+        _id: {
+            type: Sequelize.STRING,
+            primaryKey: true
+        },
+        appid: {
+            type: Sequelize.STRING
+        },
+        avatarUrl: {
+            type: Sequelize.STRING
+        },
+        name: {
+            type: Sequelize.STRING
+        },
+        gender: {
+            type: Sequelize.INTEGER
+        },
+        openid: {
+            type: Sequelize.STRING
+        },
+        unionid: {
+            type: Sequelize.STRING
+        },
+        city: {
+            type: Sequelize.STRING
+        },
+        province: {
+            type: Sequelize.STRING
+        },
+        country: {
+            type: Sequelize.STRING
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                if (value instanceof String) {
+                    this.setDataValue('createDate', hash(value));
+                } else {
+                    // console.log(value['$date'])
+                    this.setDataValue('createDate', value['$date']);
+                }
+            }
+        },
+    }, {
+        freezeTableName: true
+    });
+};
 // module.exports.patient = (database, Sequelize) => {
 //     return database.define("patient", {
 //         openid: {

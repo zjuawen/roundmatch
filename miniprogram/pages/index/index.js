@@ -15,32 +15,31 @@ Page({
     requestResult: ''
   },
 
-  redirect: function(){
+  redirect: function() {
     // return;
     wx.redirectTo({
-      // url: '../clubs/clubList',
+      url: '../clubs/clubList',
       // url: '../clubs/create',
       // url: '/pages/clubs/clubList?action=sharejoin&clubid=1b64dd7b5f688b9b0036ea5e65c0b470',
       // url: '/pages/clubs/clubList?action=sharejoin&clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0',
-      url: '/pages/matches/matchList?clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0',
+      // url: '/pages/matches/matchList?clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0',
       // url: '/pages/players/playerList?clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0&action=new&type=fixpair',
       // url: '../matches/detail?action=old&clubid=' + 'cbddf0af60952f6906fa62640d859ca2' + '&matchid=' + '17453ede60961476082de5384e44dc48',
     })
     return;
   },
-  
-  onLoad: function() {
-    this.redirect()
-    return
-    
-    if (!wx.cloud) {
-      wx.redirectTo({
-        url: '../chooseLib/chooseLib',
-      })
-      return
-    }
 
-    this.getOpenid();
+  onLoad: function() {
+    // this.redirect()
+    // return
+
+    // if (!wx.cloud) {
+    //   wx.redirectTo({
+    //     url: '../chooseLib/chooseLib',
+    //   })
+    //   return
+    // }
+
 
     if (wx.getUserProfile) {
       this.setData({
@@ -49,30 +48,35 @@ Page({
     }
 
     // 获取用户信息
-    wx.getSetting({
-      success: res => {
-        if (res.authSetting['scope.userInfo']) {
-          // 已经授权，可以直接调用 getUserInfo 获取头像昵称，不会弹框
-          wx.getUserInfo({
-            success: res => {
-              this.setData({
-                avatarUrl: res.userInfo.avatarUrl,
-                userInfo: res.userInfo
-              });
-              this.redirect();
-            },
-            fail: err => {
-              this.redirect();
-            }
-          })
-        }
-      }
-    })
+    // wx.getSetting({
+    //   success: res => {
+    //     if (res.authSetting['scope.userInfo']) {
+    //       // 已经授权，可以直接调用 getUserInfo 获取头像昵称，不会弹框
+    //       wx.getUserInfo({
+    //         success: res => {
+    //           this.setData({
+    //             avatarUrl: res.userInfo.avatarUrl,
+    //             userInfo: res.userInfo
+    //           });
+    //           this.redirect();
+    //         },
+    //         fail: err => {
+    //           this.redirect();
+    //         }
+    //       })
+    //     }
+    //   }
+    // })
 
-    //debug
-    this.redirect();
-    //end of debug
 
+    this.login( 
+      (res) => {
+        console.log(res);
+        //debug
+        // this.redirect();
+        //end of debug
+
+      });
     // this.onTest();
   },
 
@@ -109,14 +113,23 @@ Page({
     // }
   },
 
-  getOpenid: function() {
-    let that = this; 
-    APIs.getOpenid(this, res => {
+  login: async function(callback) {
+    let that = this;
+    const login = await wx.login();
+    console.log(login);
+
+    await APIs.login(login.code, this, res => {
+      console.log(res)
+      if ( callback){
+        callback(res);
+      }
+      
       app.globalData.openid = res.openid;
       that.setData({
-          openid: res.openid
+        openid: res.openid
       });
       // that.redirect();
+      return res;
     })
   },
 

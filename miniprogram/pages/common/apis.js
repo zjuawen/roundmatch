@@ -36,7 +36,15 @@ function commonCallFuction(that, callback, serviceName, actionName, params) {
             'content-type': 'application/json'
         },
         success(res) {
-            console.log(res.data)
+            console.log(res)
+            if (res.data) {
+                let data = res.data;
+                commonSuccessHandler(data, that, callback);
+            }
+        },
+        fail: err => {
+            console.error('[服务] ' + func + ' 调用失败', err);
+            commonErrorHandler(that);
         }
     })
 }
@@ -88,8 +96,10 @@ function getClubInfo(clubid, that, callback) {
     });
 }
 
-function getOpenid(that, callback) {
-    commonCallFuction(that, callback, 'userService', 'login');
+function login(code, that, callback) {
+    commonCallFuction(that, callback, 'userService', 'login', {
+        code: code
+    });
 }
 
 function getUserDetail(that, callback) {
@@ -275,7 +285,7 @@ function saveGameData(that, clubid, gamedata, callback) {
 module.exports = {
     // user api
     updateUserInfo: updateUserInfo,
-    getOpenid: getOpenid,
+    login: login,
     getUserDetail: getUserDetail,
     isVip: isVip,
 

@@ -52,4 +52,4 @@ server.listen(port, () => {
 // Run following function if you want import all data 
 // utils.process('./exported/', 'clubs');
 
-// db.databaseConf.sync();
+db.databaseConf.sync();
