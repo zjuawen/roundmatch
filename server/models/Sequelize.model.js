@@ -9,6 +9,7 @@ module.exports.clubs = (database, Sequelize) => {
     return database.define("clubs", {
         _id: {
             type: Sequelize.STRING,
+            defaultValue: Sequelize.UUIDV4,
             primaryKey: true
         },
         wholeName: {
@@ -38,22 +39,27 @@ module.exports.clubs = (database, Sequelize) => {
         createDate: {
             type: Sequelize.DATE,
             set(value) {
-                if (value instanceof String) {
-                    this.setDataValue('createDate', hash(value));
-                } else {
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value));
+                } else if( typeof value === 'object' && value['$date'] ){
                     // console.log(value['$date'])
                     this.setDataValue('createDate', value['$date']);
+                } else {
+                    this.setDataValue('createDate', value);
                 }
             }
         }
     }, {
-        freezeTableName: true
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime'
     });
 };
 module.exports.users = (database, Sequelize) => {
     return database.define("users", {
         _id: {
             type: Sequelize.STRING,
+            defaultValue: Sequelize.UUIDV4,
             primaryKey: true
         },
         appid: {
@@ -86,16 +92,21 @@ module.exports.users = (database, Sequelize) => {
         createDate: {
             type: Sequelize.DATE,
             set(value) {
-                if (value instanceof String) {
-                    this.setDataValue('createDate', hash(value));
-                } else {
+                // console.log(typeof value );
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value));
+                } else if( typeof value === 'object' && value['$date'] ){
                     // console.log(value['$date'])
                     this.setDataValue('createDate', value['$date']);
+                } else {
+                    this.setDataValue('createDate', value);
                 }
             }
         },
     }, {
-        freezeTableName: true
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime'
     });
 };
 // module.exports.patient = (database, Sequelize) => {

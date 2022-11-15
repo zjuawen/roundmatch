@@ -16,7 +16,6 @@ Page({
   },
 
   redirect: function() {
-    // return;
     wx.redirectTo({
       url: '../clubs/clubList',
       // url: '../clubs/create',
@@ -68,10 +67,28 @@ Page({
     //   }
     // })
 
+    let that = this;
 
-    this.login( 
+    this.login(
       (res) => {
+        console.log('login return')
         console.log(res);
+        if (res.code === 0) {
+          if (res.data && res.data.openid) {
+            app.globalData.openid = res.data.openid;
+          }
+          // that.setData({
+          //   openid: res.openid
+          // });
+
+          if (res.data && res.data.userInfo != null) {
+            console.log('login success');
+            that.redirect();
+          } else {
+            console.log('login pedding, waiting authorization');
+          }
+        }
+
         //debug
         // this.redirect();
         //end of debug
@@ -89,18 +106,29 @@ Page({
         this.setData({
           userInfo: res.userInfo,
           hasUserInfo: true
-        })
+        });
+
+        console.log(app.globalData.openid)
+        // res.userInfo.openid = app.globalData.openid;
+
+        this.saveUserData(
+          app.globalData.openid,
+          res.userInfo,
+          () => {
+            this.redirect();
+          }
+        );
       }
     })
   },
 
-  getUserInfo(e) {
-    // 不推荐使用getUserInfo获取用户信息，预计自2021年4月13日起，getUserInfo将不再弹出弹窗，并直接返回匿名的用户个人信息
-    this.setData({
-      userInfo: e.detail.userInfo,
-      hasUserInfo: true
-    })
-  },
+  // getUserInfo(e) {
+  //   // 不推荐使用getUserInfo获取用户信息，预计自2021年4月13日起，getUserInfo将不再弹出弹窗，并直接返回匿名的用户个人信息
+  //   this.setData({
+  //     userInfo: e.detail.userInfo,
+  //     hasUserInfo: true
+  //   })
+  // },
 
   onGetUserInfo: function(e) {
     getUserProfile(e);
@@ -113,6 +141,17 @@ Page({
     // }
   },
 
+  saveUserData: async function(openid, userInfo, callback) {
+    await APIs.updateUserInfo(
+      openid,
+      userInfo, 
+      this, res => {
+      if (callback) {
+        callback(res);
+      }
+    });
+  },
+
   login: async function(callback) {
     let that = this;
     const login = await wx.login();
@@ -120,16 +159,9 @@ Page({
 
     await APIs.login(login.code, this, res => {
       console.log(res)
-      if ( callback){
+      if (callback) {
         callback(res);
       }
-      
-      app.globalData.openid = res.openid;
-      that.setData({
-        openid: res.openid
-      });
-      // that.redirect();
-      return res;
     })
   },
 

@@ -19,6 +19,7 @@ exports.main = async (request, result) => {
   // const wxContext = context;// cloud.getWXContext()
   let event = request.query;
 
+  console.log('userservice');
   console.log(event);
   // console.log(cloud.DYNAMIC_CURRENT_ENV);
 
@@ -27,8 +28,6 @@ exports.main = async (request, result) => {
   let data;
   if (action == 'login') {
     data = await login(event.code);
-  } else if (action == 'save') {
-    data = await saveUserData(event.code);
   } else if (action == 'detail') {
     data = await readUserDetail(wxContext);
   } else if (action == 'list') {
@@ -42,8 +41,9 @@ exports.main = async (request, result) => {
   } else if (action == 'search') {
     data = await searchUserInClub(event.clubid, event.keyword);
   } else if (action == 'update') {
+    let openid = event.openid;
     let userInfo = event.userInfo;
-    data = await updateUserInfo(wxContext.OPENID, userInfo);
+    data = await upSertUserInfo(openid, userInfo);
   } else if (action == 'saveconfig') {
     let key = event.key;
     let value = event.value;
@@ -72,9 +72,9 @@ exports.main = async (request, result) => {
 
 // 用户登录
 login = async (code) => {
-  let userInfo = await wechat.getOpenid(code);
-  console.log(userInfo);
-  let openid = userInfo.openid;
+  let code2Session = await wechat.getOpenid(code);
+  console.log(code2Session);
+  let openid = code2Session.openid;
 
   return await sequelizeExecute(
     db.collection('users').findOne({
@@ -82,40 +82,141 @@ login = async (code) => {
         openid: openid
       }
     }),
+    async (res) => {
+      console.log(res);
+      if (res && res.dataValues && res.dataValues.name) {
+        return {
+          openid,
+          userInfo: res.dataValues
+        };
+      } else {
+        if( res == null){
+          await addUserInfo(openid);
+        }
+        return {
+          openid
+        };
+      }
+    }
+  );
+}
+
+
+upSertUserInfo = async (openid, userInfo) => {
+  if (openid == null) {
+    return null;
+  }
+
+  // console.log(typeof(userInfo) );
+  if (typeof userInfo === 'string') {
+    userInfo = JSON.parse(userInfo);
+  }
+
+  return await sequelizeExecute(
+    db.collection('users').findOne({
+      where: {
+        openid: openid
+      }
+    }),
+    async (obj) => {
+      // console.log(obj);
+      if (obj != null) {
+        console.log('updateUserInfo');
+        return await updateUserInfo(openid, userInfo);
+      } else {
+        console.log('addUserInfo');
+        return await addUserInfo(openid, userInfo);
+      }
+    }
+  );
+}
+
+//更新用户微信信息
+updateUserInfo = async (openid, userInfo) => {
+  console.log(userInfo);
+  // let dt = new Date();
+  return await sequelizeExecute(
+    db.collection('users').update({
+      name: userInfo.nickName,
+      avatarUrl: userInfo.avatarUrl,
+      gender: userInfo.gender,
+      country: userInfo.country,
+      province: userInfo.province,
+      city: userInfo.city,
+      // createDate: dt
+    }, {
+      where: {
+        openid: openid
+      },
+    }),
     (res) => {
       console.log(res);
-      if (res && res.data.length > 0) {
-        return res.data[0];
+      // let count = await updatePlayerInfo(openid, userInfo);
+      
+      if( res[0] === 1){
+        return {
+          count: 1
+        }
       } else {
         return null;
       }
-      //add user info
-      // return addUserData(context);
-    });
+    }
+  );
 }
 
-//添加用户信息
-addUserData = async (context) => {
+// 添加用户微信信息
+addUserInfo = async (openid, userInfo) => {
+  // console.log(userInfo);
+  let dt = new Date();
+  console.log(dt);
+  if (userInfo == null) {
+    userInfo = {}
+  }
+  return await sequelizeExecute(
+    db.collection('users').create({
+      openid: openid,
+      name: userInfo.nickName,
+      avatarUrl: userInfo.avatarUrl,
+      gender: userInfo.gender,
+      country: userInfo.country,
+      province: userInfo.province,
+      city: userInfo.city,
+      createDate: dt
+    }),
+    (res) => {
+      console.log(res);
+      // return res.data;
+      let data = res.dataValues;
+      // let count = await updatePlayerInfo(openid, userInfo);
+      return {
+        msg: data,
+        // count: count
+      };
+    }
+  );
+}
+
+updatePlayerInfo = async (openid, userInfo) => {
   let dt = db.serverDate();
-  return await db.collection('users')
-    .add({
+  return await db.collection('players')
+    .where({
+      openid: openid
+    })
+    .update({
       data: {
-        appid: context.APPID,
-        openid: context.OPENID,
-        unionid: context.UNIONID,
-        createDate: dt
+        name: userInfo.name,
+        avatarUrl: userInfo.avatarUrl,
+        gender: userInfo.gender,
+        updatedDate: dt
       }
+      // data:{
+      //   avatarUrl: userInfo.avatarUrl,
+      // }
     })
     .then(res => {
       console.log(res);
-      if (res.errMsg == "collection.add:ok") {
-        return {
-          _id: res._id,
-          appid: context.APPID,
-          openid: context.OPENID,
-          unionid: context.UNIONID,
-          createDate: dt
-        };
-      }
+      // return res.data;
+      let count = res.stats.updated;
+      return count;
     })
 }

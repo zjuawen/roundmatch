@@ -25,6 +25,7 @@ const database = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
         typeCast: true
     },
     timezone: '+08:00',
+
     // logging: false
 });
 
@@ -48,7 +49,7 @@ db.users = require("./Sequelize.model").users(database, Sequelize);
 db.dropRestApiTable = () => {
     db.databaseConf.sync({
         force: true,
-        alter: true 
+        alter: true
     }).then(() => {
         console.log("roundmatch table just dropped and db re-synced.");
     });

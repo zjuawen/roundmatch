@@ -84,9 +84,9 @@ function joinClub(clubid, userInfo, password, that, callback) {
     });
 }
 
-function updateUserInfo(userInfo, that, callback) {
+function updateUserInfo(openid, userInfo, that, callback) {
     commonCallFuction(that, callback, 'userService', 'update', {
-        userInfo: userInfo,
+        openid, userInfo,
     });
 }
 
