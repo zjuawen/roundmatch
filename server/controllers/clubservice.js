@@ -15,6 +15,7 @@ exports.main = async (request, result) => {
   // const wxContext = context;// cloud.getWXContext()
   let event = request.query;
 
+  console.log('clubservice');
   console.log(event);
   // console.log(cloud.DYNAMIC_CURRENT_ENV);
 
@@ -202,32 +203,41 @@ listOwnClub = async (openid) => {
 
 //参与的俱乐部列表
 listPrivateClub = async (openid) => {
-  return await db.collection('players')
-    .where({
-      openid: wxContext.OPENID
-    })
-    .get()
-    .then(res => {
-      console.log(res);
-      return loadClubData(wxContext.OPENID, res.data);
-    })
+  return await sequelizeExecute(
+    db.collection('players').findAll({
+      where: {
+        openid: openid
+      }
+    }),
+    (players) => {
+      // console.log(players);
+      return loadClubData(openid, players);
+    }
+  );
 }
 
 loadClubData = async (openid, uacs) => {
   let clubids = uacs.map(a => a.clubid);
-  return await db.collection('clubs')
-    .aggregate()
-    .match({
-      _id: _.in(clubids),
-      delete: _.neq(true),
-    })
-    .addFields({
-      owner: $.eq(['$creator', openid]),
-    })
-    .end()
-    .then(async res => {
-      console.log(res);
-      return res.list;
+  console.log(clubids);
+  return await sequelizeExecute(
+    db.collection('clubs').findAll({
+      where: {
+        '_id': clubids,
+        delete: false,
+      }
+    }),
+    async (array) => {
+      // console.log(array);
+      let data = array.map(a => {
+        let value = a.dataValues
+        value.owner = (value.creator == openid);
+        return value;
+      });
+      console.log(data);
+      // .addFields({
+      //   owner: $.eq(['$creator', openid]),
+      // })
+      return data;
     });
 }
 

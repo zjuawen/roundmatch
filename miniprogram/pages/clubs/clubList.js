@@ -4,6 +4,8 @@
 var APIs = require('../common/apis.js');
 var Utils = require('../common/utils.js');
 
+const app = getApp()
+
 // 在页面中定义激励视频广告
 let videoAd = null
 
@@ -171,9 +173,10 @@ Page({
     },
     loadClubs: function() {
         let that = this;
-        APIs.loadClubs( this, res => {
+        let openid = app.globalData.openid;
+        APIs.loadClubs( openid, this, res => {
             that.setData({
-                clubs: res.private,
+                clubs: res.data.private,
                 publicClubs: [], //data.public
             })
             if( this.data.clubs.length > 0 && !this.data.login && !this.data.detailPedding){
@@ -542,7 +545,7 @@ Page({
     onLoad: function(options) {
         console.log("clublist onload");
         // this.getOpenid();
-        // this.getUserDetail();
+        this.getUserDetail();
         // this.isAuditing();
         // this.readNotices();
         // let action = options.action;
@@ -573,8 +576,8 @@ Page({
      * 生命周期函数--监听页面初次渲染完成
      */
     onReady: function() {
-        // this.getUserDetail();
-        // this.loadUserInfo();
+        this.getUserDetail();
+        this.loadUserInfo();
         this.loadClubs();
         // this.createVideoAd();
         setTimeout( this.getBannerADHeight, 2000);

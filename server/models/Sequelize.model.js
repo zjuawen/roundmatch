@@ -5,6 +5,7 @@
  * Date: 04/04/2020
  * Time: 00:01
  **/
+
 module.exports.clubs = (database, Sequelize) => {
     return database.define("clubs", {
         _id: {
@@ -41,7 +42,7 @@ module.exports.clubs = (database, Sequelize) => {
             set(value) {
                 if (typeof value === 'string') {
                     this.setDataValue('createDate', Date.parse(value));
-                } else if( typeof value === 'object' && value['$date'] ){
+                } else if (typeof value === 'object' && value['$date']) {
                     // console.log(value['$date'])
                     this.setDataValue('createDate', value['$date']);
                 } else {
@@ -55,6 +56,7 @@ module.exports.clubs = (database, Sequelize) => {
         updatedAt: 'updateTime'
     });
 };
+
 module.exports.users = (database, Sequelize) => {
     return database.define("users", {
         _id: {
@@ -62,9 +64,9 @@ module.exports.users = (database, Sequelize) => {
             defaultValue: Sequelize.UUIDV4,
             primaryKey: true
         },
-        appid: {
-            type: Sequelize.STRING
-        },
+        // appid: {
+        //     type: Sequelize.STRING
+        // },
         avatarUrl: {
             type: Sequelize.STRING
         },
@@ -95,7 +97,7 @@ module.exports.users = (database, Sequelize) => {
                 // console.log(typeof value );
                 if (typeof value === 'string') {
                     this.setDataValue('createDate', Date.parse(value));
-                } else if( typeof value === 'object' && value['$date'] ){
+                } else if (typeof value === 'object' && value['$date']) {
                     // console.log(value['$date'])
                     this.setDataValue('createDate', value['$date']);
                 } else {
@@ -109,6 +111,56 @@ module.exports.users = (database, Sequelize) => {
         updatedAt: 'updateTime'
     });
 };
+
+module.exports.players = (database, Sequelize) => {
+    return database.define("players", {
+        _id: {
+            type: Sequelize.STRING,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        clubid: {
+            type: Sequelize.STRING
+        },
+        avatarUrl: {
+            type: Sequelize.STRING
+        },
+        name: {
+            type: Sequelize.STRING
+        },
+        gender: {
+            type: Sequelize.INTEGER
+        },
+        openid: {
+            type: Sequelize.STRING
+        },
+        enable: {
+            type: Sequelize.BOOLEAN
+        },
+        order: {
+            type: Sequelize.INTEGER
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                // console.log(typeof value );
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value));
+                } else if (typeof value === 'object' && value['$date']) {
+                    // console.log(value['$date'])
+                    this.setDataValue('createDate', value['$date']);
+                } else {
+                    this.setDataValue('createDate', value);
+                }
+            }
+        },
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime'
+    });
+};
+
 // module.exports.patient = (database, Sequelize) => {
 //     return database.define("patient", {
 //         openid: {

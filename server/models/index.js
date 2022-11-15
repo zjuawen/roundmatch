@@ -35,6 +35,7 @@ db.databaseConf = database;
 
 db.clubs = require("./Sequelize.model").clubs(database, Sequelize);
 db.users = require("./Sequelize.model").users(database, Sequelize);
+db.players = require("./Sequelize.model").players(database, Sequelize);
 
 // db.doctor.hasMany(db.patient, {foreignKey: 'doctorId'});
 // db.patient.belongsTo(db.doctor, {foreignKey: 'doctorId'});

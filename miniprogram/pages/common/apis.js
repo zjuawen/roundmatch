@@ -106,8 +106,10 @@ function getUserDetail(that, callback) {
     commonCallFuction(that, callback, 'userService', 'detail');
 }
 
-function loadClubs(that, callback) {
-    commonCallFuction(that, callback, 'clubService', 'list');
+function loadClubs(openid, that, callback) {
+    commonCallFuction(that, callback, 'clubService', 'list', {
+        openid
+    });
 }
 
 function checkCreateClubEnable(that, callback) {
