@@ -1,15 +1,16 @@
 {
   "pages": [
-    "pages/index/index",
+    "pages/index/login",
     "pages/clubs/clubList",
     "pages/clubs/create",
     "pages/clubs/detail",
     "pages/matches/matchList",
     "pages/matches/detail",
     "pages/players/playerList",
-    "pages/players/detail"
+    "pages/players/detail",
+    "pages/error/error"
   ],
-  "entryPagePath": "pages/index/index",
+  "entryPagePath": "pages/index/login",
   "window": {
     "backgroundColor": "#F6F6F6",
     "backgroundTextStyle": "light",

@@ -4,7 +4,9 @@
 var APIs = require('../common/apis.js');
 var Utils = require('../common/utils.js');
 
-const app = getApp()
+const saveGlobalData = require('../common/utils').saveGlobalData;
+const getGlobalData = require('../common/utils').getGlobalData;
+const showError = require('../common/utils').showError;
 
 // 在页面中定义激励视频广告
 let videoAd = null
@@ -173,7 +175,7 @@ Page({
     },
     loadClubs: function() {
         let that = this;
-        let openid = app.globalData.openid;
+        let openid = getGlobalData('openid');
         APIs.loadClubs( openid, this, res => {
             that.setData({
                 clubs: res.data.private,
