@@ -160,7 +160,7 @@ listOwnClub = async (openid) => {
       }
     }),
     async (res) => {
-      console.log(res);
+      // console.log(res);
       return res;
     });
 
@@ -223,17 +223,20 @@ loadClubData = async (openid, uacs) => {
     db.collection('clubs').findAll({
       where: {
         '_id': clubids,
-        delete: false,
+        delete: {
+          [Op.not]: true
+        },
       }
     }),
     async (array) => {
       // console.log(array);
       let data = array.map(a => {
+        console.log(a);
         let value = a.dataValues
         value.owner = (value.creator == openid);
         return value;
       });
-      console.log(data);
+      // console.log(data);
       // .addFields({
       //   owner: $.eq(['$creator', openid]),
       // })

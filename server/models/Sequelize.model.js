@@ -26,16 +26,19 @@ module.exports.clubs = (database, Sequelize) => {
             type: Sequelize.STRING
         },
         vip: {
-            type: Sequelize.BOOLEAN
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
         },
         creator: {
             type: Sequelize.STRING
         },
         delete: {
-            type: Sequelize.BOOLEAN
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
         },
         public: {
-            type: Sequelize.BOOLEAN
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
         },
         createDate: {
             type: Sequelize.DATE,
@@ -135,7 +138,8 @@ module.exports.players = (database, Sequelize) => {
             type: Sequelize.STRING
         },
         enable: {
-            type: Sequelize.BOOLEAN
+            type: Sequelize.BOOLEAN,
+            defaultValue: true
         },
         order: {
             type: Sequelize.INTEGER
@@ -204,7 +208,8 @@ module.exports.notices = (database, Sequelize) => {
             type: Sequelize.STRING
         },
         enable: {
-            type: Sequelize.BOOLEAN
+            type: Sequelize.BOOLEAN,
+            defaultValue: true
         },
         page: {
             type: Sequelize.STRING

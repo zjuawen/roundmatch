@@ -22,11 +22,11 @@ exports.main = async (request, result) => {
   let action = event.action
   let data
   if (action == 'notices') {
-    data = await getNotices( wxContext.OPENID, event.page)
+    data = await getNotices(event.openid, event.page)
   } else if (action == 'msgSecCheck') {
-    data = await msgSecCheck( wxContext.OPENID, event.param)
+    data = await msgSecCheck(wxContext.OPENID, event.param)
   } else if (action == 'imgSecCheck') {
-    data = await imgSecCheck( event)
+    data = await imgSecCheck(event)
   } else if (action == 'auditing') {
     data = isAuditing()
   }
@@ -45,32 +45,36 @@ exports.main = async (request, result) => {
 
 isAuditing = () => {
   return {
-      auditing: false
-    }
+    auditing: false
+  }
 }
 
 getNotices = async (openid, page) => {
-   return await sequelizeExecute(
-   db.collection('notices').findAll({
-    where: {
-      page: page,
-      enable: !true
-    },
-    order:{
-      'order': DESC
-    }
-   }),
-   (data) => {
-    console.log(data)
-    // .project({
-    //   title: '$content',
-    // })
-    // .then( async res => {
-    //   console.log(res)
-    //   let data = res.list
-    //   return data
-    // })
-    return data
-  })
+  return await sequelizeExecute(
+    db.collection('notices').findAll({
+      where: {
+        page: page,
+        enable: {
+          [Op.not]: false
+        }
+      },
+      attributes: {
+        exclude: ['enable', 'page', 'createDate', 'updateTime']
+      },
+      order: [
+        ['order', 'DESC']
+      ]
+    }),
+    async (array) => {
+      // console.log(array)
+      let data = array.map(a => {
+        // console.log(a)
+        a.dataValues.title = a.dataValues.content
+        delete a.dataValues.content
+        // console.log(a)
+        return a
+      })
+      return data
+    })
 
 }

@@ -379,7 +379,8 @@ Page({
     },
     checkCreateClubEnable: function() {
         let that = this
-        APIs.checkCreateClubEnable(this, res => {
+        let openid = getGlobalData('openid')
+        APIs.checkCreateClubEnable(openid, this, res => {
             console.log(res)
             let data = res
             // let createClubEnable = data.vip || (data.clubs && (data.clubs.length <= 0))
@@ -461,7 +462,7 @@ Page({
         APIs.getNotices(this, "clubList", res => {
             console.log(res)
             that.setData({
-                msgList: res,
+                msgList: res.data
             })
         })
     },
@@ -532,6 +533,7 @@ Page({
     getBannerADHeight: function() {
         var query = wx.createSelectorQuery()
         query.select('#bannerAD').boundingClientRect(function(res) {
+            console.log('#bannerAD')
             console.log(res)
         }).exec()
     },

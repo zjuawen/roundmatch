@@ -120,8 +120,10 @@ function loadClubs(openid, that, callback) {
     })
 }
 
-function checkCreateClubEnable(that, callback) {
-    commonCallFuction(that, callback, 'clubService', 'listByOwner')
+function checkCreateClubEnable(openid, that, callback) {
+    commonCallFuction(that, callback, 'clubService', 'listByOwner', {
+        openid
+    })
 }
 
 function needUnlockMatchCount(that, clubid, callback) {
