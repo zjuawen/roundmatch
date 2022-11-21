@@ -1,12 +1,12 @@
 // miniprogram/pages/clubs/clubList.js
-// var app = getApp();
+// var app = getApp()
 
-var APIs = require('../common/apis.js');
-var Utils = require('../common/utils.js');
+var APIs = require('../common/apis.js')
+var Utils = require('../common/utils.js')
 
-const saveGlobalData = require('../common/utils').saveGlobalData;
-const getGlobalData = require('../common/utils').getGlobalData;
-const showError = require('../common/utils').showError;
+const saveGlobalData = require('../common/utils').saveGlobalData
+const getGlobalData = require('../common/utils').getGlobalData
+const showError = require('../common/utils').showError
 
 // 在页面中定义激励视频广告
 let videoAd = null
@@ -24,7 +24,7 @@ Page({
         loading: false,
 
         clubs: [],
-        
+
         buttons: [{
             text: '取消'
         }, {
@@ -36,175 +36,163 @@ Page({
         authDialogMessage: '',
         createClubEnable: false,
         slideButtonTwo: [{
-          text: '查看',
-          // src: '/page/weui/cell/icon_love.svg', // icon的路径
-        },{
-          type: 'warn',
-          text: '修改',
-          // extClass: 'test',
-          // src: '/page/weui/cell/icon_del.svg', // icon的路径
+            text: '查看',
+            // src: '/page/weui/cell/icon_love.svg', // icon的路径
+        }, {
+            type: 'warn',
+            text: '修改',
+            // extClass: 'test',
+            // src: '/page/weui/cell/icon_del.svg', // icon的路径
         }],
         slideButtonOne: [{
-          text: '查看',
-          // src: '/page/weui/cell/icon_love.svg', // icon的路径
+            text: '查看',
+            // src: '/page/weui/cell/icon_love.svg', // icon的路径
         }],
         // inputShowed: false,
         // inputVal: "",
-        adShow: false,  // banner广告
+        adShow: false, // banner广告
         videoAdLoaded: false,
         videoAdError: false,
         videoAdClosed: false,
 
         auditing: true,
 
-        msgList: [],    //[ {title: 'test1'}, {title: 'test3'} ],
+        msgList: [], //[ {title: 'test1'}, {title: 'test3'} ],
 
         debug: false,
     },
     loading: function(value) {
         this.setData({
             loading: value
-        });
+        })
     },
     loadUserInfo: async function() {
         // 获取用户信息
-        let that = this;
-        
+        let that = this
+
         Utils.getUserDetail({
             success: async res => {
-                console.log(res.userInfo);
-                getApp().globalData.userInfo = res.userInfo;
+                console.log(res.userInfo)
+                getApp().globalData.userInfo = res.userInfo
                 that.setData({
                     avatarUrl: res.userInfo.avatarUrl,
                     userInfo: res.userInfo,
                     login: true
                 })
-                that.updateUserInfo(res.userInfo);
-                this.showAuthDialog(false);
+                that.updateUserInfo(res.userInfo)
+                this.showAuthDialog(false)
                 if (that.data.sharejoin) {
-                    wx.hideLoading();
-                    that.onJoinClub(that.data.sharedclubid);
+                    wx.hideLoading()
+                    that.onJoinClub(that.data.sharedclubid)
                 }
             },
-            error: res =>{
+            error: res => {
                 that.setData({
                     login: false
                 })
                 if (that.data.sharejoin) {
-                    wx.hideLoading();
-                    that.showAuthDialog(true, "需要用户昵称，头像等信息以进行下一步操作");
+                    wx.hideLoading()
+                    that.showAuthDialog(true, "需要用户昵称，头像等信息以进行下一步操作")
                 } else {
-                    this.showAuthDialog(false);
+                    this.showAuthDialog(false)
                 }
             }
         })
     },
     //更新用户信息
     updateUserInfo: function(userInfo) {
-        APIs.updateUserInfo(userInfo, this, this.updateUserInfoCb);
+        APIs.updateUserInfo(userInfo, this, this.updateUserInfoCb)
     },
 
-    updateUserInfoCb: function(data){
+    updateUserInfoCb: function(data) {
         console.log(data)
-        if( data.msg == "collection.update:ok"){
+        if (data.msg == "collection.update:ok") {
             wx.showToast({
                 title: '更新信息成功',
                 icon: 'success'
             })
         } else {
-             wx.showToast({
+            wx.showToast({
                 title: data.msg,
                 icon: 'none'
             })
-        }    
+        }
     },
 
     isAuditing: async function() {
-        let that = this; 
+        let that = this
         await APIs.isAuditing(this, async res => {
             that.setData({
                 auditing: res.auditing
-            });
+            })
         })
     },
-    getOpenid: async function() {
-        let that = this; 
-        APIs.getOpenid(this, res => {
-            that.setData({
-                openid: res.openid
-            });
-            // that.loadClubs();
-        })
-    },
+    // getOpenid: async function() {
+    //     let openid = getGlobalData('openid')
+    //     this.setData({
+    //         openid: openid
+    //     })
+    // },
     getUserDetail: async function() {
-        let that = this; 
         this.setData({
             detailPedding: true
         })
-        APIs.getUserDetail(this, res => {
-            if( res != null){ 
-                that.setData({
-                    userInfo: res,
-                });
-                if( res.avatarUrl ){
-                    that.setData({
-                        avatarUrl: res.avatarUrl,
-                    });
-                }
-                if( res.name && res.avatarUrl){
-                    this.setData({
-                        login: true
-                    })
-                    getApp().globalData.userInfo = res;
-                    if( this.data.sharejoin){
-                        wx.hideLoading();
-                        this.onJoinClub(this.data.sharedclubid);
-                    }
-                } else {
-                    if( this.data.sharejoin){
-                        wx.hideLoading();
-                        this.showAuthDialog(true, '需要授权获取用户昵称，头像等信息');
-                    }
+        let userInfo  = getGlobalData('userInfo')
+        // console.log('userInfo')
+        // console.log(userInfo)
+        if (userInfo != null) {
+            this.setData({
+                login: true,
+                userInfo: userInfo,
+                avatarUrl: userInfo.avatarUrl,
+            })
+            if (this.data.sharejoin) {
+                wx.hideLoading()
+                this.onJoinClub(this.data.sharedclubid)
+            }
+        } else {
+                if (this.data.sharejoin) {
+                    wx.hideLoading()
+                    this.showAuthDialog(true, '需要授权获取用户昵称，头像等信息')
                 }
             }
-            this.setData({
-                detailPedding: false
-            })
-            // that.loadClubs();
+        this.setData({
+            detailPedding: false
         })
+       
     },
     loadClubs: function() {
-        let that = this;
-        let openid = getGlobalData('openid');
-        APIs.loadClubs( openid, this, res => {
+        let that = this
+        let openid = getGlobalData('openid')
+        APIs.loadClubs(openid, this, res => {
             that.setData({
                 clubs: res.data.private,
                 publicClubs: [], //data.public
             })
-            if( this.data.clubs.length > 0 && !this.data.login && !this.data.detailPedding){
+            if (this.data.clubs.length > 0 && !this.data.login && !this.data.detailPedding) {
                 this.showAuthDialog(true, "微信修改授权机制，需要重新授权获取用户信息")
             }
         })
     },
-    onTapUser: function(e){
-        if( this.data.login){
-            return;
+    onTapUser: function(e) {
+        if (this.data.login) {
+            return
         }
-        this.loadUserInfo();
+        this.loadUserInfo()
     },
-    onLongTapUser: function(e){
-        this.showAuthDialog(true, "重新授权获取用户信息");
-        return;        
+    onLongTapUser: function(e) {
+        this.showAuthDialog(true, "重新授权获取用户信息")
+        return
     },
     onClickPublicClub: function(e) {
-        console.log(e);
-        let data = e.currentTarget.dataset.item;
-        if( !data ){
+        console.log(e)
+        let data = e.currentTarget.dataset.item
+        if (!data) {
             wx.showToast({
-              title: '获取俱乐部信息失败',
-              icon: 'none',
-            });
-            return;
+                title: '获取俱乐部信息失败',
+                icon: 'none',
+            })
+            return
         }
         this.setData({
             selected: data,
@@ -212,85 +200,89 @@ Page({
         })
     },
     onInputPassword: function(e) {
-        console.log(e);
-        let data = e.detail.value;
+        console.log(e)
+        let data = e.detail.value
         this.setData({
             password: data
-        });
+        })
     },
     tapDialogButton(e) {
-        let btnIndex = e.detail.index;
+        let btnIndex = e.detail.index
         if (btnIndex === 1) {
-            this.loading(true);
-            this.joinClub(this.data.selected._id);
+            this.loading(true)
+            this.joinClub(this.data.selected._id)
         }
         this.setData({
             joinDialogShow: false
         })
     },
     onCancelAuthDialog: function(e) {
-        // console.log(e);
+        // console.log(e)
         this.setData({
             authDialogShow: false
         })
     },
-    onClickClubCell: function(event){
+    onClickClubCell: function(event) {
         console.log(event)
-        let clubid = event.currentTarget.dataset.clubid;
-        if( !clubid) {
-            console.log('no cluid present with onClickClubCell, some error oops~');
-            return;
+        let clubid = event.currentTarget.dataset.clubid
+        if (!clubid) {
+            console.log('no cluid present with onClickClubCell, some error oops~')
+            return
         }
 
-        let type = event.type;
-        if( type == 'tap'){
-            wx.navigateTo({ url: '../matches/matchList?clubid='+ clubid });
-        } else if( type == 'buttontap'){
-            let buttonIndex = event.detail.index;
-            if( buttonIndex == 0) { //查看
-                wx.navigateTo({ url: './detail?action=view&clubid='+ clubid });
-            } else if( buttonIndex == 1){   //修改
+        let type = event.type
+        if (type == 'tap') {
+            wx.navigateTo({
+                url: '../matches/matchList?clubid=' + clubid
+            })
+        } else if (type == 'buttontap') {
+            let buttonIndex = event.detail.index
+            if (buttonIndex == 0) { //查看
+                wx.navigateTo({
+                    url: './detail?action=view&clubid=' + clubid
+                })
+            } else if (buttonIndex == 1) { //修改
                 if (this.data.login) {
-                    let userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
+                    let userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo))
                     wx.navigateTo({
                         url: './create?action=edit&clubid=' + clubid + '&userInfo=' + userInfo,
-                    });
-                } else{
+                    })
+                } else {
                     wx.showToast({
-                      title: '获取用户信息失败，无法修改',
-                      icon: 'none',
-                    });
+                        title: '获取用户信息失败，无法修改',
+                        icon: 'none',
+                    })
                 }
             }
         }
     },
     joinClub: function(clubid) {
-        let that = this;
-        APIs.joinClub( clubid, this.data.userInfo, this.data.password,
+        let that = this
+        APIs.joinClub(clubid, this.data.userInfo, this.data.password,
             this, res => {
-                let data = res;
+                let data = res
                 if (data.status == 'fail') {
                     wx.showToast({
                         title: data.errMsg,
                         icon: 'none',
-                    });
+                    })
                 } else if (data._id.length > 0) {
                     wx.showToast({
                         icon: 'success'
-                    });
-                    that.data.clubs.push(that.data.selected);
+                    })
+                    that.data.clubs.push(that.data.selected)
                     that.setData({
                         clubs: that.data.clubs
-                    });
+                    })
                 }
                 that.setData({
                     joinDialogShow: false
-                });
+                })
             }
-        );
+        )
     },
     onGetUserInfo: function(e) {
-        console.log(e);
+        console.log(e)
         if (e.detail.userInfo != null) {
             this.setData({
                 login: true,
@@ -299,10 +291,10 @@ Page({
             })
         }
         if (this.data.sharejoin) {
-            this.showAuthDialog(false);
-            this.onJoinClub(this.data.sharedclubid);
+            this.showAuthDialog(false)
+            this.onJoinClub(this.data.sharedclubid)
         } else {
-            this.onClickPublicClub(e);
+            this.onClickPublicClub(e)
         }
     },
     showAuthDialog: function(show, msg) {
@@ -319,8 +311,8 @@ Page({
         }
     },
     onJoinClub: function(clubid) {
-        if( !this.data.login) {
-             wx.showToast({
+        if (!this.data.login) {
+            wx.showToast({
                 title: '请先授权',
                 icon: 'error'
             })
@@ -330,18 +322,18 @@ Page({
             title: '获取俱乐部信息',
             mask: true
         })
-        APIs.getClubInfo( clubid, this, res => {
-            wx.hideLoading();
-            let data = res;
+        APIs.getClubInfo(clubid, this, res => {
+            wx.hideLoading()
+            let data = res
             let e = {
                 currentTarget: {
                     dataset: {
                         item: data
                     }
                 }
-            };
+            }
             if (data != null) {
-                this.onClickPublicClub(e);
+                this.onClickPublicClub(e)
             } else {
                 wx.showToast({
                     title: '错误：俱乐部信息不存在'
@@ -349,24 +341,24 @@ Page({
             }
         })
     },
-    onClickCreateClub: function(e){
-        console.log("onClickCreateClub");
+    onClickCreateClub: function(e) {
+        console.log("onClickCreateClub")
         if (!this.data.login) {
-            this.showAuthDialog(true, "创建俱乐部需要用户昵称，头像等信息");
-            return;
+            this.showAuthDialog(true, "创建俱乐部需要用户昵称，头像等信息")
+            return
         }
-        // this.showAD();
-        if( this.data.vip){
-            this.gotoCreateClubPage();
+        // this.showAD()
+        if (this.data.vip) {
+            this.gotoCreateClubPage()
         } else {
-            if( this.data.videoAdLoaded){
-                this.showAD();
-            } else if( this.data.videoAdError ) {
-                wx.showToast({ 
+            if (this.data.videoAdLoaded) {
+                this.showAD()
+            } else if (this.data.videoAdError) {
+                wx.showToast({
                     title: '广告加载失败',
                     icon: 'error',
                 })
-                this.gotoCreateClubPage();
+                this.gotoCreateClubPage()
             } else {
                 wx.showLoading({
                     title: '广告努力加载中',
@@ -379,19 +371,19 @@ Page({
         }
     },
     gotoCreateClubPage: function() {
-        console.log("gotoCreateClubPage");
-        var userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
+        console.log("gotoCreateClubPage")
+        var userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo))
         wx.navigateTo({
             url: '../clubs/create?action=create&userInfo=' + userInfo,
         })
     },
     checkCreateClubEnable: function() {
-        let that = this;
-        APIs.checkCreateClubEnable( this, res => {
-            console.log(res);
-            let data = res;
-            // let createClubEnable = data.vip || (data.clubs && (data.clubs.length <= 0));
-            let createClubEnable = true;
+        let that = this
+        APIs.checkCreateClubEnable(this, res => {
+            console.log(res)
+            let data = res
+            // let createClubEnable = data.vip || (data.clubs && (data.clubs.length <= 0))
+            let createClubEnable = true
             that.setData({
                 vip: data.vip,
                 createClubEnable: createClubEnable,
@@ -400,53 +392,53 @@ Page({
         })
     },
     onClickDownloadManual: function(e) {
-        // let url = 'cloud://roundmatch.726f-roundmatch-1300750420/documents/羽毛球双打轮转小程序使用手册.pdf';
-        let url = 'cloud://test-roundmatch.7465-test-roundmatch-1300750420/documents/羽毛球双打轮转小程序使用手册.pdf';
+        // let url = 'cloud://roundmatch.726f-roundmatch-1300750420/documents/羽毛球双打轮转小程序使用手册.pdf'
+        let url = 'cloud://test-roundmatch.7465-test-roundmatch-1300750420/documents/羽毛球双打轮转小程序使用手册.pdf'
         wx.cloud.downloadFile({
             fileID: url
         }).then(res => {
             // get temp file path
             console.log(res.tempFilePath)
-            let filePath = res.tempFilePath;
+            let filePath = res.tempFilePath
             wx.openDocument({
                 filePath: filePath,
                 success: function(res) {
-                    console.log('打开文档成功');
+                    console.log('打开文档成功')
                 }
             })
         }).catch(error => {
             // handle error
         })
     },
-    search: function (value) {
-        console.log("search: " + value);
-        if( value.length == 0){
-            this.loading(false);
+    search: function(value) {
+        console.log("search: " + value)
+        if (value.length == 0) {
+            this.loading(false)
             return new Promise((resolve, reject) => {
-                resolve([]);
-            });
+                resolve([])
+            })
         }
-        this.loading(true);
-        return this.searchClubs(value);
+        this.loading(true)
+        return this.searchClubs(value)
     },
     searchClubs: function(keyword) {
-        return APIs.searchClubs(this, keyword).then (res => {
-            let data = res.result.data;
-            let clubs = [];
+        return APIs.searchClubs(this, keyword).then(res => {
+            let data = res.result.data
+            let clubs = []
             data.forEach((club) => {
                 clubs.push({
                     text: club.wholeName + '(' + club.shortName + ')',
                     value: club._id,
                 })
             })
-            this.loading(false);
-            console.log(clubs);
-            return clubs;
+            this.loading(false)
+            console.log(clubs)
+            return clubs
         })
     },
-    onTapSearchResult: function (e) {
-        console.log('select result', e.detail);
-        if( !this.data.login) {
+    onTapSearchResult: function(e) {
+        console.log('select result', e.detail)
+        if (!this.data.login) {
             //  wx.showToast({
             //     title: '请先授权',
             //     icon: 'error'
@@ -454,26 +446,29 @@ Page({
             this.showAuthDialog(true)
             return
         }
-        let clubid = e.detail.item.value;
-        var param = 'clubid=' + clubid;
+        let clubid = e.detail.item.value
+        var param = 'clubid=' + clubid
         if (this.data.login) {
-            var userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo));
-            param = param + '&userInfo=' + userInfo;
+            var userInfo = encodeURIComponent(JSON.stringify(this.data.userInfo))
+            param = param + '&userInfo=' + userInfo
         }
         wx.navigateTo({
             url: './detail?action=join&' + param
         })
     },
-    readNotices: function(){
-        let that = this;
+    readNotices: function() {
+        let that = this
         APIs.getNotices(this, "clubList", res => {
-            console.log(res);
+            console.log(res)
             that.setData({
                 msgList: res,
             })
         })
     },
-    createVideoAd: function({success, error}){
+    createVideoAd: function({
+        success,
+        error
+    }) {
         // 在页面onLoad回调事件中创建激励视频广告实例
         if (wx.createRewardedVideoAd) {
             videoAd = wx.createRewardedVideoAd({
@@ -485,22 +480,22 @@ Page({
                 this.setData({
                     videoAdLoaded: true
                 })
-                if( success && !this.data.videoAdClosed){
-                    success();
+                if (success && !this.data.videoAdClosed) {
+                    success()
                 }
                 this.setData({
                     videoAdClosed: false
                 })
             })
             videoAd.onError((err) => {
-                console.log('videoAd.onError');
-                console.log(err);
+                console.log('videoAd.onError')
+                console.log(err)
                 wx.hideLoading()
-                 this.setData({
+                this.setData({
                     videoAdError: true
                 })
-                if( error){
-                    error();
+                if (error) {
+                    error()
                 }
             })
             videoAd.onClose((res) => {
@@ -510,91 +505,91 @@ Page({
                 // 用户点击了【关闭广告】按钮
                 if (res && res.isEnded) {
                     // 正常播放结束，可以下发游戏奖励
-                    this.gotoCreateClubPage();
+                    this.gotoCreateClubPage()
                 } else {
                     // 播放中途退出，不下发游戏奖励
                     wx.showToast({
-                      title: '请播放完成后关闭',
-                      icon: 'none',
-                    });
+                        title: '请播放完成后关闭',
+                        icon: 'none',
+                    })
                 }
             })
         }
     },
-    showAD: function(){
+    showAD: function() {
         // 用户触发广告后，显示激励视频广告
         if (videoAd) {
             videoAd.show().catch(() => {
-            // 失败重试
-            videoAd.load()
-                .then(() => videoAd.show())
-                .catch(err => {
-                    console.log('激励视频 广告显示失败')
-                })
+                // 失败重试
+                videoAd.load()
+                    .then(() => videoAd.show())
+                    .catch(err => {
+                        console.log('激励视频 广告显示失败')
+                    })
             })
         }
     },
-    getBannerADHeight: function () {  
-        var query = wx.createSelectorQuery()  
-        query.select('#bannerAD').boundingClientRect(function (res) {  
-            console.log(res);  
-        }).exec();  
-    }, 
+    getBannerADHeight: function() {
+        var query = wx.createSelectorQuery()
+        query.select('#bannerAD').boundingClientRect(function(res) {
+            console.log(res)
+        }).exec()
+    },
 
     /**
      * 生命周期函数--监听页面加载
      */
     onLoad: function(options) {
-        console.log("clublist onload");
-        // this.getOpenid();
-        this.getUserDetail();
-        // this.isAuditing();
-        // this.readNotices();
-        // let action = options.action;
-        // if (action == 'sharejoin') {
-        //     let clubid = options.clubid;
-        //     console.log("share invited to clubid: " + clubid);
-        //     this.setData({
-        //         sharejoin: true,
-        //         sharedclubid: clubid
-        //     })
-        //     if (!this.data.login) {
-        //         wx.showLoading({
-        //             title: '检查授权信息',
-        //             mask: true
-        //         })
-        //     } else {
-        //         this.onJoinClub(clubid);
-        //     }
-        // }
-        // if( !this.data.isAuditing){
-        //     this.checkCreateClubEnable();
-        // }
-        // this.setData({
-        //     search: this.search.bind(this)
-        // })
+        console.log("clublist onload")
+        // this.getOpenid()
+        this.getUserDetail()
+        this.isAuditing()
+        this.readNotices()
+        let action = options.action
+        if (action == 'sharejoin') {
+            let clubid = options.clubid
+            console.log("share invited to clubid: " + clubid)
+            this.setData({
+                sharejoin: true,
+                sharedclubid: clubid
+            })
+            if (!this.data.login) {
+                wx.showLoading({
+                    title: '检查授权信息',
+                    mask: true
+                })
+            } else {
+                this.onJoinClub(clubid)
+            }
+        }
+        if( !this.data.isAuditing){
+            this.checkCreateClubEnable()
+        }
+        this.setData({
+            search: this.search.bind(this)
+        })
     },
     /**
      * 生命周期函数--监听页面初次渲染完成
      */
     onReady: function() {
-        this.getUserDetail();
-        this.loadUserInfo();
-        this.loadClubs();
-        // this.createVideoAd();
-        setTimeout( this.getBannerADHeight, 2000);
+        // this.getUserDetail()
+        // this.loadUserInfo()
+        this.loadClubs()
+        // this.createVideoAd()
+        setTimeout(this.getBannerADHeight, 2000)
     },
     /**
      * 生命周期函数--监听页面显示
      */
     onShow: function() {
-        console.log("onShow");
+        console.log("onShow")
     },
     /**
      * 生命周期函数--监听页面隐藏
      */
     onHide: function() {
-        console.log("onHide");
+        console.log("onHide")
         /* 
          * 一旦离开页面，就不再检查邀请加入的动作，
          * 以免页面刷新或其他授权回调后的重新弹出邀请界面
@@ -607,13 +602,13 @@ Page({
      * 生命周期函数--监听页面卸载
      */
     onUnload: function() {
-        console.log("onUnload");
+        console.log("onUnload")
     },
     /**
      * 页面相关事件处理函数--监听用户下拉动作
      */
     onPullDownRefresh: function() {
-        console.log("onPullDownRefresh");
+        console.log("onPullDownRefresh")
     },
     /**
      * 页面上拉触底事件的处理函数
@@ -625,12 +620,7 @@ Page({
     // onShareAppMessage: function () {
     // },
     onClickDebug: function(e) {
-        console.log("onClickDebug");
-        // this.doUpload();
+        console.log("onClickDebug")
+        // this.doUpload()
     },
 })
-
-
-
-
-

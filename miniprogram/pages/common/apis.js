@@ -44,8 +44,12 @@ function commonCallFuction(that, callback, serviceName, actionName, params) {
             }
         },
         fail: err => {
-            console.error('[服务] ' + func + ' 调用失败', err)
-            commonErrorHandler(that, err)
+            let service = func + '(' + actionName + ')'
+            console.error('[服务] ' + service + ' 调用失败', err)
+            commonErrorHandler(that, {
+                service,
+                err
+            })
         }
     })
 }
@@ -65,12 +69,13 @@ function commonSuccessHandler(data, that, callback) {
     }
 }
 
-function commonErrorHandler(that, err) {
+function commonErrorHandler(that, errInfo) {
     if (that && that.loading) {
         that.loading(false)
     }
     wx.hideLoading()
-    showError(err)
+    console.error(errInfo)
+    showError(errInfo.err.errMsg)
     // wx.navigateTo({
     //     url: '../error/error?error=' + err,
     // })
@@ -88,7 +93,8 @@ function joinClub(clubid, userInfo, password, that, callback) {
 
 function updateUserInfo(openid, userInfo, that, callback) {
     commonCallFuction(that, callback, 'userService', 'update', {
-        openid, userInfo,
+        openid,
+        userInfo,
     })
 }
 

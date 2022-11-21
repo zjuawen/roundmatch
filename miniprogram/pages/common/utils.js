@@ -2,8 +2,8 @@ const app = getApp()
 
 //获取当前日期时间
 function getCurrentDateTime() {
-    var date = new Date();
-    var fmt = "yyyyMMdd-HHmmss";
+    var date = new Date()
+    var fmt = "yyyyMMdd-HHmmss"
     var o = {
         'M+': date.getMonth() + 1, // 月份
         'd+': date.getDate(), // 日
@@ -14,22 +14,22 @@ function getCurrentDateTime() {
         S: date.getMilliseconds() // 毫秒
     }
 
-    if (/(y+)/.test(fmt));
+    if (/(y+)/.test(fmt))
     fmt = fmt.replace(RegExp.$1, (date.getFullYear() + '')
-        .substr(4 - RegExp.$1.length));
+        .substr(4 - RegExp.$1.length))
     for (var k in o) {
         if (new RegExp('(' + k + ')').test(fmt)) {
             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ?
-                (o[k]) : (('00' + o[k]).substr(('' + o[k]).length)));
+                (o[k]) : (('00' + o[k]).substr(('' + o[k]).length)))
         }
     }
-    return fmt;
+    return fmt
 }
 
 //获取当前日期
 function getCurrentDate() {
-    var date = new Date();
-    var fmt = "yyyy-MM-dd";
+    var date = new Date()
+    var fmt = "yyyy-MM-dd"
     var o = {
         'M+': date.getMonth() + 1, // 月份
         'd+': date.getDate(), // 日
@@ -40,16 +40,16 @@ function getCurrentDate() {
         S: date.getMilliseconds() // 毫秒
     }
 
-    if (/(y+)/.test(fmt));
+    if (/(y+)/.test(fmt))
     fmt = fmt.replace(RegExp.$1, (date.getFullYear() + '')
-        .substr(4 - RegExp.$1.length));
+        .substr(4 - RegExp.$1.length))
     for (var k in o) {
         if (new RegExp('(' + k + ')').test(fmt)) {
             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ?
-                (o[k]) : (('00' + o[k]).substr(('' + o[k]).length)));
+                (o[k]) : (('00' + o[k]).substr(('' + o[k]).length)))
         }
     }
-    return fmt;
+    return fmt
 }
 
 async function getUserDetail({
@@ -63,7 +63,7 @@ async function getUserDetail({
             desc: '用于完善会员资料', // 声明获取用户个人信息后的用途，后续会展示在弹窗中，请谨慎填写
             success: (res) => {
                 console.log("getUserDetail->getUserProfile return ==>")
-                console.log(res);
+                console.log(res)
                 if (res.userInfo.nickName)
                     res.userInfo.name = res.userInfo.nickName
                 if (success != null)
@@ -71,7 +71,7 @@ async function getUserDetail({
             },
             fail: (res) => {
                 console.log("getUserDetail->getUserProfile return ==>")
-                console.log(res);
+                console.log(res)
             }
         })
     } else {
@@ -82,8 +82,8 @@ async function getUserDetail({
                     await wx.getUserInfo({
                         success: async res => {
                             console.log("getUserDetail->getUserInfo return ==>")
-                            console.log(res);
-                            // console.log(res.userInfo);
+                            console.log(res)
+                            // console.log(res.userInfo)
                             if (res.userInfo.nickName)
                                 res.userInfo.name = res.userInfo.nickName
                             if (success != null)
@@ -91,7 +91,7 @@ async function getUserDetail({
                         }
                     })
                 } else {
-                    console.log("Unauthrorized: authSetting['scope.userInfo'] null");
+                    console.log("Unauthrorized: authSetting['scope.userInfo'] null")
                     if (error != null)
                         error()
                 }
@@ -108,26 +108,27 @@ function saveGlobalData(key, value) {
         wx.setStorageSync(
             key,
             value
-        );
+        )
     } catch (e) {
-        console.error(e);
+        console.error(e)
     }
 }
 
 function getGlobalData(key) {
-    if (app.globalData.key == null) {
+    // console.log(app.globalData)
+    if (app.globalData[key] == null) {
         console.log('reading from storage: ' + key)
-        app.globalData.key = wx.getStorageSync(key)
-        console.log(app.globalData.key)
+        app.globalData[key] = wx.getStorageSync(key)
+        console.log(app.globalData[key])
     }
-    return app.globalData.key;
+    return app.globalData[key]
 }
 
 function showError(errMsg) {
     wx.showToast({
         title: errMsg,
         icon: 'error'
-    });
+    })
 }
 
 //exports

@@ -41,12 +41,12 @@ module.exports.clubs = (database, Sequelize) => {
             type: Sequelize.DATE,
             set(value) {
                 if (typeof value === 'string') {
-                    this.setDataValue('createDate', Date.parse(value));
+                    this.setDataValue('createDate', Date.parse(value))
                 } else if (typeof value === 'object' && value['$date']) {
                     // console.log(value['$date'])
-                    this.setDataValue('createDate', value['$date']);
+                    this.setDataValue('createDate', value['$date'])
                 } else {
-                    this.setDataValue('createDate', value);
+                    this.setDataValue('createDate', value)
                 }
             }
         }
@@ -54,8 +54,8 @@ module.exports.clubs = (database, Sequelize) => {
         freezeTableName: true,
         createdAt: false,
         updatedAt: 'updateTime'
-    });
-};
+    })
+}
 
 module.exports.users = (database, Sequelize) => {
     return database.define("users", {
@@ -94,14 +94,14 @@ module.exports.users = (database, Sequelize) => {
         createDate: {
             type: Sequelize.DATE,
             set(value) {
-                // console.log(typeof value );
+                // console.log(typeof value )
                 if (typeof value === 'string') {
-                    this.setDataValue('createDate', Date.parse(value));
+                    this.setDataValue('createDate', Date.parse(value))
                 } else if (typeof value === 'object' && value['$date']) {
                     // console.log(value['$date'])
-                    this.setDataValue('createDate', value['$date']);
+                    this.setDataValue('createDate', value['$date'])
                 } else {
-                    this.setDataValue('createDate', value);
+                    this.setDataValue('createDate', value)
                 }
             }
         },
@@ -109,8 +109,8 @@ module.exports.users = (database, Sequelize) => {
         freezeTableName: true,
         createdAt: false,
         updatedAt: 'updateTime'
-    });
-};
+    })
+}
 
 module.exports.players = (database, Sequelize) => {
     return database.define("players", {
@@ -143,14 +143,14 @@ module.exports.players = (database, Sequelize) => {
         createDate: {
             type: Sequelize.DATE,
             set(value) {
-                // console.log(typeof value );
+                // console.log(typeof value )
                 if (typeof value === 'string') {
-                    this.setDataValue('createDate', Date.parse(value));
+                    this.setDataValue('createDate', Date.parse(value))
                 } else if (typeof value === 'object' && value['$date']) {
                     // console.log(value['$date'])
-                    this.setDataValue('createDate', value['$date']);
+                    this.setDataValue('createDate', value['$date'])
                 } else {
-                    this.setDataValue('createDate', value);
+                    this.setDataValue('createDate', value)
                 }
             }
         },
@@ -158,129 +158,77 @@ module.exports.players = (database, Sequelize) => {
         freezeTableName: true,
         createdAt: false,
         updatedAt: 'updateTime'
-    });
-};
+    })
+}
 
-// module.exports.patient = (database, Sequelize) => {
-//     return database.define("patient", {
-//         openid: {
-//             type: Sequelize.STRING
-//         },
-//         name: {
-//             type: Sequelize.STRING
-//         },
-//         avatar: {
-//             type: Sequelize.STRING
-//         },
-//         mobile: {
-//             type: Sequelize.STRING
-//         },
-//         idcardNo: {
-//             type: Sequelize.STRING
-//         },
-//         idcardImage: {
-//             type: Sequelize.STRING
-//         },
-//         doctorId: {
-//             type: Sequelize.INTEGER
-//         },
-//         surveyType: {
-//             type: Sequelize.INTEGER
-//         },
-//         projectId: {
-//             type: Sequelize.INTEGER
-//         },
-//         enable: {
-//             type: Sequelize.INTEGER
-//         }
-//     }, {
-//         freezeTableName: true
-//     });
-// };
-// module.exports.dict = (database, Sequelize) => {
-//     return database.define("dict", {
-//         name: {
-//             type: Sequelize.STRING
-//         },
-//         value: {
-//             type: Sequelize.STRING
-//         }
-//     }, {
-//         freezeTableName: true
-//     });
-// };
-// module.exports.data = (database, Sequelize) => {
-//     return database.define("data", {
-//         doctorId: {
-//             type: Sequelize.INTEGER,
-//             // validate: {
-//             //     isInt: true,              // 检查有效的整数
-//             // }
-//         },
-//         patientId: {
-//             type: Sequelize.INTEGER
-//         },
-//         stage: {
-//             type: Sequelize.INTEGER
-//         },
-//         encrypt: {
-//             type: Sequelize.BOOLEAN
-//         },
-//         editable: {
-//             type: Sequelize.BOOLEAN
-//         },
-//         invalid: {
-//             type: Sequelize.BOOLEAN
-//         },
-//         dataInfoDr: {
-//             type: Sequelize.TEXT
-//         },
-//         tmInfoDr: {
-//             type: Sequelize.DATE
-//         },
-//         dataInfoPt: {
-//             type: Sequelize.TEXT
-//         },
-//         tmInfoPt: {
-//             type: Sequelize.DATE
-//         },
-//         dataSuryOneDr: {
-//             type: Sequelize.TEXT
-//         },
-//         tmSuryOneDr: {
-//             type: Sequelize.DATE
-//         },
-//         dataSuryOnePt: {
-//             type: Sequelize.TEXT
-//         },
-//         tmSuryOnePt: {
-//             type: Sequelize.DATE
-//         },
-//         dataSuryTwoDr: {
-//             type: Sequelize.TEXT
-//         },
-//         tmSuryTwoDr: {
-//             type: Sequelize.DATE
-//         },
-//         dataSuryTwoPt: {
-//             type: Sequelize.TEXT
-//         },
-//         tmSuryTwoPt: {
-//             type: Sequelize.DATE
-//         },
-//         dataSuryTrdDr: {
-//             type: Sequelize.TEXT
-//         },
-//         tmSuryTrdDr: {
-//             type: Sequelize.DATE
-//         },
-//         dataSuryTrdPt: {
-//             type: Sequelize.TEXT
-//         },
-//         tmSuryTrdPt: {
-//             type: Sequelize.DATE
-//         },
-//     }, {
-//         freezeTableName: true
-//     });
-// };
+module.exports.system = (database, Sequelize) => {
+    return database.define("system", {
+        _id: {
+            type: Sequelize.STRING,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        name: {
+            type: Sequelize.STRING
+        },
+        key: {
+            type: Sequelize.STRING
+        },
+        value: {
+            type: Sequelize.STRING(1024)
+        },
+        type: {
+            type: Sequelize.STRING
+        },
+        nosort: {
+            type: Sequelize.STRING
+        },
+        order: {
+            type: Sequelize.INTEGER
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime'
+    })
+}
+
+module.exports.notices = (database, Sequelize) => {
+    return database.define("notices", {
+        _id: {
+            type: Sequelize.STRING,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        content: {
+            type: Sequelize.STRING
+        },
+        enable: {
+            type: Sequelize.BOOLEAN
+        },
+        page: {
+            type: Sequelize.STRING
+        },
+        order: {
+            type: Sequelize.INTEGER
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                // console.log(typeof value )
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    // console.log(value['$date'])
+                    this.setDataValue('createDate', value['$date'])
+                } else {
+                    this.setDataValue('createDate', value)
+                }
+            }
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime'
+    })
+}

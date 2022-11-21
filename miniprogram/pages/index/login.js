@@ -30,7 +30,9 @@ Page({
 
   onLoad: function() {
     if (this.isLogin()) {
+      console.log('user already logined')
       this.redirect()
+      return
     }
 
     if (wx.getUserProfile) {
