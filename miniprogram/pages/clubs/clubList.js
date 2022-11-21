@@ -61,6 +61,95 @@ Page({
 
         debug: false,
     },
+
+        /**
+     * 生命周期函数--监听页面加载
+     */
+    onLoad: function(options) {
+        console.log("clublist onload")
+        // this.getOpenid()
+        this.getUserDetail()
+        this.isAuditing()
+        this.readNotices()
+        let action = options.action
+        if (action == 'sharejoin') {
+            let clubid = options.clubid
+            console.log("share invited to clubid: " + clubid)
+            this.setData({
+                sharejoin: true,
+                sharedclubid: clubid
+            })
+            if (!this.data.login) {
+                wx.showLoading({
+                    title: '检查授权信息',
+                    mask: true
+                })
+            } else {
+                this.onJoinClub(clubid)
+            }
+        }
+        if( !this.data.isAuditing){
+            this.checkCreateClubEnable()
+        }
+        this.setData({
+            search: this.search.bind(this)
+        })
+    },
+    /**
+     * 生命周期函数--监听页面初次渲染完成
+     */
+    onReady: function() {
+        // this.getUserDetail()
+        // this.loadUserInfo()
+        this.loadClubs()
+        // this.createVideoAd()
+        setTimeout(this.getBannerADHeight, 2000)
+    },
+    /**
+     * 生命周期函数--监听页面显示
+     */
+    onShow: function() {
+        console.log("onShow")
+    },
+    /**
+     * 生命周期函数--监听页面隐藏
+     */
+    onHide: function() {
+        console.log("onHide")
+        /* 
+         * 一旦离开页面，就不再检查邀请加入的动作，
+         * 以免页面刷新或其他授权回调后的重新弹出邀请界面
+         */
+        this.setData({
+            sharejoin: false
+        })
+    },
+    /**
+     * 生命周期函数--监听页面卸载
+     */
+    onUnload: function() {
+        console.log("onUnload")
+    },
+    /**
+     * 页面相关事件处理函数--监听用户下拉动作
+     */
+    onPullDownRefresh: function() {
+        console.log("onPullDownRefresh")
+    },
+    /**
+     * 页面上拉触底事件的处理函数
+     */
+    onReachBottom: function() {},
+    /**
+     * 用户点击右上角分享
+     */
+    // onShareAppMessage: function () {
+    // },
+    onClickDebug: function(e) {
+        console.log("onClickDebug")
+        // this.doUpload()
+    },
+    
     loading: function(value) {
         this.setData({
             loading: value
@@ -538,91 +627,5 @@ Page({
         }).exec()
     },
 
-    /**
-     * 生命周期函数--监听页面加载
-     */
-    onLoad: function(options) {
-        console.log("clublist onload")
-        // this.getOpenid()
-        this.getUserDetail()
-        this.isAuditing()
-        this.readNotices()
-        let action = options.action
-        if (action == 'sharejoin') {
-            let clubid = options.clubid
-            console.log("share invited to clubid: " + clubid)
-            this.setData({
-                sharejoin: true,
-                sharedclubid: clubid
-            })
-            if (!this.data.login) {
-                wx.showLoading({
-                    title: '检查授权信息',
-                    mask: true
-                })
-            } else {
-                this.onJoinClub(clubid)
-            }
-        }
-        if( !this.data.isAuditing){
-            this.checkCreateClubEnable()
-        }
-        this.setData({
-            search: this.search.bind(this)
-        })
-    },
-    /**
-     * 生命周期函数--监听页面初次渲染完成
-     */
-    onReady: function() {
-        // this.getUserDetail()
-        // this.loadUserInfo()
-        this.loadClubs()
-        // this.createVideoAd()
-        setTimeout(this.getBannerADHeight, 2000)
-    },
-    /**
-     * 生命周期函数--监听页面显示
-     */
-    onShow: function() {
-        console.log("onShow")
-    },
-    /**
-     * 生命周期函数--监听页面隐藏
-     */
-    onHide: function() {
-        console.log("onHide")
-        /* 
-         * 一旦离开页面，就不再检查邀请加入的动作，
-         * 以免页面刷新或其他授权回调后的重新弹出邀请界面
-         */
-        this.setData({
-            sharejoin: false
-        })
-    },
-    /**
-     * 生命周期函数--监听页面卸载
-     */
-    onUnload: function() {
-        console.log("onUnload")
-    },
-    /**
-     * 页面相关事件处理函数--监听用户下拉动作
-     */
-    onPullDownRefresh: function() {
-        console.log("onPullDownRefresh")
-    },
-    /**
-     * 页面上拉触底事件的处理函数
-     */
-    onReachBottom: function() {},
-    /**
-     * 用户点击右上角分享
-     */
-    // onShareAppMessage: function () {
-    // },
-    onClickDebug: function(e) {
-        console.log("onClickDebug")
-        // this.doUpload()
-    },
+
 })

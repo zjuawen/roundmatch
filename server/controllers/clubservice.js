@@ -102,7 +102,7 @@ getClubInfo = async (clubid) => {
   return await sequelizeExecute(
     db.collection('clubs').findByPk(clubid),
     async (res) => {
-      console.log(res);
+      // console.log(res);
       let club = res;
       if (club != null) {
         let password = club.password;

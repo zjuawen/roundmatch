@@ -165,6 +165,64 @@ module.exports.players = (database, Sequelize) => {
     })
 }
 
+module.exports.matches = (database, Sequelize) => {
+    return database.define("matches", {
+        _id: {
+            type: Sequelize.STRING,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        name: {
+            type: Sequelize.STRING
+        },
+        playerCount: {
+            type: Sequelize.INTEGER
+        },
+        clubid: {
+            type: Sequelize.STRING
+        },
+        owner: {
+            type: Sequelize.STRING
+        },
+        finish: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0
+        },
+        total: {
+            type: Sequelize.INTEGER
+        },
+        type: {
+            type: Sequelize.STRING
+        },
+        delete: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
+        },
+        remark: {
+            type: Sequelize.STRING
+        },
+
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                // console.log(typeof value )
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    // console.log(value['$date'])
+                    this.setDataValue('createDate', value['$date'])
+                } else {
+                    this.setDataValue('createDate', value)
+                }
+            }
+        },
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime'
+    })
+}
+
 module.exports.system = (database, Sequelize) => {
     return database.define("system", {
         _id: {

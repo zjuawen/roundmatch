@@ -138,8 +138,9 @@ function unlockMatchCount(that, clubid, callback) {
     })
 }
 
-function listMatch(clubid, pageNum, pageSize, that, callback) {
+function listMatch(openid, clubid, pageNum, pageSize, that, callback) {
     commonCallFuction(that, callback, 'matchService', 'list', {
+        openid: openid,
         clubid: clubid,
         pageNum: pageNum,
         pageSize: pageSize

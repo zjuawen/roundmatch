@@ -57,6 +57,8 @@ db.databaseConf.sync()
 // utils.process('./exported/', 'users')
 // utils.process('./exported/', 'system')
 // utils.process('./exported/', 'notices')
+// utils.process('./exported/', 'matches')
+
 
 
 
