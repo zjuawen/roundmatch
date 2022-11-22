@@ -322,57 +322,61 @@ exports.main = async (request, result) => {
 //     })
 // }
 
-// //读取比赛对阵数据
-// readMatch = async (clubid, matchid) => {
-//   return await db.collection('games_' + clubid)
-//     .aggregate()
-//     .match({
-//       matchid: matchid,
-//       delete: _.neq(true),
-//     })
-//     .lookup({
-//       from: "players",
-//       localField: "player1",
-//       foreignField: "_id",
-//       as: "player1"
-//     })
-//     .lookup({
-//       from: "players",
-//       localField: "player2",
-//       foreignField: "_id",
-//       as: "player2"
-//     })
-//     .lookup({
-//       from: "players",
-//       localField: "player3",
-//       foreignField: "_id",
-//       as: "player3"
-//     })
-//     .lookup({
-//       from: "players",
-//       localField: "player4",
-//       foreignField: "_id",
-//       as: "player4"
-//     })
-//     .project({
-//       "score1": 1,
-//       "score2": 1,
-//       "matchid": 1,
-//       player1: $.arrayElemAt(["$player1", 0]),
-//       player2: $.arrayElemAt(["$player2", 0]),
-//       player3: $.arrayElemAt(["$player3", 0]),
-//       player4: $.arrayElemAt(["$player4", 0]),
-//     })
-//     .limit(64)
-//     .sort({
-//       'order': 1
-//     })
-//     .end()
-//     .then(async res => {
-//       console.log(res)
-//       return res.list;
-//     })
-// }
+//读取比赛对阵数据
+readMatch = async (clubid, matchid) => {
+  return await sequelizeExecute(
+    db.collection('games').findAll({
+      where: {
+        clubid: clubid,
+        matchid: matchid,
+        delete: {
+          [Op.not]: true
+        },
+      }
+    }),
+    // .lookup({
+    //   from: "players",
+    //   localField: "player1",
+    //   foreignField: "_id",
+    //   as: "player1"
+    // })
+    // .lookup({
+    //   from: "players",
+    //   localField: "player2",
+    //   foreignField: "_id",
+    //   as: "player2"
+    // })
+    // .lookup({
+    //   from: "players",
+    //   localField: "player3",
+    //   foreignField: "_id",
+    //   as: "player3"
+    // })
+    // .lookup({
+    //   from: "players",
+    //   localField: "player4",
+    //   foreignField: "_id",
+    //   as: "player4"
+    // })
+    // .project({
+    //   "score1": 1,
+    //   "score2": 1,
+    //   "matchid": 1,
+    //   player1: $.arrayElemAt(["$player1", 0]),
+    //   player2: $.arrayElemAt(["$player2", 0]),
+    //   player3: $.arrayElemAt(["$player3", 0]),
+    //   player4: $.arrayElemAt(["$player4", 0]),
+    // })
+    // .limit(64)
+    // .sort({
+    //   'order': 1
+    // })
+    // .end()
+    async (res) => {
+      console.log(res)
+      return res.list;
+    })
+}
 
 // //删除比赛数据
 // deleteMatch = async (clubid, matchid) => {

@@ -7,7 +7,6 @@ const saveGlobalData = require('../common/utils').saveGlobalData
 const getGlobalData = require('../common/utils').getGlobalData
 const showError = require('../common/utils').showError
 
-
 Page({
   data: {
     avatarUrl: './user-unlogin.png',

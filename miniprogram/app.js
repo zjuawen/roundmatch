@@ -15,9 +15,14 @@ App({
 				traceUser: true,
 			})
 		}
- 
-		this.globalData = {
-			adShow1: true
+ 		
+ 		wx.setStorageSync(
+            'adShow1',
+            true
+        )
+
+ 		this.globalData = {
+			// adShow1: true
 		}
 	}
 })

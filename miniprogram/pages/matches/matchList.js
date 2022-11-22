@@ -183,7 +183,7 @@ Page({
             })
             //delay show ad
             that.setData({
-                adShow: app.globalData.adShow1
+                adShow: getGlobalData('adShow1')
             })
             that.loading(false)
         })
