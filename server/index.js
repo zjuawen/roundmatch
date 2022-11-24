@@ -58,6 +58,7 @@ db.databaseConf.sync()
 // utils.process('./exported/', 'system')
 // utils.process('./exported/', 'notices')
 // utils.process('./exported/', 'matches')
+// utils.batchProcess('./exported/games/', 'games')
 
 
 

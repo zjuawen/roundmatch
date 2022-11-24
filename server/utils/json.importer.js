@@ -18,18 +18,15 @@ async function insertRec(line) {
   await db[_modelName].create(obj);
 }
 
-importer.process = (folder, model) => {
-  _modelName = model;
-  console.log('processing: ' + _modelName);
-
+function process(filename) {
   const rl = readline.createInterface({
-    input: fs.createReadStream(folder + model + '.json'),
+    input: fs.createReadStream(filename),
     // output: process.stdout,
     console: false
   });
 
   var count = 0;
-  rl.on('line', async function(line){
+  rl.on('line', async function(line) {
     count++;
     // console.log('No: '+ count);
     // if( count > 1){
@@ -40,10 +37,34 @@ importer.process = (folder, model) => {
 
 
   rl.on('close', () => {
-    console.log('total: '+ count);
+    console.log('total: ' + count);
   });
 
-  // return count;
+}
+
+importer.process = (folder, model) => {
+  _modelName = model;
+  console.log('processing: ' + _modelName);
+
+  let filename = folder + model + '.json'
+  process(filename)
+
+};
+
+importer.batchProcess = (folder, model) => {
+  _modelName = model
+
+  var dirFiles = fs.readdirSync(folder);
+  console.log(dirFiles);
+
+  for (let fileName of dirFiles) {
+    if( !fileName.startsWith(model)){
+      continue
+    }
+    // console.log(folder + fileName)
+    process(folder + fileName)
+  }
+
 };
 
 module.exports = importer;

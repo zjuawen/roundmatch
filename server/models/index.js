@@ -37,6 +37,7 @@ db.clubs = require("./Sequelize.model").clubs(database, Sequelize)
 db.users = require("./Sequelize.model").users(database, Sequelize)
 db.players = require("./Sequelize.model").players(database, Sequelize)
 db.matches = require("./Sequelize.model").matches(database, Sequelize)
+db.games = require("./Sequelize.model").games(database, Sequelize)
 db.system = require("./Sequelize.model").system(database, Sequelize)
 db.notices = require("./Sequelize.model").notices(database, Sequelize)
 

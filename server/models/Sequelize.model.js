@@ -223,6 +223,61 @@ module.exports.matches = (database, Sequelize) => {
     })
 }
 
+module.exports.games = (database, Sequelize) => {
+    return database.define("games", {
+        _id: {
+            type: Sequelize.STRING,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        clubid: {
+            type: Sequelize.STRING
+        },
+        matchid: {
+            type: Sequelize.STRING
+        },
+        player1: {
+            type: Sequelize.STRING
+        },
+        player2: {
+            type: Sequelize.STRING
+        },
+        player3: {
+            type: Sequelize.STRING
+        },
+        player4: {
+            type: Sequelize.STRING
+        },
+        score1: {
+            type: Sequelize.INTEGER
+        },
+        score2: {
+            type: Sequelize.INTEGER
+        },
+        order: {
+            type: Sequelize.INTEGER
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                // console.log(typeof value )
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    // console.log(value['$date'])
+                    this.setDataValue('createDate', value['$date'])
+                } else {
+                    this.setDataValue('createDate', value)
+                }
+            }
+        },
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime'
+    })
+}
+
 module.exports.system = (database, Sequelize) => {
     return database.define("system", {
         _id: {
