@@ -5,7 +5,7 @@
 // const WechatAPI = require('co-wechat-api')
 import Axios from 'axios'
 import WechatAPI from 'co-wechat-api'
-import  download from 'download'
+import download from 'download'
 import Sleep from 'sleep'
 
 const wxappApi = new WechatAPI('wxf3f6462195815590', 'bb1434a237637a2feeea1a3cf56307af')
@@ -28,24 +28,19 @@ const getDatabaseMigrateStatus = async (accessToken, data) => {
   return resp.data
 }
 
+const exportData = async (clubid, accessToken) => {
+  console.log('exporting club games: ' + clubid)
+  let tableName = 'games_' + clubid
 
-const main = async () => {
+  let check = await getDatabaseRecord(accessToken, {
+    "env": env,
+    "query": "db.collection(\"games_" + clubid + "\").get()"
+  })
+  if( check.errcode != 0){
+    console.log( check.errmsg)
+    return
+  }
 
-  // let accessToken = await wxappApi.getAccessToken()
-  // console.log('getAccessToken: ')
-  // console.log(accessToken)
-  // accessToken = accessToken.accessToken
-
-  let accessToken = '63_nXFOtDL8DSu_QQHbIa6DGcrwnRjGX-0EaoXfq23eIv0FKm-xojOGlc38LFqYU1zfMf_czKzdQ69x6ZD7Df1dLMk53Ln1CjiCmiqyQwDqmRmjWL1-aDCA9nB1ExAALDaAAAWHZ'
-
-  // let data = {
-  //   "env": env,
-  //   "query": "db.collection(\"clubs\").limit(100).skip(0).get()"
-  // }
-  // let result = await getDatabaseRecord(accessToken, data)
-  // console.log(result)
-
-  let tableName = 'games_' + '2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0'
   let exportDatabaseItemParam = {
     "env": env,
     "file_path": 'games_export/' + tableName + '.json',
@@ -63,17 +58,61 @@ const main = async () => {
   let migrateResult = await getDatabaseMigrateStatus(accessToken, databaseMigrateStatusParam)
   console.log(migrateResult)
 
-  while( migrateResult.status == 'waiting'){
+  while (migrateResult.status != 'success') {
     console.log('waiting')
-    Sleep.sleep(3)
+    Sleep.sleep(1)
     migrateResult = await getDatabaseMigrateStatus(accessToken, databaseMigrateStatusParam)
-    console.log(migrateResult)
+    if( migrateResult.status == 'success'){
+      console.log(migrateResult)
+    }
+    // console.log(migrateResult)
   }
-  
+
   // const url = 'https://tcb-mongodb-data-1254135806.cos.ap-shanghai.myqcloud.com/games_export?q-sign-algorithm=sha1&q-ak=AKIDvf9NN5WhonVx94tOfgPqzqPhhQzIJ2Te&q-sign-time=1669124812;1669128412&q-key-time=1669124812;1669128412&q-header-list=&q-url-param-list=&q-signature=f4a1708cbd1522f47b3db41bf4caf0c88426f077'
   const url = migrateResult.file_url
   console.log('downloading: ' + url)
   await download(url, './games/');
+
+}
+
+const queryClubs = async (offset, pageSize, accessToken) => {
+  let data = {
+    "env": env,
+    "query": "db.collection(\"clubs\").limit(" + pageSize + ").skip(" + offset + ").get()"
+  }
+  let result = await getDatabaseRecord(accessToken, data)
+  console.log(result)
+  return result
+}
+
+const main = async () => {
+
+  // let accessToken = await wxappApi.getAccessToken()
+  // console.log('getAccessToken: ')
+  // console.log(accessToken)
+  // accessToken = accessToken.accessToken
+
+  let accessToken = '63_YZhhchTc_-9N2H9vzjmNKcEPr4bIEWk-YqUGX9UNurFZYZM6AtJDTebAJfdNlqRWRuQzWCD1tCLamr8rXLTdUxjrqZOnKmxLIsbhOLhh9UkUPwSBIzAQ2QzFTjsTMHcAHAFYT'
+
+  let offset = 0
+  let page = 1
+  let pageSize = 10
+  let result = null
+  do {
+    console.log('page: ' + page++)
+    result = await queryClubs(offset, pageSize, accessToken)
+    // console.log(result.data)
+
+    for (let club of result.data) {
+      // console.log(club)
+      club = JSON.parse(club)
+      // console.log(club)
+      let clubid = club._id
+      // console.log(clubid)
+      await exportData(clubid, accessToken)
+    }
+    offset += pageSize
+  } while (result.data.length >= pageSize)
 
 }
 
