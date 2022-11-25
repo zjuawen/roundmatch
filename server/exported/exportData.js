@@ -29,23 +29,43 @@ const getDatabaseMigrateStatus = async (accessToken, data) => {
 }
 
 const exportData = async (clubid, accessToken) => {
+  // clubid = '2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0'
   console.log('exporting club games: ' + clubid)
-  let tableName = 'games_' + clubid
 
   let check = await getDatabaseRecord(accessToken, {
     "env": env,
-    "query": "db.collection(\"games_" + clubid + "\").get()"
+    "query": "db.collection(\"games_" + clubid + "\").count()",
   })
-  if( check.errcode != 0){
-    console.log( check.errmsg)
+  // console.log('count()')
+  // console.log(check)
+  let total = 0
+  if (check.errcode != 0) {
+    console.log(check.errmsg)
     return
+  } else {
+    total = check.pager.Total
+    console.log('total: ' + total)
   }
+
+  let offset = 0
+  let pageSize = 1000
+  let pager = 0
+  let ceil = Math.ceil(total / pageSize)
+  for (let pager = 0; pager < ceil; pager++) {
+    await exportPagedData(clubid, accessToken, offset, pageSize, pager)
+    offset += pageSize
+  }
+
+}
+
+const exportPagedData = async (clubid, accessToken, offset, pageSize, pager) => {
+  let tableName = 'games_' + clubid
 
   let exportDatabaseItemParam = {
     "env": env,
-    "file_path": 'games_export/' + tableName + '.json',
+    "file_path": 'games_export/' + tableName + '-' + pager + '.json',
     "file_type": "1",
-    "query": "db.collection(\"" + tableName + "\").limit(1000).skip(0).get()"
+    "query": "db.collection(\"" + tableName + "\").limit(" + pageSize + ").skip(" + offset + ").get()"
   }
   let dataResult = await exportDatabaseItem(accessToken, exportDatabaseItemParam)
   console.log(dataResult)
@@ -62,7 +82,7 @@ const exportData = async (clubid, accessToken) => {
     console.log('waiting')
     Sleep.sleep(1)
     migrateResult = await getDatabaseMigrateStatus(accessToken, databaseMigrateStatusParam)
-    if( migrateResult.status == 'success'){
+    if (migrateResult.status == 'success') {
       console.log(migrateResult)
     }
     // console.log(migrateResult)
@@ -92,7 +112,7 @@ const main = async () => {
   // console.log(accessToken)
   // accessToken = accessToken.accessToken
 
-  let accessToken = '63_YZhhchTc_-9N2H9vzjmNKcEPr4bIEWk-YqUGX9UNurFZYZM6AtJDTebAJfdNlqRWRuQzWCD1tCLamr8rXLTdUxjrqZOnKmxLIsbhOLhh9UkUPwSBIzAQ2QzFTjsTMHcAHAFYT'
+  let accessToken = '63_oZA4qjlCKQ_1b_ibgV9R4_MVvP1e6mBbd_aNzoJutLF-FK24NUFpRRxbnUmNnbRYPkj-fWTtZQ9TuJdBJhvPAJsbaLq_ByTNLIsGLBiyGNoCkvje0cnHLCgF8NoQSYiADAMOU'
 
   let offset = 0
   let page = 1

@@ -328,10 +328,7 @@ readMatch = async (clubid, matchid) => {
     db.collection('games').findAll({
       where: {
         clubid: clubid,
-        matchid: matchid,
-        delete: {
-          [Op.not]: true
-        },
+        matchid: matchid
       }
     }),
     // .lookup({

@@ -257,6 +257,10 @@ module.exports.games = (database, Sequelize) => {
         order: {
             type: Sequelize.INTEGER
         },
+        delete: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: Sequelize.false
+        },
         createDate: {
             type: Sequelize.DATE,
             set(value) {
