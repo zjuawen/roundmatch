@@ -324,12 +324,35 @@ exports.main = async (request, result) => {
 
 //读取比赛对阵数据
 readMatch = async (clubid, matchid) => {
+  console.log('readMatch')
   return await sequelizeExecute(
     db.collection('games').findAll({
+      attributes: ['score1', 'score2'],
       where: {
         clubid: clubid,
-        matchid: matchid
-      }
+        matchid: matchid,
+        delete: {
+          [Op.not]: true
+        },
+      },
+      raw: true,
+      include: [{
+        model: db.players,
+        as: 'player_1',
+        required: true
+      },{
+        model: db.players,
+        as: 'player_2',
+        required: true
+      },{
+        model: db.players,
+        as: 'player_3',
+        required: true
+      },{
+        model: db.players,
+        as: 'player_4',
+        required: true
+      }]
     }),
     // .lookup({
     //   from: "players",

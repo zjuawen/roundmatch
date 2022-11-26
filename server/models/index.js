@@ -41,6 +41,45 @@ db.games = require("./Sequelize.model").games(database, Sequelize)
 db.system = require("./Sequelize.model").system(database, Sequelize)
 db.notices = require("./Sequelize.model").notices(database, Sequelize)
 
+db.matches.hasMany(db.games, {
+    foreignKey: 'matchid',
+    constraints: false
+})
+
+// db.players.belongsToMany(db.games, {
+//     foreignKey: ['player1', 'player2', 'player3', 'player4'],
+//     sourceKey: '_id',
+//     constraints: false
+// })
+
+db.games.hasMany(db.players, {
+    foreignKey: '_id',
+    sourceKey: 'player1',
+    as: 'player_1'
+    // constraints: false
+})
+
+db.games.hasMany(db.players, {
+    foreignKey: '_id',
+    sourceKey: 'player2',
+    as: 'player_2'
+    // constraints: false
+})
+
+db.games.hasMany(db.players, {
+    foreignKey: '_id',
+    sourceKey: 'player3',
+    as: 'player_3'
+    // constraints: false
+})
+
+db.games.hasMany(db.players, {
+    foreignKey: '_id',
+    sourceKey: 'player4',
+    as: 'player_4'
+    // constraints: false
+})
+
 // db.doctor.hasMany(db.patient, {foreignKey: 'doctorId'})
 // db.patient.belongsTo(db.doctor, {foreignKey: 'doctorId'})
 
