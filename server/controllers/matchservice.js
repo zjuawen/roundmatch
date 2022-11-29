@@ -1,48 +1,49 @@
-const db = require("../models");
-const Op = require("sequelize").Op;
+const db = require("../models")
+const Op = require("sequelize").Op
 // utils
-const paginate = require("../utils/util").paginate;
-const md5String = require("../utils/util").md5String;
-const queryLike = require("../utils/util").queryLike;
-const validateSession = require("../utils/util").validateSession;
-const sequelizeExecute = require("../utils/util").sequelizeExecute;
-const successResponse = require("../utils/util").successResponse;
-const errorResponse = require("../utils/util").errorResponse;
+const paginate = require("../utils/util").paginate
+const md5String = require("../utils/util").md5String
+const queryLike = require("../utils/util").queryLike
+const validateSession = require("../utils/util").validateSession
+const sequelizeExecute = require("../utils/util").sequelizeExecute
+const sequelizeExecuteSync = require("../utils/util").sequelizeExecuteSync
+const successResponse = require("../utils/util").successResponse
+const errorResponse = require("../utils/util").errorResponse
 
 
 // 云函数入口函数
 exports.main = async (request, result) => {
   // const wxContext = context;// cloud.getWXContext()
-  let event = request.query;
+  let event = request.query
 
-  console.log('clubservice');
-  console.log(event);
-  // console.log(cloud.DYNAMIC_CURRENT_ENV);
+  console.log('clubservice')
+  console.log(event)
+  // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
-  let action = event.action;
-  // console.log("action: " + action);
-  let data;
+  let action = event.action
+  // console.log("action: " + action)
+  let data
   if (action == 'create') {
-    data = await createMatchData(event.type, event.players);
+    data = await createMatchData(event.type, event.players)
   } else if (action == 'list') {
-    let pageNum = (event.pageNum == null) ? 1 : event.pageNum;
-    let pageSize = (event.pageSize == null) ? 10 : event.pageSize;
-    data = await listMatch(event.openid, event.clubid, pageNum, pageSize);
+    let pageNum = (event.pageNum == null) ? 1 : event.pageNum
+    let pageSize = (event.pageSize == null) ? 10 : event.pageSize
+    data = await listMatch(event.openid, event.clubid, pageNum, pageSize)
   } else if (action == 'save') {
     data = await saveMatchData(wxContext.OPENID, event.type, event.clubid,
-      event.matchdata, event.playerCount);
+      event.matchdata, event.playerCount)
   } else if (action == 'read') {
-    data = await readMatch(event.clubid, event.matchid);
+    data = await readMatch(event.clubid, event.matchid)
   } else if (action == 'delete') {
-    data = await deleteMatch(event.clubid, event.matchid);
+    data = await deleteMatch(event.clubid, event.matchid)
   } else if (action == 'update') {
-    data = await updateMatch(event.match);
+    data = await updateMatch(event.match)
   }
 
-  // console.log(data);
+  // console.log(data)
   successResponse(result, {
     data
-  });
+  })
   // return {
   //   data,
   //   // openid: wxContext.OPENID,
@@ -62,9 +63,9 @@ exports.main = async (request, result) => {
 //       }
 //     })
 //     .then(res => {
-//       console.log("update match: ");
+//       console.log("update match: ")
 //       console.log(res)
-//       let updated = res.stats.updated;
+//       let updated = res.stats.updated
 //       return {
 //         updated: updated
 //       }
@@ -91,55 +92,55 @@ exports.main = async (request, result) => {
 //     })
 //     .then(res => {
 //       console.log(res)
-//       let matchid = res._id;
-//       console.log("added new match: " + matchid);
-//       return savaGames(clubid, matchid, games);
+//       let matchid = res._id
+//       console.log("added new match: " + matchid)
+//       return savaGames(clubid, matchid, games)
 //     })
 // }
 
 // createClubGameDataTable = async (clubid) => {
-//   let gameDataTableName = 'games_' + clubid;
+//   let gameDataTableName = 'games_' + clubid
 
-//   const table = db.collection(gameDataTableName);
-//   var exist = true;
+//   const table = db.collection(gameDataTableName)
+//   var exist = true
 //   try{
 //     await table
 //     .count()
 //     .then( async res=>{
-//       console.log(res);
-//     });
+//       console.log(res)
+//     })
 //   } catch (e) {
-//     console.log(e);
-//     exist = false;
+//     console.log(e)
+//     exist = false
 //   }
 //   if( exist){
-//     console.log('game data table already created');
-//     return;
+//     console.log('game data table already created')
+//     return
 //   }
 
 //   return await db.createCollection(gameDataTableName)
 //   .then(res => {
-//       console.log('create game data table...');
-//       console.log(res);
+//       console.log('create game data table...')
+//       console.log(res)
 //       return {
 //         dataTable: gameDataTableName,
 //         msg: res.errMsg,
 //       }
 //     }
-//   );
+//   )
 // }
 
 
 // //保存对阵数据
 // savaGames = async (clubid, matchid, games) => {
 
-//   await createClubGameDataTable(clubid);
+//   await createClubGameDataTable(clubid)
 
-//   let data = games;
+//   let data = games
 
-//   let playerWeight = [];
+//   let playerWeight = []
 
-//   let count = 0;
+//   let count = 0
 //   for (let i = 0; i < data.length; i++) {
 //     let gamedata = {
 //       clubid: clubid,
@@ -152,7 +153,7 @@ exports.main = async (request, result) => {
 //       score1: -1,
 //       score2: -1,
 //       createDate: db.serverDate(),
-//     };
+//     }
 
 //     await db.collection('games_' + clubid )
 //       .add({
@@ -161,38 +162,38 @@ exports.main = async (request, result) => {
 //       })
 //       .then(res => {
 //         console.log(res)
-//         count += 1;
-//         collectPlayerWeight(playerWeight, data[i]);
-//         return count;
+//         count += 1
+//         collectPlayerWeight(playerWeight, data[i])
+//         return count
 //       })
 //   }
 
-//   console.log(playerWeight);
+//   console.log(playerWeight)
 
 //   //增加参与人员权重
 //   playerWeight.forEach(async function (pWeight){
-//       await justifyPlayerOrder(pWeight);
-//   });
+//       await justifyPlayerOrder(pWeight)
+//   })
 
 //   return {
 //     gamecount: count,
 //     matchid: matchid
-//   };
+//   }
 // }
 
 // //收集权重信息
 // collectPlayerWeight = (playerWeight, data) => {
-//   let players = [data.player1, data.player2, data.player3, data.player4];
+//   let players = [data.player1, data.player2, data.player3, data.player4]
 
 //   players.forEach(function (playerid){
-//     let found = false;
+//     let found = false
 
 //     for( let i = 0; i<playerWeight.length; i++) {
-//       let weightObj = playerWeight[i];
+//       let weightObj = playerWeight[i]
 //       if( weightObj.playerid == playerid){
-//         found = true;
-//         weightObj.weight++;
-//         break;
+//         found = true
+//         weightObj.weight++
+//         break
 //       }
 //     }
 
@@ -216,60 +217,60 @@ exports.main = async (request, result) => {
 //       }
 //     })
 //     .then(res => {
-//       console.log(res);
-//       return res;
+//       console.log(res)
+//       return res
 //     })
 // }
 
 // //创建比赛数据（排阵，未保存）
 // createMatchData = async (type, playerArray) => {
-//   // let playerArray = event.data;
+//   // let playerArray = event.data
 
-//   var orderArraies = null;
-//   var typeValue = 'none';
+//   var orderArraies = null
+//   var typeValue = 'none'
 //   if( type == 'fixpair'){
-//     typeValue = 'fix';
+//     typeValue = 'fix'
 //   } else if( type == 'group'){
-//     typeValue = 'group';
+//     typeValue = 'group'
 //   } else {
-//     typeValue = 'none';
+//     typeValue = 'none'
 //   }
 
-//   let count = playerArray.length;
+//   let count = playerArray.length
 
 //   if( type == 'fixpair' ||  type == 'group'){
-//     var playerArrayFlat = flatPlayerArray(playerArray);
-//     count = playerArrayFlat.length;
+//     var playerArrayFlat = flatPlayerArray(playerArray)
+//     count = playerArrayFlat.length
 //   }
 
-//   // let count = playerArray.length;
-//   var orderArraies = await loadOrders(count, typeValue);
-//   // {orderArraies, nosort} = orders;
+//   // let count = playerArray.length
+//   var orderArraies = await loadOrders(count, typeValue)
+//   // {orderArraies, nosort} = orders
 
 //   //save clone array 
-//   var playerArraySave = JSON.parse(JSON.stringify(playerArray));
+//   var playerArraySave = JSON.parse(JSON.stringify(playerArray))
 
-//   let allgames = [];
+//   let allgames = []
 //   for( let n = 0; n < orderArraies.length; n++){
-//     let games = [];
-//     let value = orderArraies[n].value;
-//     let orderArray = JSON.parse(value);
-//     let nosort = [];
+//     let games = []
+//     let value = orderArraies[n].value
+//     let orderArray = JSON.parse(value)
+//     let nosort = []
 //     if(orderArraies[n].nosort != undefined){
-//       nosort = JSON.parse(orderArraies[n].nosort);
+//       nosort = JSON.parse(orderArraies[n].nosort)
 //     }
-//     var playerArrayOnce = null;
+//     var playerArrayOnce = null
 //     if( type == 'group'){
-//       sortgroups = JSON.parse(orderArraies[n].sortgroups);
-//       playerArrayOnce = shuffleArrayGroup(playerArraySave, sortgroups);
+//       sortgroups = JSON.parse(orderArraies[n].sortgroups)
+//       playerArrayOnce = shuffleArrayGroup(playerArraySave, sortgroups)
 //     } else {
-//       playerArrayOnce = shuffleArray(playerArraySave, nosort);
+//       playerArrayOnce = shuffleArray(playerArraySave, nosort)
 //       if( type == 'fixpair' ){
-//         playerArrayOnce = flatPlayerArray(playerArrayOnce);
+//         playerArrayOnce = flatPlayerArray(playerArrayOnce)
 //       }
 //     }
 
-//     console.log('after shuffle: ' + playerArrayOnce);
+//     console.log('after shuffle: ' + playerArrayOnce)
 
 //     for (let i = 0; i < orderArray.length; i++) {
 //       let game = {
@@ -280,35 +281,35 @@ exports.main = async (request, result) => {
 //         player4: playerArrayOnce[orderArray[i][1][1]],
 //         score1: -1,
 //         score2: -1,
-//       };
-//       games.push(game);
+//       }
+//       games.push(game)
 //     }
 
 //     allgames.push({
 //       name : orderArraies[n].name,
 //       data : games,
-//     });
+//     })
 //   }
 
-//   return allgames;
+//   return allgames
 // }
 
 // flatPlayerArray = (array) => {
-//   var newArray = [];
+//   var newArray = []
 //   array.forEach( pair => {
-//     newArray.push(pair.player1);
-//     newArray.push(pair.player2);
-//   });
+//     newArray.push(pair.player1)
+//     newArray.push(pair.player2)
+//   })
 
-//   return newArray;
+//   return newArray
 // }
 
 // loadOrders = async (playerNum, typeValue) => {
-//   var key = 'ORDERS_' + playerNum;
+//   var key = 'ORDERS_' + playerNum
 //   if( typeValue == 'fix'){
-//     key = 'PAIR_ORDERS_' + playerNum;
+//     key = 'PAIR_ORDERS_' + playerNum
 //   } if( typeValue == 'group'){
-//     key = 'GROUP_ORDERS_' + playerNum;
+//     key = 'GROUP_ORDERS_' + playerNum
 //   }
 //   return await db.collection('systemconfig')
 //     .where({
@@ -317,17 +318,17 @@ exports.main = async (request, result) => {
 //     .orderBy('order', 'desc')
 //     .get()
 //     .then(res => {
-//       console.log(res);
-//       return res.data;
+//       console.log(res)
+//       return res.data
 //     })
 // }
 
 //读取比赛对阵数据
 readMatch = async (clubid, matchid) => {
   console.log('readMatch')
-  return await sequelizeExecute(
+  let games = await sequelizeExecuteSync(
     db.collection('games').findAll({
-      attributes: ['score1', 'score2'],
+      attributes: ['matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4', ],
       where: {
         clubid: clubid,
         matchid: matchid,
@@ -335,67 +336,56 @@ readMatch = async (clubid, matchid) => {
           [Op.not]: true
         },
       },
+      order: [
+        ['order', 'DESC']
+      ],
       raw: true,
-      include: [{
-        model: db.players,
-        as: 'player_1',
-        required: true
-      },{
-        model: db.players,
-        as: 'player_2',
-        required: true
-      },{
-        model: db.players,
-        as: 'player_3',
-        required: true
-      },{
-        model: db.players,
-        as: 'player_4',
-        required: true
-      }]
-    }),
-    // .lookup({
-    //   from: "players",
-    //   localField: "player1",
-    //   foreignField: "_id",
-    //   as: "player1"
-    // })
-    // .lookup({
-    //   from: "players",
-    //   localField: "player2",
-    //   foreignField: "_id",
-    //   as: "player2"
-    // })
-    // .lookup({
-    //   from: "players",
-    //   localField: "player3",
-    //   foreignField: "_id",
-    //   as: "player3"
-    // })
-    // .lookup({
-    //   from: "players",
-    //   localField: "player4",
-    //   foreignField: "_id",
-    //   as: "player4"
-    // })
-    // .project({
-    //   "score1": 1,
-    //   "score2": 1,
-    //   "matchid": 1,
-    //   player1: $.arrayElemAt(["$player1", 0]),
-    //   player2: $.arrayElemAt(["$player2", 0]),
-    //   player3: $.arrayElemAt(["$player3", 0]),
-    //   player4: $.arrayElemAt(["$player4", 0]),
-    // })
-    // .limit(64)
-    // .sort({
-    //   'order': 1
-    // })
-    // .end()
-    async (res) => {
-      console.log(res)
-      return res.list;
     })
+  )
+
+
+  console.log(games)
+  let players = []
+  await games.forEach(game => {
+    // console.log(game['player_1'])
+    for (let i = 1; i < 5; i++) {
+      let player = game['player' + i]
+      // console.log(player)
+      if (players.includes(player)) {
+        continue
+      }
+      players.push(player)
+    }
+  })
+
+  console.log(players)
+
+  players = await sequelizeExecuteSync(
+    db.collection('players').findAll({
+      attributes: ['_id', 'name', 'avatarUrl'],
+      where: {
+        _id: {
+          [Op.in]: players
+        },
+      },
+      raw: true,
+    })
+  )
+
+  console.log(players)
+
+  await games.forEach(game => {
+    for (let i = 1; i < 5; i++) {
+      let player = game['player' + i]
+      game['player' + i] = players.find( (player) => {
+        return player._id === game['player' + i];
+      })
+    }
+  })
+
+  console.log(games)
+
+  return games
 }
 
 // //删除比赛数据
@@ -408,9 +398,9 @@ readMatch = async (clubid, matchid) => {
 //       },
 //     })
 //     .then(async res => {
-//       console.log("delete match...");
-//       console.log(res);
-//       let matchUpdated = res.stats.updated;
+//       console.log("delete match...")
+//       console.log(res)
+//       let matchUpdated = res.stats.updated
 //       if( matchUpdated > 0){
 //         return await db.collection('games_' + clubid)
 //           .where({
@@ -422,16 +412,16 @@ readMatch = async (clubid, matchid) => {
 //             },
 //           })
 //           .then(async res => {
-//             console.log("delete games...");
-//             console.log(res);
-//             let gameUpdated = res.stats.updated;
+//             console.log("delete games...")
+//             console.log(res)
+//             let gameUpdated = res.stats.updated
 //             return {
 //               matchUpdated: matchUpdated,
 //               gameUpdated: gameUpdated,
-//             };
+//             }
 //           })
 //       }
-//     });
+//     })
 // }
 
 //获取比赛列表
@@ -459,68 +449,68 @@ listMatch = async (owner, clubid, pageNum, pageSize) => {
     (array) => {
       // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
       console.log(array)
-      return array;
+      return array
     })
 }
 
 // shuffleArrayGroup = (arraySaved, groups) => {
-//   let array = flatPlayerArray(arraySaved);
+//   let array = flatPlayerArray(arraySaved)
 //   for( let n = 0; n<groups.length; n++){
-//     let group = groups[n];
+//     let group = groups[n]
 //     for (let i = group.length; i; i--) {
-//       let j = Math.floor(Math.random() * group.length);
-//       // console.log("swap: " + array[group[i-1]].name + "-" + array[group[j]].name);
-//       let t = array[group[i-1]];
-//       array[group[i-1]] = array[group[j]];
-//       array[group[j]] = t;
+//       let j = Math.floor(Math.random() * group.length)
+//       // console.log("swap: " + array[group[i-1]].name + "-" + array[group[j]].name)
+//       let t = array[group[i-1]]
+//       array[group[i-1]] = array[group[j]]
+//       array[group[j]] = t
 //     }
 //   }
-//   return array;
+//   return array
 // }
 
 // shuffleArray = (arraySaved, skiparray) => {
-//   let array = JSON.parse(JSON.stringify(arraySaved));
-//   let returnArray = [];
+//   let array = JSON.parse(JSON.stringify(arraySaved))
+//   let returnArray = []
 //   for( let n = 0; n<skiparray.length; n++){
-//     let index = skiparray[n];
-//     returnArray[index] = array[index];
-//     array[index] = null;
+//     let index = skiparray[n]
+//     returnArray[index] = array[index]
+//     array[index] = null
 //   }
 //   for (let i = array.length; i; i--) {
-//     let j = Math.floor(Math.random() * i);
-//     [array[i - 1], array[j]] = [array[j], array[i - 1]];
+//     let j = Math.floor(Math.random() * i)
+//     [array[i - 1], array[j]] = [array[j], array[i - 1]]
 //   }
-//   var i=0;
+//   var i=0
 //   for( let n = 0; n<arraySaved.length && i<arraySaved.length; n++){
 //     if( returnArray[n] == null){
 //       while(array[i] == null && i<arraySaved.length){
-//         i++;
+//         i++
 //       }
-//       returnArray[n] = array[i];
-//       i++;
+//       returnArray[n] = array[i]
+//       i++
 //     }
 //   }
 
-//   return returnArray;
+//   return returnArray
 // }
 
 // //保持一对
 // shuffleArray2 = (array) => {
 //   if( array.length % 2 != 0){
-//     console.log("shuffleArray2: array length = " + array.length + " incorrect");
-//     return null;
+//     console.log("shuffleArray2: array length = " + array.length + " incorrect")
+//     return null
 //   }
 //   for (let i = 0; i<array.length/2; i++) {
-//     let j = Math.floor(Math.random() * i);
-//     [array[2*i], array[2*j]] = [array[2*j], array[2*i]];
-//     [array[2*i+1], array[2*j+1]] = [array[2*j+1], array[2*i+1]];
+//     let j = Math.floor(Math.random() * i)
+//     [array[2*i], array[2*j]] = [array[2*j], array[2*i]]
+//     [array[2*i+1], array[2*j+1]] = [array[2*j+1], array[2*i+1]]
 //   }
-//   return array;
+//   return array
 // }
 
 //清除matches和games数据
 // debug = () => {
-//   let collectionName = 'games';
+//   let collectionName = 'games'
 //   db.collection(collectionName)
 //   .where({
 //     score1: -1
@@ -528,5 +518,5 @@ listMatch = async (owner, clubid, pageNum, pageSize) => {
 //   .remove()
 //   .then(res => {
 //     console.log(res)
-//   });
+//   })
 // }

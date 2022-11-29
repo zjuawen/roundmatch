@@ -52,33 +52,32 @@ db.matches.hasMany(db.games, {
 //     constraints: false
 // })
 
-db.games.hasMany(db.players, {
-    foreignKey: '_id',
-    sourceKey: 'player1',
-    as: 'player_1'
-    // constraints: false
-})
+// db.games.hasOne(db.players, {
+//     foreignKey: 'player_1',
+//     targetKey: '_id',
+//     as: 'player1',
+//     constraints: false
+// })
+// db.games.belongsTo(db.players,{
+//     foreignKey: 'player_1',
+//     // sourceKey: 'player2',
+//     as: 'player1',
+//     constraints: false
+// })
 
-db.games.hasMany(db.players, {
-    foreignKey: '_id',
-    sourceKey: 'player2',
-    as: 'player_2'
-    // constraints: false
-})
+// db.games.hasMany(db.players, {
+//     foreignKey: '_id',
+//     sourceKey: 'player3',
+//     // as: 'player_3'
+//     // constraints: false
+// })
 
-db.games.hasMany(db.players, {
-    foreignKey: '_id',
-    sourceKey: 'player3',
-    as: 'player_3'
-    // constraints: false
-})
-
-db.games.hasMany(db.players, {
-    foreignKey: '_id',
-    sourceKey: 'player4',
-    as: 'player_4'
-    // constraints: false
-})
+// db.games.hasMany(db.players, {
+//     foreignKey: '_id',
+//     sourceKey: 'player4',
+//     // as: 'player_4'
+//     // constraints: false
+// })
 
 // db.doctor.hasMany(db.patient, {foreignKey: 'doctorId'})
 // db.patient.belongsTo(db.doctor, {foreignKey: 'doctorId'})

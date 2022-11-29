@@ -75,6 +75,16 @@ exports.errorResponse = (result, errorCode, errorMsg) => {
         msg: message,
     });
 };
+
+exports.sequelizeExecuteSync = async (execFn) => {
+    // console.log(execFn);
+    return await execFn.then((data) => {
+        return data
+    }).catch(err => {
+        console.log(err);
+    });
+};
+
 exports.sequelizeExecute = async (execFn, thenFn) => {
     // console.log(execFn);
     return await execFn.then((data) => {

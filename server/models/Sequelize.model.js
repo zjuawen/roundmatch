@@ -238,6 +238,7 @@ module.exports.games = (database, Sequelize) => {
         },
         player1: {
             type: Sequelize.STRING
+            // as: 'player_1'
         },
         player2: {
             type: Sequelize.STRING
