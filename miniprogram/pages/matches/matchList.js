@@ -168,7 +168,7 @@ Page({
         let pageSize = this.data.pageSize
         let openid = getGlobalData('openid')
         APIs.listMatch(openid, clubid, pageNum, pageSize, this, res => {
-            let newData = res.data
+            let newData = res
             newData.forEach((item) => {
                 if (!item.name) {
                     item.name = item.createDate

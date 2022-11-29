@@ -254,7 +254,7 @@ Page({
 
     let that = this;
     APIs.readMatch(this, clubid, matchid, res => {
-      let data = res.data;
+      let data = res;
       that.setData({
         matchPlayers: []
       });
@@ -578,7 +578,7 @@ Page({
     APIs.createNewMatch(this,
       this.data.selectedPlayers,
       this.data.type,
-      res => {
+      (res) => {
         let data = res;
         if (!data || data.length == 0) {
           wx.showToast({

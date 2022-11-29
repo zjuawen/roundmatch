@@ -27,77 +27,84 @@ exports.main = async (request, result) => {
     // data = await readGameData(event.clubid, event.gameid)
   }
 
+  console.log('gameService return:')
+  console.log(data)
+
   successResponse(result, {
     data
   })
 }
 
-// //保存比赛数据
-// saveGameData = async (clubid, gamedata) => {
+//保存比赛数据
+saveGameData = async (clubid, gamedata) => {
 
-//   let old = await readGameData(clubid, gamedata)
-//   // console.log("new: " + gamedata.score1 + " & " + gamedata.score2)
+  let old = await readGameData(clubid, gamedata)
+  // console.log("new: " + gamedata.score1 + " & " + gamedata.score2)
 
-//   if( old.data == null){
-//     console.log('no gamedata found: ' + gamedata._id)
-//     return ({ 
-//       stats: { 
-//         updated: 0 
-//       }, 
-//       errMsg: 'no record found!'
-//     })
-//   }
+  if (old.data == null) {
+    console.log('no gamedata found: ' + gamedata._id)
+    return ({
+      stats: {
+        updated: 0
+      },
+      errMsg: 'no record found!'
+    })
+  }
 
-//   let needInc = false
-//   if( old.data.score1<0 && old.data.score2 <0 
-//     && gamedata.score1>=0 && gamedata.score2>=0){
-//     needInc = true
-//   }
-//   return await db.collection('games_' + clubid)
-//     .doc(gamedata._id)
-//     .update({
-//       // data 字段表示需新增的 JSON 数据
-//       data: {
-//         // id: _.inc(1),
-//         score1: gamedata.score1,
-//         score2: gamedata.score2,
-//       }
-//     })
-//     .then( async res => {
-//       console.log(res)
-//       if( needInc){
-//         await updateMatchData(gamedata.matchid)
-//       }
-//       return res
-//     })
-// }
+  let needInc = false
+  if (old.data.score1 < 0 && old.data.score2 < 0 &&
+    gamedata.score1 >= 0 && gamedata.score2 >= 0) {
+    needInc = true
+  }
 
-// readGameData = async (clubid, gamedata) => {
+  let res = await sequelizeExecute(
+    db.collection('games').update({
+      // id: _.inc(1),
+      score1: gamedata.score1,
+      score2: gamedata.score2,
+    }, {
+      where: {
+        _id: gamedata._id
+      }
+    })
+  )
 
-//   return await db.collection('games_' + clubid)
-//     .doc(gamedata._id)
-//     .get()
-//     .then(res => {
-//       console.log(res)
-//       return res
-//     })
-// }
+  console.log(res)
 
-// //更新比赛
-// updateMatchData = async (matchid) => {
-//   return await db.collection('matches')
-//     .where({
-//       _id: matchid
-//     })
-//     .update({
-//       // data 字段表示需新增的 JSON 数据
-//       data: {
-//         // id: _.inc(1),
-//         finish: _.inc(1),
-//       }
-//     })
-//     .then(res => {
-//       console.log(res)
-//       return res
-//     })
-// }
+  if (needInc) {
+    await updateMatchData(gamedata.matchid)
+  }
+  return res
+
+}
+
+// 读取单场数据
+readGameData = async (clubid, gamedata) => {
+  let game = await sequelizeExecute(
+    db.collection('games').findByPk(gamedata._id)
+  )
+
+  console.log(game)
+
+  return game
+}
+
+//更新比赛
+updateMatchData = async (matchid) => {
+  let updated = await sequelizeExecute(
+    db.collection('matches').update({
+      finish: {
+        [OP.inc]: 1
+      },
+    }, {
+      where: {
+        _id: matchid
+      }
+    })
+  )
+
+  console.log(updated)
+
+  return updated
+
+}

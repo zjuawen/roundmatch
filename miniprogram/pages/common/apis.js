@@ -15,21 +15,6 @@ function commonCallFuction(that, callback, serviceName, actionName, params) {
     }
     console.log(func + " " + action + " with data:")
     console.log(data)
-    // wx.cloud.callFunction({
-    //     name: func,
-    //     data: data,
-    //     success: res => {
-    //         console.log('[云函数] ' + func + ' return: ', res)
-    //         if( res.result){
-    //             let data = res.result.data
-    //             commonSuccessHandler( data, that, callback)
-    //         }
-    //     },
-    //     fail: err => {
-    //         console.error('[云函数] ' + func + ' 调用失败', err)
-    //         commonErrorHandler(that)
-    //     }
-    // })
     wx.request({
         url: ServerUrl + 'api/' + serviceName,
         data: data,
@@ -37,9 +22,11 @@ function commonCallFuction(that, callback, serviceName, actionName, params) {
             'content-type': 'application/json'
         },
         success(res) {
-            console.log(res)
-            if (res.data) {
-                let data = res.data
+            let resData = res.data
+            console.log(func + " " + action + " return")
+            console.log(resData)
+            if (resData.code == 0) {
+                let data = resData.data
                 commonSuccessHandler(data, that, callback)
             }
         },

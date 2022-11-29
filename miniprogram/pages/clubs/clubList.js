@@ -211,6 +211,8 @@ Page({
     isAuditing: async function() {
         let that = this
         await APIs.isAuditing(this, async res => {
+            // console.log('isAuditing')
+            // console.log(res)
             that.setData({
                 auditing: res.auditing
             })
@@ -255,7 +257,7 @@ Page({
         let openid = getGlobalData('openid')
         APIs.loadClubs(openid, this, res => {
             that.setData({
-                clubs: res.data.private,
+                clubs: res.private,
                 publicClubs: [], //data.public
             })
             if (this.data.clubs.length > 0 && !this.data.login && !this.data.detailPedding) {
@@ -470,6 +472,7 @@ Page({
         let that = this
         let openid = getGlobalData('openid')
         APIs.checkCreateClubEnable(openid, this, res => {
+            console.log('checkCreateClubEnable')
             console.log(res)
             let data = res
             // let createClubEnable = data.vip || (data.clubs && (data.clubs.length <= 0))
@@ -513,7 +516,7 @@ Page({
     },
     searchClubs: function(keyword) {
         return APIs.searchClubs(this, keyword).then(res => {
-            let data = res.result.data
+            let data = res.result
             let clubs = []
             data.forEach((club) => {
                 clubs.push({
@@ -551,7 +554,7 @@ Page({
         APIs.getNotices(this, "clubList", res => {
             console.log(res)
             that.setData({
-                msgList: res.data
+                msgList: res
             })
         })
     },

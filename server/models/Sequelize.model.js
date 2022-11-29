@@ -355,3 +355,26 @@ module.exports.notices = (database, Sequelize) => {
         updatedAt: 'updateTime'
     })
 }
+
+module.exports.userconfig = (database, Sequelize) => {
+    return database.define("userconfig", {
+        _id: {
+            type: Sequelize.STRING,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        openid: {
+            type: Sequelize.STRING
+        },
+        key: {
+            type: Sequelize.STRING
+        },
+        value: {
+            type: Sequelize.STRING
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime'
+    })
+}

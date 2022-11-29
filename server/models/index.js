@@ -40,6 +40,7 @@ db.matches = require("./Sequelize.model").matches(database, Sequelize)
 db.games = require("./Sequelize.model").games(database, Sequelize)
 db.system = require("./Sequelize.model").system(database, Sequelize)
 db.notices = require("./Sequelize.model").notices(database, Sequelize)
+db.userconfig = require("./Sequelize.model").userconfig(database, Sequelize)
 
 db.matches.hasMany(db.games, {
     foreignKey: 'matchid',
@@ -97,6 +98,11 @@ db.dropRestApiTable = () => {
         console.log("roundmatch table just dropped and db re-synced.")
     })
 }
+
+db.serverDate = () => {
+    return new Date()
+}
+
 // db.importData = (folder) => {
 //     let count = importer.process('system')
 //     console.log('imported records: ' + count)

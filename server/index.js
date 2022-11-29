@@ -49,9 +49,9 @@ server.listen(port, () => {
 // Run following function if you want drop existing tables and re-sync database
 // db.dropRestApiTable()
 
-// db.databaseConf.sync()
+db.databaseConf.sync()
 
-db.databaseConf.sync({alter:true})
+// db.databaseConf.sync({alter:true})
 
 // Run following function if you want import all data 
 // utils.process('./exported/', 'clubs')
@@ -60,6 +60,7 @@ db.databaseConf.sync({alter:true})
 // utils.process('./exported/', 'system')
 // utils.process('./exported/', 'notices')
 // utils.process('./exported/', 'matches')
+// utils.process('./exported/', 'userconfig')
 // utils.batchProcess('./exported/games/', 'games')
 
 

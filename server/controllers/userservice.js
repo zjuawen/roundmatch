@@ -9,7 +9,7 @@ const paginate = require("../utils/util").paginate
 const md5String = require("../utils/util").md5String
 const queryLike = require("../utils/util").queryLike
 const validateSession = require("../utils/util").validateSession
-const sequelizeExecuteSync = require("../utils/util").sequelizeExecuteSync
+const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
 
@@ -19,7 +19,7 @@ exports.main = async (request, result) => {
   // const wxContext = context;// cloud.getWXContext()
   let event = request.query
 
-  console.log('userservice')
+  console.log('userService')
   console.log(event)
   // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
@@ -47,10 +47,10 @@ exports.main = async (request, result) => {
   } else if (action == 'saveconfig') {
     let key = event.key
     let value = event.value
-    data = await updateUserConfig(wxContext.OPENID, key, value)
+    data = await updateUserConfig(event.openid, key, value)
   } else if (action == 'readconfig') {
     let key = event.key
-    data = await readUserConfig(wxContext.OPENID, key)
+    data = await readUserConfig(event.openid, key)
     // } else if( action == 'info') {
     //   let key = event.key
     //   data = await readPlayerInfo(event.openid)
@@ -58,16 +58,12 @@ exports.main = async (request, result) => {
     data = await isUserVip(wxContext.OPENID)
   }
 
-  // console.log(data)
+  console.log('userService return:')
+  console.log(data)
+
   successResponse(result, {
     data
   })
-  // return {
-  //   data,
-  //   // openid: wxContext.OPENID,
-  //   // appid: wxContext.APPID,
-  //   // unionid: wxContext.UNIONID,
-  // }
 }
 
 // 用户登录
@@ -76,7 +72,7 @@ login = async (code) => {
   console.log(code2Session)
   let openid = code2Session.openid
 
-  let users = await sequelizeExecuteSync(
+  let users = await sequelizeExecute(
     db.collection('users').findOne({
       where: {
         openid: openid
@@ -113,7 +109,7 @@ upSertUserInfo = async (openid, userInfo) => {
     userInfo = JSON.parse(userInfo)
   }
 
-  let obj = await sequelizeExecuteSync(
+  let obj = await sequelizeExecute(
     db.collection('users').findOne({
       where: {
         openid: openid
@@ -138,7 +134,7 @@ upSertUserInfo = async (openid, userInfo) => {
 updateUserInfo = async (openid, userInfo) => {
   console.log(userInfo)
   // let dt = new Date()
-  let users = await sequelizeExecuteSync(
+  let users = await sequelizeExecute(
     db.collection('users').update({
       name: userInfo.nickName,
       avatarUrl: userInfo.avatarUrl,
@@ -176,7 +172,7 @@ addUserInfo = async (openid, userInfo) => {
     userInfo = {}
   }
 
-  let user = await sequelizeExecuteSync(
+  let user = await sequelizeExecute(
     db.collection('users').create({
       openid: openid,
       name: userInfo.nickName,
@@ -201,30 +197,111 @@ addUserInfo = async (openid, userInfo) => {
 
 }
 
-// updatePlayerInfo = async (openid, userInfo) => {
-//   let dt = db.serverDate()
-//   let res = await sequelizeExecuteSync(
-//   db.collection('players')
-//     .where({
-//       openid: openid
-//     })
-//     .update({
-//       data: {
-//         name: userInfo.name,
-//         avatarUrl: userInfo.avatarUrl,
-//         gender: userInfo.gender,
-//         updatedDate: dt
-//       }
-//       // data:{
-//       //   avatarUrl: userInfo.avatarUrl,
-//       // }
-//     })
-    
+updatePlayerInfo = async (openid, userInfo) => {
+  let dt = db.serverDate()
+  let res = await sequelizeExecute(
+    db.collection('players').update({
+      name: userInfo.name,
+      avatarUrl: userInfo.avatarUrl,
+      gender: userInfo.gender,
+      updatedDate: dt
+    }, {
+      where: {
+        openid: openid
+      }
+    })
+  )
 
-//     .then(res => {
-//       console.log(res)
-//       // return res.data
-//       let count = res.stats.updated
-//       return count
-//     })
-// }
+  console.log(res)
+  // return res.data
+  let count = res.stats.updated
+  return count
+}
+
+//读取用户配置
+readUserConfig = async (openid, key) => {
+  let doc = await sequelizeExecute(
+    db.collection('userconfig').findOne({
+      where: {
+        openid: openid,
+        key: key,
+      }
+    })
+  )
+  console.log(doc)
+  if (doc != null && doc.length > 0) {
+    return doc[0].value
+  }
+  return null
+}
+
+
+//读取指定用户信息
+readPlayerInfo = async (openid) => {
+  let doc = await db.collection('players')
+    .where({
+      openid: openid,
+      key: key,
+    })
+    .get()
+    .then(res => {
+      return res.data
+    })
+
+  if (doc != null && doc.length > 0) {
+    return doc[0].value
+  }
+  return null
+}
+
+//更新用户配置
+updateUserConfig = async (openid, key, value) => {
+  let doc = await db.collection('userconfig')
+    .where({
+      openid: openid,
+      key: key,
+    })
+    .get()
+    .then(res => {
+      return res.data
+    })
+
+  if (doc != null && doc.length > 0) {
+    return await db.collection('userconfig')
+      .doc(doc[0]._id)
+      .update({
+        data: {
+          value: value,
+        }
+      })
+      .then(res => {
+        console.log(res)
+        // return res.data
+        let data = res.errMsg
+        return data
+      })
+  } else {
+    return await db.collection('userconfig')
+      .add({
+        data: {
+          openid: openid,
+          key: key,
+          value: value,
+        }
+      })
+      .then(res => {
+        console.log(res)
+        // return res.data
+        let data = res.errMsg
+        return data
+      })
+  }
+}
+
+isUserVip = async (openid) => {
+  let vip = await readUserConfig(openid, 'vip')
+  if (vip == null) {
+    vip = false
+  }
+  return vip
+}

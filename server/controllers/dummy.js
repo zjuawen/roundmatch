@@ -5,8 +5,8 @@
  * Date: 10/11/2022
  **/
 exports.test = (request, result) => {
-    // console.log(request);
+    // console.log(request)
     result.status(200).send({
         message: request.originalUrl + " not implement"
-    });
-};
+    })
+}

@@ -5,7 +5,7 @@ const paginate = require("../utils/util").paginate
 const md5String = require("../utils/util").md5String
 const queryLike = require("../utils/util").queryLike
 const validateSession = require("../utils/util").validateSession
-const sequelizeExecuteSync = require("../utils/util").sequelizeExecuteSync
+const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
 
@@ -15,7 +15,7 @@ exports.main = async (request, result) => {
   // const wxContext = context;// cloud.getWXContext()
   let event = request.query
 
-  console.log('clubservice')
+  console.log('matchService')
   console.log(event)
   // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
@@ -39,16 +39,12 @@ exports.main = async (request, result) => {
     data = await updateMatch(event.match)
   }
 
-  // console.log(data)
+  console.log('matchService return:')
+  console.log(data)
+
   successResponse(result, {
     data
   })
-  // return {
-  //   data,
-  //   // openid: wxContext.OPENID,
-  //   // appid: wxContext.APPID,
-  //   // unionid: wxContext.UNIONID,
-  // }
 }
 
 
@@ -325,7 +321,7 @@ exports.main = async (request, result) => {
 //读取比赛对阵数据
 readMatch = async (clubid, matchid) => {
   console.log('readMatch')
-  let games = await sequelizeExecuteSync(
+  let games = await sequelizeExecute(
     db.collection('games').findAll({
       attributes: ['matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4', ],
       where: {
@@ -359,7 +355,7 @@ readMatch = async (clubid, matchid) => {
 
   console.log(players)
 
-  players = await sequelizeExecuteSync(
+  players = await sequelizeExecute(
     db.collection('players').findAll({
       attributes: ['_id', 'name', 'avatarUrl'],
       where: {
@@ -426,7 +422,7 @@ readMatch = async (clubid, matchid) => {
 //获取比赛列表
 listMatch = async (owner, clubid, pageNum, pageSize) => {
 
-  let matches = await sequelizeExecuteSync(
+  let matches = await sequelizeExecute(
     db.collection('matches').findAll({
       where: {
         clubid: clubid,
@@ -448,7 +444,7 @@ listMatch = async (owner, clubid, pageNum, pageSize) => {
   )
 
   console.log(matches)
-  
+
   return matches
 }
 

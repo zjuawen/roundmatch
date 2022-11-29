@@ -76,24 +76,19 @@ exports.errorResponse = (result, errorCode, errorMsg) => {
     })
 }
 
-exports.sequelizeExecuteSync = async (execFn) => {
+exports.sequelizeExecute = async (execFn, thenFn) => {
     // console.log(execFn)
     return await execFn.then((data) => {
-        return data
+        if (thenFn == null) {
+            return data
+        } else {
+            thenFn(data)
+        }
     }).catch(err => {
         console.log(err)
         return null
     })
 }
-
-// exports.sequelizeExecute = async (execFn, thenFn) => {
-//     // console.log(execFn)
-//     return await execFn.then((data) => {
-//         return thenFn(data)
-//     }).catch(err => {
-//         console.log(err)
-//     })
-// }
 
 exports.validateSession = (request, result) => {
     let session = request.session
