@@ -5,7 +5,7 @@ const paginate = require("../utils/util").paginate
 const md5String = require("../utils/util").md5String
 const queryLike = require("../utils/util").queryLike
 const validateSession = require("../utils/util").validateSession
-const sequelizeExecute = require("../utils/util").sequelizeExecute
+const sequelizeExecuteSync = require("../utils/util").sequelizeExecuteSync
 const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
 
@@ -50,7 +50,7 @@ isAuditing = () => {
 }
 
 getNotices = async (openid, page) => {
-  return await sequelizeExecute(
+  let notices = await sequelizeExecuteSync(
     db.collection('notices').findAll({
       where: {
         page: page,
@@ -63,18 +63,20 @@ getNotices = async (openid, page) => {
       },
       order: [
         ['order', 'DESC']
-      ]
-    }),
-    async (array) => {
-      // console.log(array)
-      let data = array.map(a => {
-        // console.log(a)
-        a.dataValues.title = a.dataValues.content
-        delete a.dataValues.content
-        // console.log(a)
-        return a
-      })
-      return data
+      ],
+      raw: true
     })
+  )
+
+  console.log(notices)
+
+  let data = notices.map(a => {
+    // console.log(a)
+    a.title = a.content
+    delete a.content
+    // console.log(a)
+    return a
+  })
+  return data
 
 }

@@ -5,7 +5,6 @@ const paginate = require("../utils/util").paginate
 const md5String = require("../utils/util").md5String
 const queryLike = require("../utils/util").queryLike
 const validateSession = require("../utils/util").validateSession
-const sequelizeExecute = require("../utils/util").sequelizeExecute
 const sequelizeExecuteSync = require("../utils/util").sequelizeExecuteSync
 const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
@@ -343,8 +342,8 @@ readMatch = async (clubid, matchid) => {
     })
   )
 
-
   console.log(games)
+
   let players = []
   await games.forEach(game => {
     // console.log(game['player_1'])
@@ -368,7 +367,7 @@ readMatch = async (clubid, matchid) => {
           [Op.in]: players
         },
       },
-      raw: true,
+      raw: true
     })
   )
 
@@ -377,7 +376,7 @@ readMatch = async (clubid, matchid) => {
   await games.forEach(game => {
     for (let i = 1; i < 5; i++) {
       let player = game['player' + i]
-      game['player' + i] = players.find( (player) => {
+      game['player' + i] = players.find((player) => {
         return player._id === game['player' + i];
       })
     }
@@ -427,9 +426,8 @@ readMatch = async (clubid, matchid) => {
 //获取比赛列表
 listMatch = async (owner, clubid, pageNum, pageSize) => {
 
-  return await sequelizeExecute(
+  let matches = await sequelizeExecuteSync(
     db.collection('matches').findAll({
-
       where: {
         clubid: clubid,
         delete: {
@@ -443,14 +441,15 @@ listMatch = async (owner, clubid, pageNum, pageSize) => {
         exclude: ['delete', 'updateTime'],
         // [sequelize.fn('EQUAL', sequelize.col('owner')), 'owner']
       },
+      raw: true,
       offset: (pageNum - 1) * pageSize,
       limit: 1 * pageSize,
-    }),
-    (array) => {
-      // res.data 是一个包含集合中有权限访问的所有记录的数据，不超过 20 条
-      console.log(array)
-      return array
     })
+  )
+
+  console.log(matches)
+  
+  return matches
 }
 
 // shuffleArrayGroup = (arraySaved, groups) => {

@@ -1,57 +1,57 @@
-const db = require("../models");
-const Op = require("sequelize").Op;
+const db = require("../models")
+const Op = require("sequelize").Op
 // utils
-const paginate = require("../utils/util").paginate;
-const md5String = require("../utils/util").md5String;
-const queryLike = require("../utils/util").queryLike;
-const validateSession = require("../utils/util").validateSession;
-const sequelizeExecute = require("../utils/util").sequelizeExecute;
-const successResponse = require("../utils/util").successResponse;
-const errorResponse = require("../utils/util").errorResponse;
+const paginate = require("../utils/util").paginate
+const md5String = require("../utils/util").md5String
+const queryLike = require("../utils/util").queryLike
+const validateSession = require("../utils/util").validateSession
+const sequelizeExecuteSync = require("../utils/util").sequelizeExecuteSync
+const successResponse = require("../utils/util").successResponse
+const errorResponse = require("../utils/util").errorResponse
 
 
 // 云函数入口函数
 exports.main = async (request, result) => {
   // const wxContext = context;// cloud.getWXContext()
-  let event = request.query;
+  let event = request.query
 
-  console.log('clubservice');
-  console.log(event);
-  // console.log(cloud.DYNAMIC_CURRENT_ENV);
+  console.log('clubservice')
+  console.log(event)
+  // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
-  let action = event.action;
-  // console.log("action: " + action);
-  let data;
+  let action = event.action
+  // console.log("action: " + action)
+  let data
   if (action == 'join') {
-    data = await joinClub(wxContext, event);
+    data = await joinClub(wxContext, event)
   } else if (action == 'list') {
-    let private = await listPrivateClub(event.openid);
-    // let public = await listPublicClub( wxContext );
+    let private = await listPrivateClub(event.openid)
+    // let public = await listPublicClub( wxContext )
     data = {
       private, //public
     }
   } else if (action == 'create') {
-    data = await createClub(wxContext, event.info, event.userInfo);
+    data = await createClub(wxContext, event.info, event.userInfo)
   } else if (action == 'update') {
-    data = await updateClub(wxContext, event.info, event.userInfo);
+    data = await updateClub(wxContext, event.info, event.userInfo)
   } else if (action == 'statis') {
-    data = await statisUserInClub(event.clubid, event.date, event.minMatchCount);
+    data = await statisUserInClub(event.clubid, event.date, event.minMatchCount)
   } else if (action == 'info') {
-    data = await getClubInfo(event.clubid);
+    data = await getClubInfo(event.clubid)
   } else if (action == 'listByOwner') {
-    data = await listOwnClub(event.openid);
+    data = await listOwnClub(event.openid)
   } else if (action == 'search') {
-    data = await searchClub(event.keyword);
+    data = await searchClub(event.keyword)
   } else if (action == 'checkMatchCount') {
-    data = await checkMatchCount(event.clubid);
+    data = await checkMatchCount(event.clubid)
   } else if (action == 'incMatchCountAllow') {
-    data = await incMatchCountAllow(event.clubid);
+    data = await incMatchCountAllow(event.clubid)
   }
 
-  // console.log(data);
+  // console.log(data)
   successResponse(result, {
     data
-  });
+  })
   // return {
   //   data,
   //   // openid: wxContext.OPENID,
@@ -63,60 +63,65 @@ exports.main = async (request, result) => {
 trimClubField = (data) => {
   let item = data
   if (item.dataValues) {
-    delete item.dataValues.password;
-    delete item.dataValues.createdAt;
-    delete item.dataValues.updatedAt;
-    delete item.dataValues.delete;
+    delete item.dataValues.password
+    delete item.dataValues.createdAt
+    delete item.dataValues.updatedAt
+    delete item.dataValues.delete
   } else {
-    delete item.password;
-    delete item.createdAt;
-    delete item.updatedAt;
-    delete item.delete;
+    delete item.password
+    delete item.createdAt
+    delete item.updatedAt
+    delete item.delete
   }
-  return item;
+  return item
 }
 
 //查找包含关键字的俱乐部
 searchClub = async (keyword) => {
-  return await sequelizeExecute(
+  let clubs = await sequelizeExecuteSync(
     db.collection('clubs').findAll({ // findAndCountAll
       where: {
         ...queryLike(keyword, ['shortName', 'wholeName']),
         public: true,
         delete: false
-      }
-    }),
-    (data) => {
-      // console.log(data)
-      data = data.map(function(item, index, array) {
-        // console.log(item.dataValues)
-        trimClubField(item);
-        return item;
-      })
-      return data;
-    });
+      },
+      raw: true
+    })
+  )
+
+  console.log(clubs)
+  clubs = await clubs.map((item, index, array) => {
+    // console.log(item.dataValues)
+    trimClubField(item)
+    return item
+  })
+
+  return clubs
+
 }
 
 //读取俱乐部信息
 getClubInfo = async (clubid) => {
-  return await sequelizeExecute(
-    db.collection('clubs').findByPk(clubid),
-    async (res) => {
-      // console.log(res);
-      let club = res;
-      if (club != null) {
-        let password = club.password;
-        if (password != null && password.length > 0) {
-          club.locked = true;
-        } else {
-          club.locked = false;
-        }
-        club.password = null;
-        club.delete = null;
-      }
-      trimClubField(club);
-      return club;
-    });
+  let club = await sequelizeExecuteSync(
+    db.collection('clubs').findByPk(clubid)
+  )
+
+  console.log(club)
+
+  if (club != null) {
+    let password = club.password
+    if (password != null && password.length > 0) {
+      club.locked = true
+    } else {
+      club.locked = false
+    }
+    club.password = null
+    club.delete = null
+  }
+
+  trimClubField(club)
+  
+  return club
 }
 
 // checkMessageSec = async (content) => {
@@ -129,9 +134,9 @@ getClubInfo = async (clubid) => {
 //       }
 //     }
 //   })
-//   console.log(result);
+//   console.log(result)
 
-//   return result;
+//   return result
 // }
 
 // isVipUser = async (wxContext) => {
@@ -143,29 +148,26 @@ getClubInfo = async (clubid) => {
 //     .limit(1)
 //     .get()
 //     .then(async res => {
-//       console.log(res);
-//       let data = res.data;
-//       return (data.length > 0) && (data[0].value == true);
-//     });
+//       console.log(res)
+//       let data = res.data
+//       return (data.length > 0) && (data[0].value == true)
+//     })
 // }
 
 //查找所有已创建的俱乐部
 listOwnClub = async (openid) => {
-  // let vip = await isVipUser(wxContext);
-  let clubs = await sequelizeExecute(
+  // let vip = await isVipUser(wxContext)
+  let clubs = await sequelizeExecuteSync(
     db.collection('clubs').findAll({
       where: {
         creator: openid,
         delete: false
       }
-    }),
-    async (res) => {
-      // console.log(res);
-      return res;
-    });
+    })
+  )
 
   clubs.forEach(club => {
-    trimClubField(club);
+    trimClubField(club)
   })
   //temp disable create club
   // return {
@@ -186,69 +188,71 @@ listOwnClub = async (openid) => {
 //     })
 //     .get()
 //     .then(res => {
-//       console.log(res);
+//       console.log(res)
 //       res.data.forEach(function(club) {
-//         let password = club.password;
+//         let password = club.password
 //         if (password != null && password.length > 0) {
-//           club.locked = true;
+//           club.locked = true
 //         } else {
-//           club.locked = false;
+//           club.locked = false
 //         }
-//         club.password = null;
+//         club.password = null
 //       })
-//       console.log(res);
-//       return res.data;
-//     });
+//       console.log(res)
+//       return res.data
+//     })
 // }
 
 //参与的俱乐部列表
 listPrivateClub = async (openid) => {
-  return await sequelizeExecute(
+  let players = await sequelizeExecuteSync(
     db.collection('players').findAll({
       where: {
         openid: openid
       }
-    }),
-    (players) => {
-      // console.log(players);
-      return loadClubData(openid, players);
-    }
-  );
+    })
+  )
+
+  // console.log(players)
+  return loadClubData(openid, players)
+
 }
 
 loadClubData = async (openid, uacs) => {
-  let clubids = uacs.map(a => a.clubid);
-  console.log(clubids);
-  return await sequelizeExecute(
+  let clubids = uacs.map(a => a.clubid)
+  console.log(clubids)
+  let clubs = await sequelizeExecuteSync(
     db.collection('clubs').findAll({
       where: {
         '_id': clubids,
         delete: {
           [Op.not]: true
         },
-      }
-    }),
-    async (array) => {
-      // console.log(array);
-      let data = array.map(a => {
-        console.log(a);
-        let value = a.dataValues
-        value.owner = (value.creator == openid);
-        return value;
-      });
-      // console.log(data);
-      // .addFields({
-      //   owner: $.eq(['$creator', openid]),
-      // })
-      return data;
-    });
+      },
+      raw: true
+    })
+  )
+
+  // console.log(clubs)
+  let data = clubs.map(a => {
+    console.log(a)
+    let value = a
+    value.owner = (value.creator == openid)
+    return value
+  })
+  // console.log(data)
+  // .addFields({
+  //   owner: $.eq(['$creator', openid]),
+  // })
+  return data
+
 }
 
 // //加入俱乐部
 // joinClub = async (wxContext, event) => {
-//   let clubid = event.clubid;
-//   let userInfo = event.userInfo;
-//   let password = event.password;
+//   let clubid = event.clubid
+//   let userInfo = event.userInfo
+//   let password = event.password
 
 //   return await db.collection('players')
 //     .where({
@@ -257,24 +261,24 @@ loadClubData = async (openid, uacs) => {
 //     })
 //     .get()
 //     .then(async res => {
-//       console.log(res);
+//       console.log(res)
 //       if (res.data.length > 0) {
 //         return ({
 //           status: "fail",
 //           errMsg: '已经加入俱乐部!'
-//         });
+//         })
 //       }
 
-//       let passwordCheck = await checkPassword(clubid, password);
+//       let passwordCheck = await checkPassword(clubid, password)
 //       if (passwordCheck == false) {
 //         return ({
 //           status: "fail",
 //           errMsg: '密码错误！'
-//         });
+//         })
 //       }
 
 //       //add user info
-//       return addUserToClub(clubid, wxContext.OPENID, userInfo);
+//       return addUserToClub(clubid, wxContext.OPENID, userInfo)
 //     })
 // }
 
@@ -288,22 +292,22 @@ loadClubData = async (openid, uacs) => {
 //     // })
 //     .get()
 //     .then(res => {
-//       console.log(res);
-//       let result = false;
+//       console.log(res)
+//       let result = false
 //       if (res.data != null) {
-//         let club = res.data;
+//         let club = res.data
 //         if (club.password == null || club.password.length == 0) {
-//           result = true;
+//           result = true
 //         } else if (club.password == password) {
-//           result = true;
+//           result = true
 //         }
 //       }
-//       return result;
+//       return result
 //     })
 // }
 
 // addUserToClub = async (clubid, openid, userInfo) => {
-//   let dt = db.serverDate();
+//   let dt = db.serverDate()
 //   return await db.collection('players')
 //     .add({
 //       data: {
@@ -318,11 +322,11 @@ loadClubData = async (openid, uacs) => {
 //       }
 //     })
 //     .then(res => {
-//       console.log(res);
+//       console.log(res)
 //       if (res.errMsg != "collection.add:ok") {
 //         return {
 //           errMsg: res.errMsg
-//         };
+//         }
 //       } else {
 //         return {
 //           _id: res._id,
@@ -335,9 +339,9 @@ loadClubData = async (openid, uacs) => {
 // }
 
 // checkOwnedClub = async (wxContext) => {
-//   let vip = await isVipUser(wxContext);
+//   let vip = await isVipUser(wxContext)
 //   if (vip) {
-//     return false;
+//     return false
 //   }
 //   return await db.collection('clubs')
 //     .where({
@@ -346,15 +350,15 @@ loadClubData = async (openid, uacs) => {
 //     })
 //     .get()
 //     .then(async res => {
-//       console.log(res);
-//       return (res.data.length > 0);
+//       console.log(res)
+//       return (res.data.length > 0)
 //       // if( res.data && res.data.)
-//     });
+//     })
 // }
 
 // //创建俱乐部
 // createClub = async (wxContext, info, userInfo) => {
-//   let exist = await checkOwnedClub(wxContext);
+//   let exist = await checkOwnedClub(wxContext)
 //   if (exist) {
 //     return {
 //       errCode: 1,
@@ -362,9 +366,9 @@ loadClubData = async (openid, uacs) => {
 //     }
 //   }
 
-//   let secCheckContent = info.wholeName + info.shortName;
-//   let secCheck = await checkMessageSec(secCheckContent);
-//   let result = secCheck.result.data;
+//   let secCheckContent = info.wholeName + info.shortName
+//   let secCheck = await checkMessageSec(secCheckContent)
+//   let result = secCheck.result.data
 //   if (result.errCode != 0) {
 //     return {
 //       errCode: result.errCode,
@@ -372,7 +376,7 @@ loadClubData = async (openid, uacs) => {
 //     }
 //   }
 
-//   let dt = db.serverDate();
+//   let dt = db.serverDate()
 
 //   return await db.collection('clubs')
 //     .add({
@@ -389,11 +393,11 @@ loadClubData = async (openid, uacs) => {
 //       }
 //     })
 //     .then(async res => {
-//       console.log(res);
+//       console.log(res)
 //       if (res.errMsg == "collection.add:ok") {
-//         let clubid = res._id;
-//         // let dataTableRes = await createClubGameDataTable(clubid, info);
-//         await addUserToClub(clubid, wxContext.OPENID, userInfo);
+//         let clubid = res._id
+//         // let dataTableRes = await createClubGameDataTable(clubid, info)
+//         await addUserToClub(clubid, wxContext.OPENID, userInfo)
 //         return {
 //           _id: res._id,
 //           creator: wxContext.OPENID,
@@ -403,15 +407,15 @@ loadClubData = async (openid, uacs) => {
 //           public: info.public,
 //           createDate: dt,
 //           // dataTableRes: dataTableRes
-//         };
+//         }
 //       }
-//     });
+//     })
 // }
 
 
 // //更新俱乐部信息
 // updateClub = async (wxContext, info, userInfo) => {
-//   let dt = db.serverDate();
+//   let dt = db.serverDate()
 //   let exist = await db.collection('clubs')
 //     .where({
 //       creator: wxContext.OPENID,
@@ -419,10 +423,10 @@ loadClubData = async (openid, uacs) => {
 //     })
 //     .get()
 //     .then(async res => {
-//       console.log(res);
-//       return (res.data.length > 0);
+//       console.log(res)
+//       return (res.data.length > 0)
 //       // if( res.data && res.data.)
-//     });
+//     })
 //   if (!exist) {
 //     return {
 //       errCode: 1,
@@ -430,9 +434,9 @@ loadClubData = async (openid, uacs) => {
 //     }
 //   }
 
-//   let secCheckContent = info.wholeName + info.shortName;
-//   let secCheck = await checkMessageSec(secCheckContent);
-//   let result = secCheck.result.data;
+//   let secCheckContent = info.wholeName + info.shortName
+//   let secCheck = await checkMessageSec(secCheckContent)
+//   let result = secCheck.result.data
 //   if (result.errCode != 0) {
 //     return {
 //       errCode: result.errCode,
@@ -452,9 +456,9 @@ loadClubData = async (openid, uacs) => {
 //       }
 //     })
 //     .then(async res => {
-//       console.log(res);
-//       return res.errMsg;
-//     });
+//       console.log(res)
+//       return res.errMsg
+//     })
 // }
 
 
@@ -462,7 +466,7 @@ loadClubData = async (openid, uacs) => {
 // //统计俱乐部成员胜率
 // statisUserInClub = async (clubid, date, minMatchCount) => {
 //   if (minMatchCount == null) {
-//     minMatchCount = 0;
+//     minMatchCount = 0
 //   }
 
 //   return await db.collection('players')
@@ -472,15 +476,15 @@ loadClubData = async (openid, uacs) => {
 //     .orderBy('order', 'desc')
 //     .get()
 //     .then(async res => {
-//       console.log(res);
-//       let players = res.data;
-//       let matches = await listClubMatches(clubid, date);
-//       let games = await listClubGames(clubid, date);
-//       let result = startStatisticPlayers(players, matches, games);
-//       let playerFiltered = filterPlayerMatchCount(players, matches, games, minMatchCount);
-//       playerFiltered.sort(billboardOrder);
-//       let data = playerFiltered;
-//       return data;
+//       console.log(res)
+//       let players = res.data
+//       let matches = await listClubMatches(clubid, date)
+//       let games = await listClubGames(clubid, date)
+//       let result = startStatisticPlayers(players, matches, games)
+//       let playerFiltered = filterPlayerMatchCount(players, matches, games, minMatchCount)
+//       playerFiltered.sort(billboardOrder)
+//       let data = playerFiltered
+//       return data
 //     })
 // }
 
@@ -493,40 +497,40 @@ loadClubData = async (openid, uacs) => {
 //   }
 
 //   if (date) {
-//     let from = new Date(date.from + ' 00:00:00');
-//     let to = new Date(date.to + ' 23:59:59');
+//     let from = new Date(date.from + ' 00:00:00')
+//     let to = new Date(date.to + ' 23:59:59')
 
-//     condition.createDate = _.and(_.gte(from), _.lte(to));
+//     condition.createDate = _.and(_.gte(from), _.lte(to))
 //   }
 
 //   return await db.collection('matches')
 //     .where(condition)
 //     .get()
 //     .then(res => {
-//       console.log("listClubMatches: ");
-//       console.log(res);
-//       let data = res.data;
-//       return data;
+//       console.log("listClubMatches: ")
+//       console.log(res)
+//       let data = res.data
+//       return data
 //     })
 // }
 
 // //获取该俱乐部所有场次
 // listClubGames = async (clubid, date, page = 1) => {
 
-//   // let page = 1;
-//   let page_size = RECORD_MAX_COUNT;
+//   // let page = 1
+//   let page_size = RECORD_MAX_COUNT
 
-//   let exist = true;
+//   let exist = true
 //   try {
 //     await db.collection('games_' + clubid)
-//       .get();
+//       .get()
 //   } catch (e) {
 //     console.log(e)
-//     exist = false;
+//     exist = false
 //   }
 
 //   if (!exist) {
-//     return [];
+//     return []
 //   }
 
 //   let condition = {
@@ -535,10 +539,10 @@ loadClubData = async (openid, uacs) => {
 //   }
 
 //   if (date) {
-//     let from = new Date(date.from + ' 00:00:00');
-//     let to = new Date(date.to + ' 23:59:59');
+//     let from = new Date(date.from + ' 00:00:00')
+//     let to = new Date(date.to + ' 23:59:59')
 
-//     condition.createDate = _.and(_.gt(from), _.lt(to));
+//     condition.createDate = _.and(_.gt(from), _.lt(to))
 //   }
 
 //   return await db.collection('games_' + clubid)
@@ -546,15 +550,15 @@ loadClubData = async (openid, uacs) => {
 //     .skip((page - 1) * page_size)
 //     .get()
 //     .then(async res => {
-//       console.log("listClubGames: page" + page);
-//       console.log(res);
+//       console.log("listClubGames: page" + page)
+//       console.log(res)
 
-//       let data = res.data;
+//       let data = res.data
 //       if (data.length < page_size) {
-//         return data;
+//         return data
 //       } else {
-//         let dataMore = await listClubGames(clubid, date, page + 1);
-//         return data.concat(dataMore);
+//         let dataMore = await listClubGames(clubid, date, page + 1)
+//         return data.concat(dataMore)
 //       }
 //     })
 // }
@@ -562,243 +566,243 @@ loadClubData = async (openid, uacs) => {
 // //开始统计
 // startStatisticPlayers = (players, matches, games) => {
 //   //start for each game
-//   statisticWinAndLost(players, games);
-//   statisticPigAndCrown(players, matches, games);
+//   statisticWinAndLost(players, games)
+//   statisticPigAndCrown(players, matches, games)
 // }
 
 // //统计胜场数和负场数
 // statisticWinAndLost = (players, games) => {
 //   //clear
 //   players.forEach(function(player) {
-//     player.winCount = 0;
-//     player.lostCount = 0;
-//     player.pigCount = 0;
-//     player.crownCount = 0;
-//     player.total = 0;
-//     player.delta = 0;
-//   });
+//     player.winCount = 0
+//     player.lostCount = 0
+//     player.pigCount = 0
+//     player.crownCount = 0
+//     player.total = 0
+//     player.delta = 0
+//   })
 
 //   games.forEach(function(game) {
 
-//     let score1 = game.score1;
-//     let score2 = game.score2;
+//     let score1 = game.score1
+//     let score2 = game.score2
 //     if (score1 < 0 || score2 < 0) {
-//       return;
+//       return
 //     }
 
-//     let delta = score1 - score2;
+//     let delta = score1 - score2
 
-//     let player1 = findPlayerById(players, game.player1);
-//     let player2 = findPlayerById(players, game.player2);
-//     let player3 = findPlayerById(players, game.player3);
-//     let player4 = findPlayerById(players, game.player4);
+//     let player1 = findPlayerById(players, game.player1)
+//     let player2 = findPlayerById(players, game.player2)
+//     let player3 = findPlayerById(players, game.player3)
+//     let player4 = findPlayerById(players, game.player4)
 
-//     player1.delta += delta;
-//     player2.delta += delta;
-//     player3.delta -= delta;
-//     player4.delta -= delta;
+//     player1.delta += delta
+//     player2.delta += delta
+//     player3.delta -= delta
+//     player4.delta -= delta
 
-//     player1.total += score1;
-//     player2.total += score1;
-//     player3.total += score2;
-//     player4.total += score2;
+//     player1.total += score1
+//     player2.total += score1
+//     player3.total += score2
+//     player4.total += score2
 
 //     if (delta > 0) {
-//       player1.winCount++;
-//       player2.winCount++;
-//       player3.lostCount++;
-//       player4.lostCount++;
+//       player1.winCount++
+//       player2.winCount++
+//       player3.lostCount++
+//       player4.lostCount++
 //     } else if (delta < 0) {
-//       player1.lostCount++;
-//       player2.lostCount++;
-//       player3.winCount++;
-//       player4.winCount++;
+//       player1.lostCount++
+//       player2.lostCount++
+//       player3.winCount++
+//       player4.winCount++
 //     } else {
 //       //draw game
 //     }
-//   });
+//   })
 // }
 
 // //统计猪头和皇冠
 // statisticPigAndCrown = (players, matches, games) => {
 //   matches.forEach(function(match) {
 
-//     let gameArray = getGamesInMatch(match, games);
+//     let gameArray = getGamesInMatch(match, games)
 //     if (gameArray.length == 0) {
-//       return;
+//       return
 //     }
 //     //debug
 //     // if( gameArray.length != match.total){
-//     //   console.log("match: " + match.createDate);
-//     //   console.log("match.total: " + match.total);
-//     //   console.log("game array: " + gameArray.length);
+//     //   console.log("match: " + match.createDate)
+//     //   console.log("match.total: " + match.total)
+//     //   console.log("game array: " + gameArray.length)
 //     // }
 
 //     if (!isAllGamesDone(gameArray)) {
-//       return;
+//       return
 //     }
-//     let playersClone = JSON.parse(JSON.stringify(players));
-//     let playerArray = getPlayersInMatch(gameArray, playersClone);
-//     statisticWinAndLost(playerArray, gameArray);
+//     let playersClone = JSON.parse(JSON.stringify(players))
+//     let playerArray = getPlayersInMatch(gameArray, playersClone)
+//     statisticWinAndLost(playerArray, gameArray)
 
 //     //sort
-//     playerArray.sort(comparePlayer);
-//     let first = playerArray[0];
-//     let last = playerArray[playerArray.length - 1];
-//     let realFirst = findPlayerById(players, first._id);
-//     let realLast = findPlayerById(players, last._id);
-//     realFirst.crownCount++;
-//     realLast.pigCount++;
+//     playerArray.sort(comparePlayer)
+//     let first = playerArray[0]
+//     let last = playerArray[playerArray.length - 1]
+//     let realFirst = findPlayerById(players, first._id)
+//     let realLast = findPlayerById(players, last._id)
+//     realFirst.crownCount++
+//     realLast.pigCount++
 //     if (match.type && match.type == 'fixpair') {
-//       let second = playerArray[1];
-//       let lastSecond = playerArray[playerArray.length - 2];
-//       let realSecond = findPlayerById(players, second._id);
-//       let realLastSecond = findPlayerById(players, lastSecond._id);
-//       realSecond.crownCount++;
-//       realLastSecond.pigCount++;
+//       let second = playerArray[1]
+//       let lastSecond = playerArray[playerArray.length - 2]
+//       let realSecond = findPlayerById(players, second._id)
+//       let realLastSecond = findPlayerById(players, lastSecond._id)
+//       realSecond.crownCount++
+//       realLastSecond.pigCount++
 //     }
-//   });
+//   })
 // }
 
 // isAllGamesDone = (games) => {
-//   let done = true;
+//   let done = true
 //   games.forEach(function(game) {
 //     if (done == false)
-//       return false;
+//       return false
 //     if ((game.score1 < 0) || (games.score2 < 0)) {
-//       done = false;
+//       done = false
 //     }
 //   })
-//   return done;
+//   return done
 // }
 
 // //过滤最少比赛次数
 // filterPlayerMatchCount = (players, matches, games, minMatchCount) => {
 //   if (minMatchCount < 1) {
-//     return players;
+//     return players
 //   }
 
 //   players.forEach(function(player) {
-//     player.matchCount = 0;
-//   });
+//     player.matchCount = 0
+//   })
 
 //   matches.forEach(function(match) {
 
-//     let gameArray = getGamesInMatch(match, games);
+//     let gameArray = getGamesInMatch(match, games)
 //     if (gameArray.length == 0) {
-//       return;
+//       return
 //     }
 
 //     if (!isAllGamesDone(gameArray)) {
-//       return;
+//       return
 //     }
 
-//     let playersClone = JSON.parse(JSON.stringify(players));
-//     let playerArray = getPlayersInMatch(gameArray, playersClone);
+//     let playersClone = JSON.parse(JSON.stringify(players))
+//     let playerArray = getPlayersInMatch(gameArray, playersClone)
 //     playerArray.forEach(function(playerA) {
-//       let player = findPlayerById(players, playerA._id);
+//       let player = findPlayerById(players, playerA._id)
 //       if (player != null)
-//         player.matchCount++;
-//     });
+//         player.matchCount++
+//     })
 
-//   });
+//   })
 
-//   let playersReturn = [];
+//   let playersReturn = []
 //   players.forEach(function(player, index) {
 //     if (player.matchCount >= minMatchCount) {
-//       playersReturn.push(player);
+//       playersReturn.push(player)
 //     } else {
-//       console.log("remove: " + player.name);
+//       console.log("remove: " + player.name)
 //     }
-//   });
+//   })
 
-//   return playersReturn;
+//   return playersReturn
 
 // }
 
 // //获取该比赛所有场次
 // getGamesInMatch = (match, games) => {
-//   let gameArray = [];
+//   let gameArray = []
 //   try {
 //     games.forEach(function(game) {
 //       if (game.matchid == match._id) {
-//         gameArray.push(game);
+//         gameArray.push(game)
 //       }
-//     });
+//     })
 //   } catch (e) {
 //     console.log(e)
 //   }
-//   return gameArray;
+//   return gameArray
 
 // }
 
 // //获取该比赛所有人员
 // getPlayersInMatch = (games, players) => {
-//   let playerArray = [];
+//   let playerArray = []
 //   games.forEach(function(game) {
 //     let fourPlayersId = [game.player1, game.player2, game.player3, game.player4]
 //     fourPlayersId.forEach(function(id) {
-//       let already = findPlayerById(playerArray, id);
+//       let already = findPlayerById(playerArray, id)
 //       if (already == null) {
-//         let player = findPlayerById(players, id);
-//         playerArray.push(player);
+//         let player = findPlayerById(players, id)
+//         playerArray.push(player)
 //       }
-//     });
-//   });
-//   return playerArray;
+//     })
+//   })
+//   return playerArray
 // }
 
 // //根据玩家id查找
 // findPlayerById = (players, id) => {
 //   return players.find(
 //     function(player, index) {
-//       return player._id == id;
+//       return player._id == id
 //     }
-//   );
+//   )
 // }
 
 // //按比分排序
 // comparePlayer = (player1, player2) => {
 //   //比较胜率
-//   let rate1 = Math.round((player1.winCount / (player1.winCount + player1.lostCount)) * 100) * 100;
-//   let rate2 = Math.round((player2.winCount / (player2.winCount + player2.lostCount)) * 100) * 100;
+//   let rate1 = Math.round((player1.winCount / (player1.winCount + player1.lostCount)) * 100) * 100
+//   let rate2 = Math.round((player2.winCount / (player2.winCount + player2.lostCount)) * 100) * 100
 //   if (isNaN(rate1)) {
-//     rate1 = 0;
+//     rate1 = 0
 //   }
 //   if (isNaN(rate2)) {
-//     rate2 = 0;
+//     rate2 = 0
 //   }
 //   if (rate1 != rate2) {
-//     return rate2 - rate1;
+//     return rate2 - rate1
 //   }
 
 //   //比较净胜分
-//   let delta1 = player1.delta;
-//   let delta2 = player2.delta;
+//   let delta1 = player1.delta
+//   let delta2 = player2.delta
 //   if (delta1 != delta2) {
-//     return delta2 - delta1;
+//     return delta2 - delta1
 //   }
 
 //   //比较总得分
-//   let total1 = player1.total;
-//   let total2 = player2.total;
+//   let total1 = player1.total
+//   let total2 = player2.total
 //   if (total1 != total2) {
-//     return total2 - total1;
+//     return total2 - total1
 //   }
 
-//   return 0;
+//   return 0
 // }
 
 // //按参加次数排序
 // billboardOrder = (player1, player2) => {
 //   //比较总参与局数
-//   let count1 = (player1.winCount + player1.lostCount);
-//   let count2 = (player2.winCount + player2.lostCount);
+//   let count1 = (player1.winCount + player1.lostCount)
+//   let count2 = (player2.winCount + player2.lostCount)
 //   if (count1 != count2) {
-//     return count2 - count1;
+//     return count2 - count1
 //   }
 
-//   return comparePlayer(player1, player2);
+//   return comparePlayer(player1, player2)
 // }
 
 // checkMatchCount = async (clubid) => {
@@ -806,16 +810,16 @@ loadClubData = async (openid, uacs) => {
 //     .doc(clubid)
 //     .get()
 //     .then(res => {
-//       return res.data;
-//     });
+//       return res.data
+//     })
 
 //   if (data && data.vip) {
-//     return false;
+//     return false
 //   }
 
-//   let maxMatchCountAllow = 10;
+//   let maxMatchCountAllow = 10
 //   if (data && data.maxMatchAllow) {
-//     maxMatchCountAllow = data.maxMatchAllow;
+//     maxMatchCountAllow = data.maxMatchAllow
 //   }
 
 //   let currentMatchCount = await db.collection('matches')
@@ -826,13 +830,13 @@ loadClubData = async (openid, uacs) => {
 //     .count()
 //     .then(res => {
 //       if (res.total) {
-//         return res.total;
+//         return res.total
 //       } else {
-//         return 0;
+//         return 0
 //       }
-//     });
+//     })
 
-//   return (currentMatchCount > maxMatchCountAllow);
+//   return (currentMatchCount > maxMatchCountAllow)
 // }
 
 // incMatchCountAllow = async (clubid) => {
@@ -844,11 +848,11 @@ loadClubData = async (openid, uacs) => {
 //     .count()
 //     .then(res => {
 //       if (res.total) {
-//         return res.total;
+//         return res.total
 //       } else {
-//         return 0;
+//         return 0
 //       }
-//     });
+//     })
 
 //   return await db.collection('clubs')
 //     .doc(clubid)
@@ -860,7 +864,7 @@ loadClubData = async (openid, uacs) => {
 //       }
 //     })
 //     .then(res => {
-//       console.log(res);
+//       console.log(res)
 //       if (res.stats && res.stats.updated == 1) {
 //         return {
 //           success: true
@@ -869,6 +873,6 @@ loadClubData = async (openid, uacs) => {
 //       return {
 //         success: false,
 //         errMsg: res.errMsg
-//       };
-//     });
+//       }
+//     })
 // }
