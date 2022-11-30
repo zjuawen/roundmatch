@@ -55,7 +55,7 @@ exports.main = async (request, result) => {
     //   let key = event.key
     //   data = await readPlayerInfo(event.openid)
   } else if (action == 'isVip') {
-    data = await isUserVip(wxContext.OPENID)
+    data = await isUserVip(event.openid)
   }
 
   console.log('userService return:')
@@ -229,8 +229,8 @@ readUserConfig = async (openid, key) => {
     })
   )
   console.log(doc)
-  if (doc != null && doc.length > 0) {
-    return doc[0].value
+  if (doc != null) {
+    return doc.value
   }
   return null
 }
@@ -299,9 +299,74 @@ updateUserConfig = async (openid, key, value) => {
 }
 
 isUserVip = async (openid) => {
+  console.log('user ' + openid + ' isVip?')
   let vip = await readUserConfig(openid, 'vip')
   if (vip == null) {
     vip = false
   }
   return vip
 }
+
+readUserDetail = async (context) => {
+  let dt = db.serverDate()
+  return await db.collection('users')
+    .where({
+      openid: context.OPENID
+    })
+    .get()
+    .then(res => {
+      console.log(res)
+      if (res.data.length > 0) {
+        return res.data[0]
+      } else {
+        return {}
+      }
+    })
+}
+
+//列出俱乐部成员
+listUserInClub = async (clubid, pageNum, pageSize) => {
+  let players = await sequelizeExecute(
+    db.collection('players').findAll({
+      where: {
+        clubid: clubid,
+      },
+      order: [
+        ['order', 'DESC']
+      ],
+      offset: pageSize * (pageNum - 1),
+      limit: pageSize - 0,
+      raw: true
+    })
+  )
+
+  console.log(players)
+
+  return players
+}
+
+//列出俱乐部成员
+searchUserInClub = async (clubid, keyword) => {
+  // let regex = '.*' + keyword
+  let players = await sequelizeExecute(
+    db.collection('players').findAll({
+      where: {
+        clubid: clubid,
+        name: {
+          [OP.substring]: keyword
+        }
+      },
+      order: [
+        ['order', 'DESC']
+      ]
+    })
+  )
+
+  console.log(players)
+
+  return players
+}
+
+
+
+

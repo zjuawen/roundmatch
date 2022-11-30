@@ -126,7 +126,7 @@ msgSecCheck = async (openid, param) => {
 // //读取AccessToken
 // readAccessToken = async () => {
 //   let key = 'access_token';
-//   let res = await db.collection('systemconfig')
+//   let res = await db.collection('system')
 //     .where({
 //       key: key,
 //     })
@@ -168,7 +168,7 @@ msgSecCheck = async (openid, param) => {
 //   });
 
 //   let key = 'access_token';
-//   let exist = await db.collection('systemconfig')
+//   let exist = await db.collection('system')
 //     .where({
 //       key: key,
 //     })
@@ -178,7 +178,7 @@ msgSecCheck = async (openid, param) => {
 //       return res.data && (res.data.length > 0);
 //     })
 //   if( exist ){
-//     return await db.collection('systemconfig')
+//     return await db.collection('system')
 //       .where({
 //         key: key,
 //       })
@@ -192,7 +192,7 @@ msgSecCheck = async (openid, param) => {
 //         return res;
 //       })
 //   } else {
-//     return await db.collection('systemconfig')
+//     return await db.collection('system')
 //       .add({
 //         data: {
 //           key: key,

@@ -159,7 +159,9 @@ listOwnClub = async (openid) => {
     db.collection('clubs').findAll({
       where: {
         creator: openid,
-        delete: false
+        delete: {
+          [Op.not]: true
+        },
       },
       raw: true
     })
@@ -309,8 +311,7 @@ addUserToClub = async (clubid, openid, userInfo) => {
   let dt = db.serverDate()
 
   let player = await sequelizeExecute(
-    db.collection('players').create(
-    {
+      db.collection('players').create({
         openid: openid,
         clubid: clubid,
         enable: true,
@@ -319,7 +320,7 @@ addUserToClub = async (clubid, openid, userInfo) => {
         avatarUrl: userInfo.avatarUrl,
         gender: userInfo.gender,
         createDate: dt
-    })
+      })
     )
     .then(res => {
       console.log(res)
@@ -348,7 +349,9 @@ checkOwnedClub = async (openid) => {
     db.collection('clubs').findAll({
       where: {
         creator: openid,
-        delete: _.neq(true),
+        delete: {
+          [Op.not]: true
+        },
       },
       raw: true
     })
@@ -404,7 +407,7 @@ createClub = async (info, userInfo) => {
 
   console.log(club)
 
-  if (club instanceof db.clubs ) {
+  if (club instanceof db.clubs) {
     let clubid = club._id
     // let dataTableRes = await createClubGameDataTable(clubid, info)
     await addUserToClub(clubid, openid, userInfo)
@@ -423,7 +426,9 @@ updateClub = async (openid, info, userInfo) => {
     db.collection('clubs')
     .where({
       creator: wxContext.OPENID,
-      delete: _.neq(true),
+      delete: {
+        [Op.not]: true
+      },
     })
   )
 
@@ -500,7 +505,9 @@ listClubMatches = async (clubid, date) => {
 
   let condition = {
     clubid: clubid,
-    delete: _.neq(true),
+    delete: {
+      [Op.not]: true
+    },
   }
 
   if (date) {
@@ -542,7 +549,9 @@ listClubGames = async (clubid, date, page = 1) => {
 
   let condition = {
     clubid: clubid,
-    delete: _.neq(true),
+    delete: {
+      [Op.not]: true
+    },
   }
 
   if (date) {
@@ -813,35 +822,33 @@ billboardOrder = (player1, player2) => {
 }
 
 checkMatchCount = async (clubid) => {
-  let data = await db.collection('clubs')
-    .doc(clubid)
-    .get()
-    .then(res => {
-      return res.data
-    })
+  let data = await sequelizeExecute(
+    db.collection('clubs').findByPk(clubid)
+  )
 
-  if (data && data.vip) {
-    return false
-  }
+  console.log(data)
+
+  // if (data && data.vip) {
+  //   return false
+  // }
 
   let maxMatchCountAllow = 10
   if (data && data.maxMatchAllow) {
     maxMatchCountAllow = data.maxMatchAllow
   }
 
-  let currentMatchCount = await db.collection('matches')
-    .where({
-      clubid: clubid,
-      delete: _.neq(true),
-    })
-    .count()
-    .then(res => {
-      if (res.total) {
-        return res.total
-      } else {
-        return 0
+  let currentMatchCount = await sequelizeExecute(
+    db.collection('matches').count({
+      where: {
+        clubid: clubid,
+        delete: {
+          [Op.not]: true
+        },
       }
     })
+  )
+
+  console.log(currentMatchCount)
 
   return (currentMatchCount > maxMatchCountAllow)
 }
@@ -850,7 +857,9 @@ incMatchCountAllow = async (clubid) => {
   let currentMatchCount = await db.collection('matches')
     .where({
       clubid: clubid,
-      delete: _.neq(true),
+      delete: {
+        [Op.not]: true
+      },
     })
     .count()
     .then(res => {

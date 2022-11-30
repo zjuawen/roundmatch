@@ -212,10 +212,11 @@ Page({
         // this.showAdPromptDialog()
         // return
         let that = this
+        let openid = this.data.openid
         let clubid = this.data.clubid
         // this.showAdPromptDialog()
         // return
-        APIs.isVip(this, clubid, res => {
+        APIs.isVip(this, openid, res => {
             let vip = res
             // let vip = data.vip
             if (vip) {

@@ -40,6 +40,10 @@ module.exports.clubs = (database, Sequelize) => {
             type: Sequelize.BOOLEAN,
             defaultValue: false
         },
+        maxMatchAllow: {
+            type: Sequelize.INTEGER,
+            defaultValue: 10
+        },
         createDate: {
             type: Sequelize.DATE,
             set(value) {

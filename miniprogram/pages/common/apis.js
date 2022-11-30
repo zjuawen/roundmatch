@@ -225,9 +225,9 @@ function pagedClubPlayers(that, clubid, pageNum, pageSize, callback) {
     })
 }
 
-function isVip(that, clubid, callback) {
+function isVip(that, openid, callback) {
     commonCallFuction(that, callback, 'userService', 'isVip', {
-        clubid: clubid
+        openid: openid
     })
 }
 
