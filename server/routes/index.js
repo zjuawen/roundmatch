@@ -9,6 +9,7 @@ const dummy = require("../controllers/dummy")
 const clubs = require("../controllers/clubservice")
 const users = require("../controllers/userservice")
 const matches = require("../controllers/matchservice")
+const games = require("../controllers/gameservice")
 const system = require("../controllers/systemservice")
 
 // const wechat = require("../controllers/WechatApi")
@@ -32,5 +33,8 @@ router.get("/api/matchservice", matches.main)
 
 // system services
 router.get("/api/systemservice", system.main)
+
+// system services
+router.get("/api/gameService", games.main)
 
 module.exports = router

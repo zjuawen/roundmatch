@@ -9,7 +9,6 @@ const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
 
-
 // 云函数入口函数
 exports.main = async (request, result) => {
   // const wxContext = context;// cloud.getWXContext()
@@ -331,7 +330,7 @@ readMatch = async (clubid, matchid) => {
   console.log('readMatch')
   let games = await sequelizeExecute(
     db.collection('games').findAll({
-      attributes: ['matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4', ],
+      attributes: ['_id', 'matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
       where: {
         clubid: clubid,
         matchid: matchid,

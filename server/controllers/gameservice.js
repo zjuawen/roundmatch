@@ -1,5 +1,6 @@
 const db = require("../models")
 const Op = require("sequelize").Op
+const sequelize = require("sequelize")
 // utils
 const paginate = require("../utils/util").paginate
 const md5String = require("../utils/util").md5String
@@ -37,11 +38,15 @@ exports.main = async (request, result) => {
 
 //保存比赛数据
 saveGameData = async (clubid, gamedata) => {
+  if (typeof gamedata === 'string') {
+    gamedata = JSON.parse(gamedata)
+  }
 
+  console.log(gamedata)
   let old = await readGameData(clubid, gamedata)
   // console.log("new: " + gamedata.score1 + " & " + gamedata.score2)
 
-  if (old.data == null) {
+  if (old == null || old == null) {
     console.log('no gamedata found: ' + gamedata._id)
     return ({
       stats: {
@@ -52,7 +57,7 @@ saveGameData = async (clubid, gamedata) => {
   }
 
   let needInc = false
-  if (old.data.score1 < 0 && old.data.score2 < 0 &&
+  if (old.score1 < 0 && old.score2 < 0 &&
     gamedata.score1 >= 0 && gamedata.score2 >= 0) {
     needInc = true
   }
@@ -84,6 +89,10 @@ readGameData = async (clubid, gamedata) => {
     db.collection('games').findByPk(gamedata._id)
   )
 
+  if( game.dataValues){
+    game = game.dataValues
+  }
+
   console.log(game)
 
   return game
@@ -93,9 +102,7 @@ readGameData = async (clubid, gamedata) => {
 updateMatchData = async (matchid) => {
   let updated = await sequelizeExecute(
     db.collection('matches').update({
-      finish: {
-        [OP.inc]: 1
-      },
+      finish: sequelize.literal('`finish` +1')
     }, {
       where: {
         _id: matchid
