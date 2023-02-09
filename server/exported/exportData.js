@@ -8,7 +8,7 @@ import WechatAPI from 'co-wechat-api'
 import download from 'download'
 import Sleep from 'sleep'
 
-const wxappApi = new WechatAPI('wxf3f6462195815590', 'bb1434a237637a2feeea1a3cf56307af')
+const wxappApi = new WechatAPI('wxf3f6462195815590', '81323b14609ba2cdcc3c738628e122a3')
 
 let env = 'roundmatch'
 
