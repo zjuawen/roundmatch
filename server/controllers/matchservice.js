@@ -35,7 +35,7 @@ exports.main = async (request, result) => {
   } else if (action == 'delete') {
     data = await deleteMatch(event.clubid, event.matchid)
   } else if (action == 'update') {
-    data = await updateMatch(event.match)
+    data = await updateMatch(event.matchid, event.value)
   }
 
   console.log('matchService return:')
@@ -48,19 +48,22 @@ exports.main = async (request, result) => {
 
 
 //更新比赛信息
-updateMatch = async (match) => {
+updateMatch = async (matchid, value) => {
+  if (typeof value === 'string') {
+    value = JSON.parse(value)
+  }
+
   let updated = await sequelizeExecute(
     db.collection('matches').update({
-      name: match.name
+      name: value.name
     }, {
       where: {
-        _id: match.matchid
+        _id: matchid
       }
     })
   )
 
-  console.log("update match: ")
-  console.log(updated)
+  console.log("update match record: " + updated)
 
   return {
     updated: updated

@@ -469,30 +469,30 @@ Page({
     },
     onUpdateMatch: function(index) {
         this.loading(true)
+        let that = this
         let func = 'matchService'
         let action = 'update'
         console.log('update match ...')
         let data = this.data.matches
-        wx.cloud.callFunction({
-            name: func,
-            data: {
-                action: action,
-                match: {
-                    matchid: data[index]._id,
-                    name: data[index].name,
-                }
-            },
-            success: res => {
-                console.log('[云函数] ' + func + ' return: ', res.result)
-                let updated = res.result.data.updated
-                this.loading(false)
-            },
-            fail: err => {
-                console.error('[云函数] ' + func + ' 调用失败', err)
-                wx.navigateTo({
-                    url: '../error/deployFunctions',
+        let matchid = data[index]._id
+        let value = {
+            name: data[index].name
+        }
+        APIs.updateMatch(this, value, matchid, res => {
+            console.log( res)
+            let count = res.updated[0]
+            if (count == 1) {
+                wx.showToast({
+                    title: '更新成功',
+                    icon: 'none',
+                })
+            } else {
+                wx.showToast({
+                    title: '更新失败',
+                    icon: 'none',
                 })
             }
+            that.loading(false)
         })
     },
     //修改比赛标题

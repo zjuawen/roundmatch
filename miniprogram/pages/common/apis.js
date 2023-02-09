@@ -165,6 +165,14 @@ function saveNewMatch(that, openid, type, matchdata, playerCount, clubid, callba
     })
 }
 
+function updateMatch(that, value, matchid, callback) {
+    commonCallFuction(that, callback, 'matchService', 'update', {
+        matchid: matchid,
+        value: value,
+    })
+}
+
+
 function searchClubs(that, keyword) {
     commonStartCloudFunction(that)
     let func = 'clubService'
@@ -306,6 +314,7 @@ module.exports = {
     listMatch: listMatch,
     createNewMatch: createNewMatch,
     saveNewMatch: saveNewMatch,
+    updateMatch: updateMatch,
     readMatch: readMatch,
     deleteMatch: deleteMatch,
 
