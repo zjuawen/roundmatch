@@ -28,7 +28,7 @@ exports.main = async (request, result) => {
     let pageSize = (event.pageSize == null) ? 10 : event.pageSize
     data = await listMatch(event.openid, event.clubid, pageNum, pageSize)
   } else if (action == 'save') {
-    data = await saveMatchData(wxContext.OPENID, event.type, event.clubid,
+    data = await saveMatchData(event.openid, event.type, event.clubid,
       event.matchdata, event.playerCount)
   } else if (action == 'read') {
     data = await readMatch(event.clubid, event.matchid)
@@ -69,68 +69,40 @@ updateMatch = async (match) => {
 
 //保存新增的比赛数据
 saveMatchData = async (owner, type, clubid, games, playerCount, remark = "") => {
-  return await db.collection('matches')
-    .add({
-      // data 字段表示需新增的 JSON 数据
-      data: {
-        // id: _.inc(1),
-        clubid: clubid,
-        createDate: db.serverDate(),
-        total: games.length,
-        finish: 0,
-        playerCount: playerCount,
-        type: type,
-        delete: false,
-        owner: owner,
-        remark: remark,
-      }
-    })
-    .then(res => {
-      console.log(res)
-      let matchid = res._id
-      console.log("added new match: " + matchid)
-      return savaGames(clubid, matchid, games)
-    })
-}
-
-createClubGameDataTable = async (clubid) => {
-  let gameDataTableName = 'games_' + clubid
-
-  const table = db.collection(gameDataTableName)
-  var exist = true
-  try {
-    await table
-      .count()
-      .then(async res => {
-        console.log(res)
-      })
-  } catch (e) {
-    console.log(e)
-    exist = false
-  }
-  if (exist) {
-    console.log('game data table already created')
-    return
+  if (typeof games === 'string') {
+    games = JSON.parse(games)
   }
 
-  return await db.createCollection(gameDataTableName)
-    .then(res => {
-      console.log('create game data table...')
-      console.log(res)
-      return {
-        dataTable: gameDataTableName,
-        msg: res.errMsg,
-      }
+  let saved = await sequelizeExecute(
+    db.collection('matches').create({
+      // id: _.inc(1),
+      clubid: clubid,
+      createDate: db.serverDate(),
+      total: games.length,
+      finish: 0,
+      playerCount: playerCount,
+      type: type,
+      delete: false,
+      owner: owner,
+      remark: remark,
     })
-}
+  )
 
+  console.log("added new match")
+  console.log(saved)
+
+  let matchid = saved._id
+  console.log("added new match: " + matchid)
+  return await savaGames(clubid, matchid, games)
+}
 
 //保存对阵数据
 savaGames = async (clubid, matchid, games) => {
 
-  await createClubGameDataTable(clubid)
-
   let data = games
+  console.log("saving games' data")
+  console.log(data)
+
 
   let playerWeight = []
 
@@ -149,23 +121,22 @@ savaGames = async (clubid, matchid, games) => {
       createDate: db.serverDate(),
     }
 
-    await db.collection('games_' + clubid)
-      .add({
-        // data 字段表示需新增的 JSON 数据
-        data: gamedata
-      })
-      .then(res => {
-        console.log(res)
-        count += 1
-        collectPlayerWeight(playerWeight, data[i])
-        return count
-      })
+    let res = await sequelizeExecute(
+      db.collection('games')
+      .create(gamedata)
+    )
+
+    if (res) {
+      count += 1
+      collectPlayerWeight(playerWeight, data[i])
+    }
   }
 
+  console.log("playerWeight:")
   console.log(playerWeight)
 
   //增加参与人员权重
-  playerWeight.forEach(async function(pWeight) {
+  await playerWeight.forEach(async function(pWeight) {
     await justifyPlayerOrder(pWeight)
   })
 
@@ -202,18 +173,21 @@ collectPlayerWeight = (playerWeight, data) => {
 
 //调整用户权重
 justifyPlayerOrder = async (weightObj) => {
-  return await db.collection('players')
-    .doc(weightObj.playerid)
-    // .get()
+  console.log("justifyPlayerOrder")
+  console.log(weightObj)
+  let res = await sequelizeExecute(
+    db.collection('players')
     .update({
-      data: {
-        order: _.inc(weightObj.weight)
+      order: weightObj.weight + 1
+    }, {
+      where: {
+        _id: weightObj.playerid._id
       }
     })
-    .then(res => {
-      console.log(res)
-      return res
-    })
+  )
+
+  console.log(res)
+  return res
 }
 
 //创建比赛数据（排阵，未保存）
@@ -403,7 +377,7 @@ deleteMatch = async (clubid, matchid) => {
       console.log("delete match...")
       console.log(res)
       let matchUpdated = res.stats.updated
-      if( matchUpdated > 0){
+      if (matchUpdated > 0) {
         return await db.collection('games_' + clubid)
           .where({
             matchid: matchid,
@@ -457,13 +431,13 @@ listMatch = async (owner, clubid, pageNum, pageSize) => {
 
 shuffleArrayGroup = (arraySaved, groups) => {
   let array = flatPlayerArray(arraySaved)
-  for( let n = 0; n<groups.length; n++){
+  for (let n = 0; n < groups.length; n++) {
     let group = groups[n]
     for (let i = group.length; i; i--) {
       let j = Math.floor(Math.random() * group.length)
       // console.log("swap: " + array[group[i-1]].name + "-" + array[group[j]].name)
-      let t = array[group[i-1]]
-      array[group[i-1]] = array[group[j]]
+      let t = array[group[i - 1]]
+      array[group[i - 1]] = array[group[j]]
       array[group[j]] = t
     }
   }
@@ -472,8 +446,10 @@ shuffleArrayGroup = (arraySaved, groups) => {
 
 shuffleArray = (arraySaved, skiparray) => {
   let array = JSON.parse(JSON.stringify(arraySaved))
+  console.log('debug')
+  console.log(array)
   let returnArray = []
-  for( let n = 0; n<skiparray.length; n++){
+  for (let n = 0; n < skiparray.length; n++) {
     let index = skiparray[n]
     returnArray[index] = array[index]
     array[index] = null
@@ -482,12 +458,15 @@ shuffleArray = (arraySaved, skiparray) => {
     let j = Math.floor(Math.random() * i)
     console.log('j: ' + j)
     console.log(array)
-    [array[i - 1], array[j]] = [array[j], array[i - 1]]
+    var temp = array[i - 1]
+    array[i - 1] = array[j]
+    array[j] = temp
+    // [array[i - 1], array[j]] = [array[j], array[i - 1]]
   }
-  var i=0
-  for( let n = 0; n<arraySaved.length && i<arraySaved.length; n++){
-    if( returnArray[n] == null){
-      while(array[i] == null && i<arraySaved.length){
+  var i = 0
+  for (let n = 0; n < arraySaved.length && i < arraySaved.length; n++) {
+    if (returnArray[n] == null) {
+      while (array[i] == null && i < arraySaved.length) {
         i++
       }
       returnArray[n] = array[i]
@@ -500,14 +479,13 @@ shuffleArray = (arraySaved, skiparray) => {
 
 //保持一对
 shuffleArray2 = (array) => {
-  if( array.length % 2 != 0){
+  if (array.length % 2 != 0) {
     console.log("shuffleArray2: array length = " + array.length + " incorrect")
     return null
   }
-  for (let i = 0; i<array.length/2; i++) {
-    let j = Math.floor(Math.random() * i)
-    [array[2*i], array[2*j]] = [array[2*j], array[2*i]]
-    [array[2*i+1], array[2*j+1]] = [array[2*j+1], array[2*i+1]]
+  for (let i = 0; i < array.length / 2; i++) {
+    let j = Math.floor(Math.random() * i)[array[2 * i], array[2 * j]] = [array[2 * j], array[2 * i]]
+      [array[2 * i + 1], array[2 * j + 1]] = [array[2 * j + 1], array[2 * i + 1]]
   }
   return array
 }

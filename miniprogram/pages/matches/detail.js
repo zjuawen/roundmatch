@@ -1,5 +1,8 @@
 // miniprogram/pages/matchList/detail.js
 var APIs = require('../common/apis.js');
+var Utils = require('../common/utils.js')
+
+const getGlobalData = Utils.getGlobalData
 
 Page({
 
@@ -456,8 +459,9 @@ Page({
       playerCount = this.data.selectedPlayers.length;
     }
     let clubid = this.data.clubid;
+    let openid = getGlobalData('openid')
 
-    APIs.saveNewMatch(this, type, matchdata, playerCount, clubid, res => {
+    APIs.saveNewMatch(this, openid, type, matchdata, playerCount, clubid, res => {
       let matchid = res.matchid;
       that.setData({
         matchid: matchid

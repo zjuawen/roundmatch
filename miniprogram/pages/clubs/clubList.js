@@ -4,8 +4,8 @@
 var APIs = require('../common/apis.js')
 var Utils = require('../common/utils.js')
 
-const saveGlobalData = require('../common/utils').saveGlobalData
-const getGlobalData = require('../common/utils').getGlobalData
+const saveGlobalData = Utils.saveGlobalData
+const getGlobalData = Utils.getGlobalData
 const showError = require('../common/utils').showError
 
 // 在页面中定义激励视频广告
