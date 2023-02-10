@@ -10,7 +10,7 @@ const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
 
 
-const RECORD_MAX_COUNT = 100;
+// const RECORD_MAX_COUNT = 100;
 
 const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
 
@@ -243,7 +243,7 @@ loadClubData = async (openid, uacs) => {
     console.log(a)
     let value = a
     value.owner = (value.creator == openid)
-    if( value.logo != null && value.logo.length > 0 && value.logo[0] == '/'){
+    if (value.logo != null && value.logo.length > 0 && value.logo[0] == '/') {
       process.env.PORT || 8300
       value.logo = SERVER_URL_UPLOADS + value.logo
     }
@@ -484,6 +484,10 @@ updateClub = async (openid, info, userInfo) => {
 
 //统计俱乐部成员胜率
 statisUserInClub = async (clubid, date, minMatchCount) => {
+  if (typeof date === 'string') {
+    date = JSON.parse(date)
+  }
+
   if (minMatchCount == null) {
     minMatchCount = 0
   }
@@ -493,14 +497,17 @@ statisUserInClub = async (clubid, date, minMatchCount) => {
       where: {
         clubid: clubid
       },
-      order: ['order', 'desc']
+      order: [
+        ['order', 'DESC']
+      ],
+      raw: true
     })
   )
 
   console.log(players)
   // let players = res.data
   let matches = await listClubMatches(clubid, date)
-  let games = await listClubGames(clubid, date)
+  let games = await listClubAllGames(clubid, date)
   let result = startStatisticPlayers(players, matches, games)
   let playerFiltered = filterPlayerMatchCount(players, matches, games, minMatchCount)
   playerFiltered.sort(billboardOrder)
@@ -511,15 +518,12 @@ statisUserInClub = async (clubid, date, minMatchCount) => {
 
 //获取该俱乐部某时间段内所有比赛
 listClubMatches = async (clubid, date) => {
-
   let condition = {
     clubid: clubid,
     delete: {
       [Op.not]: true
     },
   }
-
-  console.log(date)
 
   if (date) {
     let from = new Date(date.from + ' 00:00:00')
@@ -534,6 +538,7 @@ listClubMatches = async (clubid, date) => {
   let clubMatches = await sequelizeExecute(
     db.collection('matches').findAll({
       where: condition,
+      raw: true
     })
   )
 
@@ -541,24 +546,7 @@ listClubMatches = async (clubid, date) => {
 }
 
 //获取该俱乐部所有场次
-listClubGames = async (clubid, date, page = 1) => {
-
-  // let page = 1
-  let page_size = RECORD_MAX_COUNT
-
-  let exist = true
-  try {
-    await db.collection('games_' + clubid)
-      .get()
-  } catch (e) {
-    console.log(e)
-    exist = false
-  }
-
-  if (!exist) {
-    return []
-  }
-
+listClubAllGames = async (clubid, date) => {
   let condition = {
     clubid: clubid,
     delete: {
@@ -570,25 +558,23 @@ listClubGames = async (clubid, date, page = 1) => {
     let from = new Date(date.from + ' 00:00:00')
     let to = new Date(date.to + ' 23:59:59')
 
-    condition.createDate = _.and(_.gt(from), _.lt(to))
+    condition.createDate = {
+      [Op.gte]: from,
+      [Op.lte]: to
+    }
   }
 
-  return await db.collection('games_' + clubid)
-    .where(condition)
-    .skip((page - 1) * page_size)
-    .get()
-    .then(async res => {
-      console.log("listClubGames: page" + page)
-      console.log(res)
-
-      let data = res.data
-      if (data.length < page_size) {
-        return data
-      } else {
-        let dataMore = await listClubGames(clubid, date, page + 1)
-        return data.concat(dataMore)
-      }
+  let games = await sequelizeExecute(
+    db.collection('games').findAll({
+      where: condition,
+      raw: true
     })
+  )
+
+  console.log("listClubAllGames: " + clubid)
+  console.log(games)
+
+  return games
 }
 
 //开始统计
@@ -608,6 +594,8 @@ statisticWinAndLost = (players, games) => {
     player.crownCount = 0
     player.total = 0
     player.delta = 0
+    console.log(player)
+  
   })
 
   games.forEach(function(game) {
