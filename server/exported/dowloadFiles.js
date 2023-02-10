@@ -14,11 +14,11 @@ const { storage } = new CloudBase({
 async function downloadDirectories() {
   // await storage.downloadDirectory({
   //   cloudPath: "images",
-  //   localPath: path.resolve("./files/images")
+  //   localPath: path.resolve("./uploads/images")
   // });
   await storage.downloadDirectory({
     cloudPath: "clubicons",
-    localPath: path.resolve("./files/clubicons")
+    localPath: path.resolve("./uploads/clubicons")
   });
 }
 

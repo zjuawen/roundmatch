@@ -7,6 +7,8 @@ const server = express()
 const db = require("./models")
 const utils = require("./utils/json.importer")
 
+require("dotenv").config()
+
 const corsSettings = {
 	origin: true,
 	// origin: ["https://roundmatch.microripples.cn", "https://medical.tattoosoft.cn:8443", "http://localhost:8080"],
@@ -54,14 +56,14 @@ db.databaseConf.sync()
 // db.databaseConf.sync({alter:true})
 
 // Run following function if you want import all data 
-// utils.process('./exported/', 'clubs')
-// utils.process('./exported/', 'players')
-// utils.process('./exported/', 'users')
-// utils.process('./exported/', 'system')
-// utils.process('./exported/', 'notices')
-// utils.process('./exported/', 'matches')
-// utils.process('./exported/', 'userconfig')
-// utils.batchProcess('./exported/games/', 'games')
+// utils.process('./exported/db/', 'clubs')
+// utils.process('./exported/db/', 'players')
+// utils.process('./exported/db/', 'users')
+// utils.process('./exported/db/', 'system')
+// utils.process('./exported/db/', 'notices')
+// utils.process('./exported/db/', 'matches')
+// utils.process('./exported/db/', 'userconfig')
+// utils.batchProcess('./exported/db/games/', 'games')
 
 
 

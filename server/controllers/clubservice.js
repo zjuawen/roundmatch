@@ -10,6 +10,10 @@ const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
 
 
+const RECORD_MAX_COUNT = 100;
+
+const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
+
 // 云函数入口函数
 exports.main = async (request, result) => {
   // const wxContext = context;// cloud.getWXContext()
@@ -239,6 +243,11 @@ loadClubData = async (openid, uacs) => {
     console.log(a)
     let value = a
     value.owner = (value.creator == openid)
+    if( value.logo != null && value.logo.length > 0 && value.logo[0] == '/'){
+      process.env.PORT || 8300
+      value.logo = SERVER_URL_UPLOADS + value.logo
+    }
+    // console.log(value.logo)
     return value
   })
   // console.log(data)
@@ -510,22 +519,25 @@ listClubMatches = async (clubid, date) => {
     },
   }
 
+  console.log(date)
+
   if (date) {
     let from = new Date(date.from + ' 00:00:00')
     let to = new Date(date.to + ' 23:59:59')
 
-    condition.createDate = _.and(_.gte(from), _.lte(to))
+    condition.createDate = {
+      [Op.gte]: from,
+      [Op.lte]: to
+    }
   }
 
-  return await db.collection('matches')
-    .where(condition)
-    .get()
-    .then(res => {
-      console.log("listClubMatches: ")
-      console.log(res)
-      let data = res.data
-      return data
+  let clubMatches = await sequelizeExecute(
+    db.collection('matches').findAll({
+      where: condition,
     })
+  )
+
+  return clubMatches
 }
 
 //获取该俱乐部所有场次

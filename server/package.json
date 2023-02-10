@@ -2,10 +2,10 @@
   "name": "node_rest_api_with_mysql",
   "version": "1.0.0",
   "description": "Node.js Rest Api with Express, Sequelize, MySQL & phpMyAdmin .",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "nodemon": "nodemon server.js"
+    "start": "node index.js",
+    "nodemon": "nodemon index.js"
   },
   "repository": {
     "type": "git",
@@ -31,6 +31,7 @@
     "body-parser": "^1.19.0",
     "co-wechat-api": "^3.11.0",
     "cors": "^2.8.5",
+    "dotenv": "^16.0.3",
     "express": "^4.17.1",
     "express-fileupload": "^1.2.1",
     "express-session": "^1.17.2",

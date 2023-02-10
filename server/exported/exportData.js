@@ -17,7 +17,6 @@ const exportDatabaseItem = async (accessToken, data) => {
   return resp.data
 }
 
-
 const getDatabaseRecord = async (accessToken, data) => {
   const resp = await Axios.post("https://api.weixin.qq.com/tcb/databasequery?access_token=" + accessToken, data)
   return resp.data
@@ -91,7 +90,7 @@ const exportPagedData = async (clubid, accessToken, offset, pageSize, pager) => 
   // const url = 'https://tcb-mongodb-data-1254135806.cos.ap-shanghai.myqcloud.com/games_export?q-sign-algorithm=sha1&q-ak=AKIDvf9NN5WhonVx94tOfgPqzqPhhQzIJ2Te&q-sign-time=1669124812;1669128412&q-key-time=1669124812;1669128412&q-header-list=&q-url-param-list=&q-signature=f4a1708cbd1522f47b3db41bf4caf0c88426f077'
   const url = migrateResult.file_url
   console.log('downloading: ' + url)
-  await download(url, './games/');
+  await download(url, './db/games/');
 
 }
 
