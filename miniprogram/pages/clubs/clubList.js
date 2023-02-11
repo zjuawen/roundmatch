@@ -62,12 +62,13 @@ Page({
         debug: false,
     },
 
-        /**
+    /**
      * 生命周期函数--监听页面加载
      */
     onLoad: function(options) {
         console.log("clublist onload")
         // this.getOpenid()
+        this.userLogin()
         this.getUserDetail()
         this.isAuditing()
         this.readNotices()
@@ -88,7 +89,7 @@ Page({
                 this.onJoinClub(clubid)
             }
         }
-        if( !this.data.isAuditing){
+        if (!this.data.isAuditing) {
             this.checkCreateClubEnable()
         }
         this.setData({
@@ -149,10 +150,28 @@ Page({
         console.log("onClickDebug")
         // this.doUpload()
     },
-    
+
     loading: function(value) {
         this.setData({
             loading: value
+        })
+    },
+
+    userLogin: async function() {
+        let openid = getGlobalData('openid')
+        if (openid) {
+            console.log('stored openid: ' + openid)
+            return
+        }
+        let code = await Utils.wxLogin();
+        console.log('Utils.wxLogin return')
+        console.log(code)
+        if (code == null) {
+            Utils.showError('微信授权登录失败')
+            return
+        }
+        APIs.login(code, this, (res) => {
+            console.log(res)
         })
     },
     loadUserInfo: async function() {
@@ -228,7 +247,7 @@ Page({
         this.setData({
             detailPedding: true
         })
-        let userInfo  = getGlobalData('userInfo')
+        let userInfo = getGlobalData('userInfo')
         // console.log('userInfo')
         // console.log(userInfo)
         if (userInfo != null) {
@@ -242,15 +261,16 @@ Page({
                 this.onJoinClub(this.data.sharedclubid)
             }
         } else {
-                if (this.data.sharejoin) {
-                    wx.hideLoading()
-                    this.showAuthDialog(true, '需要授权获取用户昵称，头像等信息')
-                }
-            }
+            this.showAuthDialog(true, '需要授权获取用户昵称，头像等信息')
+            // if (this.data.sharejoin) {
+            //     wx.hideLoading()
+            //     this.showAuthDialog(true, '需要授权获取用户昵称，头像等信息')
+            // } 
+        }
         this.setData({
             detailPedding: false
         })
-       
+
     },
     loadClubs: function() {
         let that = this

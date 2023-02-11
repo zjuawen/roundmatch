@@ -76,16 +76,17 @@ login = async (code) => {
     db.collection('users').findOne({
       where: {
         openid: openid
-      }
+      },
+      raw: true
     })
   )
 
   console.log(users)
 
-  if (res && res.dataValues && res.dataValues.name) {
+  if (users && users.name) {
     return {
       openid,
-      userInfo: res.dataValues
+      userInfo: users
     }
   } else {
     if (res == null) {

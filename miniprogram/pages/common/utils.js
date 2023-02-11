@@ -15,8 +15,8 @@ function getCurrentDateTime() {
     }
 
     if (/(y+)/.test(fmt))
-    fmt = fmt.replace(RegExp.$1, (date.getFullYear() + '')
-        .substr(4 - RegExp.$1.length))
+        fmt = fmt.replace(RegExp.$1, (date.getFullYear() + '')
+            .substr(4 - RegExp.$1.length))
     for (var k in o) {
         if (new RegExp('(' + k + ')').test(fmt)) {
             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ?
@@ -41,8 +41,8 @@ function getCurrentDate() {
     }
 
     if (/(y+)/.test(fmt))
-    fmt = fmt.replace(RegExp.$1, (date.getFullYear() + '')
-        .substr(4 - RegExp.$1.length))
+        fmt = fmt.replace(RegExp.$1, (date.getFullYear() + '')
+            .substr(4 - RegExp.$1.length))
     for (var k in o) {
         if (new RegExp('(' + k + ')').test(fmt)) {
             fmt = fmt.replace(RegExp.$1, (RegExp.$1.length === 1) ?
@@ -50,6 +50,30 @@ function getCurrentDate() {
         }
     }
     return fmt
+}
+
+async function wxLogin() {
+    return new Promise(function(reslove, reject) {
+        wx.login({
+            success(res) {
+                console.log('wx.login return')
+                console.log(res)
+                if (res.code) {
+                    reslove(res.code)
+                } else {
+                    console.log('登录失败！' + res.errMsg)
+                    reject(res.errMsg)
+                }
+            }
+        })
+    })
+}
+
+async function getUserOpenid() {
+    console.log('user wx.getUserInfo')
+    let openid = await wx.getUserInfo()
+    console.log('wx.getUserInfo return')
+    console.log(openid)
 }
 
 async function getUserDetail({
@@ -121,6 +145,9 @@ function getGlobalData(key) {
         app.globalData[key] = wx.getStorageSync(key)
         console.log(app.globalData[key])
     }
+    if (app.globalData[key].length <= 0)
+        return null
+
     return app.globalData[key]
 }
 
@@ -135,8 +162,10 @@ function showError(errMsg) {
 module.exports = {
     getCurrentDateTime: getCurrentDateTime,
     getCurrentDate: getCurrentDate,
+    getUserOpenid: getUserOpenid,
     getUserDetail: getUserDetail,
     saveGlobalData: saveGlobalData,
     getGlobalData: getGlobalData,
-    showError: showError
+    showError: showError,
+    wxLogin: wxLogin
 }

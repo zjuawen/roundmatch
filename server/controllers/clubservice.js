@@ -153,7 +153,7 @@ isVipUser = async (openid) => {
 
   console.log(user)
 
-  return (user.value == 'true')
+  return (user && user.value) ? user.value == 'true' : false
 }
 
 //查找所有已创建的俱乐部
@@ -595,7 +595,7 @@ statisticWinAndLost = (players, games) => {
     player.total = 0
     player.delta = 0
     console.log(player)
-  
+
   })
 
   games.forEach(function(game) {
