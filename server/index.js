@@ -1,7 +1,9 @@
 const express = require("express")
 const session = require('express-session')
 const bodyParser = require("body-parser")
-const fileupload = require("express-fileupload")
+// const fileupload = require("express-fileupload")
+const formidable = require('formidable')
+
 const cors = require("cors")
 const server = express()
 const db = require("./models")
@@ -33,12 +35,17 @@ const api = require("./routes/index")
 
 server.use(cors(corsSettings))
 server.use(session(sessionSettings))
+server.use(bodyParser())
 // Parse request of content-type - application/json
 server.use(bodyParser.json())
 // parse requests of content-type -application/x-www-form-urlencoded
 server.use(bodyParser.urlencoded({ extended: true }))
+// app.use(bodyParser.urlencoded({ extended: false })); // 判断请求体是不是json，不是的话把请求体转化为对象
+// 
+
 // parse file uploader
-server.use(fileupload())
+// server.use(fileupload())
+// server.use(multer({ dest: '../uploads/tmp/' }).any())
 
 server.use("/", api)
 // set listening ports for request

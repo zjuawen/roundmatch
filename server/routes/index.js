@@ -5,12 +5,16 @@
  * Date: 20/11/2022
  * Time: 01:45
  **/
+
 const dummy = require("../controllers/dummy")
 const clubs = require("../controllers/clubservice")
 const users = require("../controllers/userservice")
 const matches = require("../controllers/matchservice")
 const games = require("../controllers/gameservice")
 const system = require("../controllers/systemservice")
+
+const multer = require('multer')
+const media = require("../controllers/mediaservice")
 
 // const wechat = require("../controllers/WechatApi")
 
@@ -36,5 +40,9 @@ router.get("/api/systemservice", system.main)
 
 // system services
 router.get("/api/gameService", games.main)
+
+// media services
+const upload = multer({ dest: "../uploads/tmp/" });
+router.post("/api/mediaService", upload.single('file'), media.main)
 
 module.exports = router

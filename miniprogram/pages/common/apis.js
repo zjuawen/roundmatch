@@ -1,5 +1,6 @@
 /******** common funtions below *******************/
 const ServerUrl = 'http://localhost:8300/'
+// const ServerUrl = 'https://roundmatch.microripples.cn/'
 const showError = require('./utils').showError
 
 function commonCallFuction(that, callback, serviceName, actionName, params) {
@@ -96,6 +97,25 @@ function login(code, that, callback) {
         code: code
     })
 }
+
+// function loginSync(code, that) {
+//     return await _login(code, that)
+// }
+
+// async function _login(code, that){
+//     return new Promise(function(reslove, reject) {
+//         login(code, that, {
+//             success(res) {
+//                 console.log(res)
+//                 if (res.code) {
+//                     reslove(res.code)
+//                 } else {
+//                     reject(res.errMsg)
+//                 }
+//             }
+//         })
+//     })
+// }
 
 function getUserDetail(that, callback) {
     commonCallFuction(that, callback, 'userService', 'detail')
@@ -290,6 +310,26 @@ function saveGameData(that, clubid, gamedata, callback) {
     })
 }
 
+function uploadImage(that, filePath, type, callback) {
+    let uploadApiUrl = ServerUrl + 'api/mediaService?action=upload&type=' + type
+    console.log(uploadApiUrl)
+    wx.uploadFile({
+        url: uploadApiUrl,
+        filePath: filePath,
+        name: 'file',
+        header: {
+            "content-type": "multipart/form-data"
+        },
+        success(res) {
+            console.log(res);
+        },
+        fail: function(err) {
+            console.log(err);
+        }
+    })
+
+}
+
 //exports
 module.exports = {
     // user api
@@ -321,16 +361,19 @@ module.exports = {
     // game api
     saveGameData: saveGameData,
 
-    //user api
+    // user api
     listClubUsers: listClubUsers,
     pagedClubPlayers: pagedClubPlayers,
     readUserConfig: readUserConfig,
     saveUserConfig: saveUserConfig,
     searchPlayers: searchPlayers,
 
-    //system api
+    // system api
     msgSecCheck: msgSecCheck,
     imageSecCheck: imageSecCheck,
     isAuditing: isAuditing,
     getNotices: getNotices,
+
+    // media api
+    uploadImage: uploadImage
 }

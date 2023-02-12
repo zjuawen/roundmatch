@@ -1,37 +1,30 @@
-const db = require("../models")
-const Op = require("sequelize").Op
-// utils
-const paginate = require("../utils/util").paginate
-const md5String = require("../utils/util").md5String
-const queryLike = require("../utils/util").queryLike
 const validateSession = require("../utils/util").validateSession
 const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
 
+const fs = require('fs');
 
 // 云函数入口函数
 exports.main = async (request, result) => {
+  // console.log(request)
   // const wxContext = context// cloud.getWXContext()
   let event = request.query
 
-  console.log('systemService')
+  console.log('mediaService')
   console.log(event)
   // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
   let action = event.action
-  let data = null
-  if (action == 'notices') {
-    data = await getNotices(event.openid, event.page)
-  } else if (action == 'auditing') {
-    data = isAuditing()
-  } else if (action == 'msgSecCheck') {
-    data = await msgSecCheck(event.openid, event.param);
-  } else if (action == 'imgSecCheck') {
-    data = await imgSecCheck(event);
+
+  if (action == 'upload') {
+    let file = request.file
+    console.log('receiving ')
+    console.log(file)
+    data = await upload(event.type, file)
   }
 
-  console.log('systemService return:')
+  console.log('mediaService return:')
   console.log(data)
 
   successResponse(result, {
@@ -39,42 +32,15 @@ exports.main = async (request, result) => {
   })
 }
 
-isAuditing = () => {
-  return {
-    auditing: false
+upload = async (type, file) => {
+  let inputFile = file.path //获取path:
+  let fileName = 'icon-' + Date.now() + file.originalname.match(/\.[^.]+?$/)[0]
+  if (type == 'icon') {
+    fileName = 'clubicons/' + fileName
   }
-}
-
-getNotices = async (openid, page) => {
-  let notices = await sequelizeExecute(
-    db.collection('notices').findAll({
-      where: {
-        page: page,
-        enable: {
-          [Op.not]: false
-        }
-      },
-      attributes: {
-        exclude: ['enable', 'page', 'createDate', 'updateTime']
-      },
-      order: [
-        ['order', 'DESC']
-      ],
-      raw: true
-    })
-  )
-
-  console.log(notices)
-
-  let data = notices.map(a => {
-    // console.log(a)
-    a.title = a.content
-    delete a.content
-    // console.log(a)
-    return a
-  })
-  return data
-
+  console.log(fileName)
+  fs.renameSync(inputFile, process.env.UPLOAD_LOCAL_DIRECTORY + fileName)
+  return fileName
 }
 
 

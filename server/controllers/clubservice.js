@@ -25,7 +25,7 @@ exports.main = async (request, result) => {
 
   let action = event.action
   // console.log("action: " + action)
-  let data
+  let data = null
   if (action == 'join') {
     data = await joinClub(wxContext, event)
   } else if (action == 'list') {

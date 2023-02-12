@@ -20,7 +20,7 @@ exports.main = async (request, result) => {
 
   let action = event.action
   // console.log("action: " + action)
-  let data
+  let data = null
   if (action == 'create') {
     data = await createMatchData(event.type, event.players)
   } else if (action == 'list') {
