@@ -19,7 +19,7 @@ Page({
         title: "俱乐部",
         login: false,
         detailPedding: false,
-        openid: '',
+        openid: null,
         avatarUrl: '/images/user-unlogin.png',
         loading: false,
 
@@ -65,10 +65,10 @@ Page({
     /**
      * 生命周期函数--监听页面加载
      */
-    onLoad: function(options) {
+    onLoad: async function(options) {
         console.log("clublist onload")
         // this.getOpenid()
-        this.userLogin()
+        await this.userLogin()
         this.getUserDetail()
         this.isAuditing()
         this.readNotices()
@@ -102,7 +102,9 @@ Page({
     onReady: function() {
         // this.getUserDetail()
         // this.loadUserInfo()
-        this.loadClubs()
+        if (this.data.openid) {
+            this.loadClubs()
+        }
         // this.createVideoAd()
         setTimeout(this.getBannerADHeight, 2000)
     },
@@ -161,8 +163,12 @@ Page({
         let openid = getGlobalData('openid')
         if (openid) {
             console.log('stored openid: ' + openid)
+            this.setData({
+                openid: openid
+            })
             return
         }
+        console.log('user not login, login now')
         let code = await Utils.wxLogin();
         console.log('Utils.wxLogin return')
         console.log(code)
@@ -170,8 +176,17 @@ Page({
             Utils.showError('微信授权登录失败')
             return
         }
-        APIs.login(code, this, (res) => {
-            console.log(res)
+        let that = this
+        await APIs.login(code, this, (res) => {
+            let openid = res.openid
+            console.log('get openid from userservice: ' + openid)
+            if (openid != null && openid.length > 0) {
+                Utils.saveGlobalData('openid', openid)
+                that.setData({
+                    openid
+                })
+                that.loadClubs(openid)
+            }
         })
     },
     loadUserInfo: async function() {
@@ -272,9 +287,15 @@ Page({
         })
 
     },
-    loadClubs: function() {
+    loadClubs: function(openid = null) {
         let that = this
-        let openid = getGlobalData('openid')
+        if (!openid) {
+            openid = getGlobalData('openid')
+        }
+        if (!openid) {
+            console.error('null openid while loadClubs')
+            return
+        }
         APIs.loadClubs(openid, this, res => {
             that.setData({
                 clubs: res.private,
