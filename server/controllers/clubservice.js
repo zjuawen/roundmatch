@@ -103,20 +103,28 @@ searchClub = async (keyword) => {
 //读取俱乐部信息
 getClubInfo = async (clubid) => {
   let club = await sequelizeExecute(
-    db.collection('clubs').findByPk(clubid)
+    db.collection('clubs').findByPk(clubid, { raw: true })
   )
 
   console.log(club)
 
   if (club != null) {
+    const logo = club.logo
+    // console.log(logo.startWith('http://'))
+    if( logo != null && logo.startsWith('cloud://')){
+      console.log('warning: cloud image exist!')
+    }
+
+    if (logo != null && logo.length > 0 && !logo.startsWith('http://') && !logo.startsWith('cloud://')) {
+      club.logo = SERVER_URL_UPLOADS + logo
+    }
+
     let password = club.password
     if (password != null && password.length > 0) {
       club.locked = true
     } else {
       club.locked = false
     }
-    club.password = null
-    club.delete = null
   }
 
   trimClubField(club)
@@ -243,8 +251,13 @@ loadClubData = async (openid, uacs) => {
     console.log(a)
     let value = a
     value.owner = (value.creator == openid)
+
     const logo = value.logo
     // console.log(logo.startWith('http://'))
+    if( logo != null && logo.startsWith('cloud://')){
+      console.log('warning: cloud image exist!')
+    }
+
     if (logo != null && logo.length > 0 && !logo.startsWith('http://') && !logo.startsWith('cloud://')) {
       value.logo = SERVER_URL_UPLOADS + logo
     }
@@ -401,13 +414,19 @@ createClub = async (info, userInfo) => {
 
   let dt = db.serverDate()
 
+  let logo = info.logo
+  if( logo != null && logo.startsWith(SERVER_URL_UPLOADS)){
+    logo = logo.substring(SERVER_URL_UPLOADS.length)
+    console.log('trim logo to: ' + logo)
+  }
+
   let club = await sequelizeExecute(
     db.collection('clubs').create({
       creator: openid,
       password: info.password,
       shortName: info.shortName,
       wholeName: info.wholeName,
-      logo: info.logo,
+      logo: logo,
       vip: false,
       public: info.public,
       delete: false,
@@ -463,12 +482,18 @@ updateClub = async (openid, info, userInfo) => {
   //   }
   // }
 
+  let logo = info.logo
+  if( logo != null && logo.startsWith(SERVER_URL_UPLOADS)){
+    logo = logo.substring(SERVER_URL_UPLOADS.length)
+    console.log('trim logo to: ' + logo)
+  }
+
   let updated = await sequelizeExecute(
     db.collection('clubs').update({
       password: info.password,
       shortName: info.shortName,
       wholeName: info.wholeName,
-      logo: info.logo,
+      logo: logo,
       public: info.public
     }, {
       where: {
