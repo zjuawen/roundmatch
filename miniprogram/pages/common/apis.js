@@ -321,7 +321,23 @@ function uploadImage(that, filePath, type, callback) {
             "content-type": "multipart/form-data"
         },
         success(res) {
-            console.log(res);
+            let resData = res.data
+            console.log("uploadImage return")
+            console.log(resData)
+
+             if (typeof resData === 'string') {
+                // console.log('jsonify res data')
+                resData = JSON.parse(resData)
+                // console.log(resData)
+            }
+            
+            if (resData.code == 0) {
+                let data = resData.data
+                // if( typeof data == 'string'){
+                //     data = JSON.parse(data)
+                // }
+                commonSuccessHandler(data, that, callback)
+            }
         },
         fail: function(err) {
             console.log(err);

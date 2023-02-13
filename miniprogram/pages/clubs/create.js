@@ -194,7 +194,16 @@ Page({
 			if (res.errCode == 0) {
 				console.log('uploading: ' + tempFiles[0].path)
 				APIs.uploadImage(this, tempFiles[0].path, 'icon', (res)=> {
+					console.log('APIs.uploadImage callback')
 					console.log(res)
+					let fileObject = {
+						url: res.url,
+						loading: false
+					}
+					this.setData({
+						fileList: [fileObject],
+						logo: res.url,
+					})
 				})
 			} else if (res.errCode == 87014) {
 				this.setData({

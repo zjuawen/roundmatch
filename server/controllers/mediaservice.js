@@ -5,6 +5,9 @@ const errorResponse = require("../utils/util").errorResponse
 
 const fs = require('fs');
 
+const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
+
+
 // 云函数入口函数
 exports.main = async (request, result) => {
   // console.log(request)
@@ -40,7 +43,12 @@ upload = async (type, file) => {
   }
   console.log(fileName)
   fs.renameSync(inputFile, process.env.UPLOAD_LOCAL_DIRECTORY + fileName)
-  return fileName
+  if (fileName != null && fileName.length > 0 && !fileName.startsWith('http://') && !fileName.startsWith('cloud://')) {
+      fileName = SERVER_URL_UPLOADS + fileName
+    }
+  return {
+    url: fileName
+  }
 }
 
 

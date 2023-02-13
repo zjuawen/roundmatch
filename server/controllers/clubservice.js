@@ -243,9 +243,10 @@ loadClubData = async (openid, uacs) => {
     console.log(a)
     let value = a
     value.owner = (value.creator == openid)
-    if (value.logo != null && value.logo.length > 0 && value.logo[0] == '/') {
-      process.env.PORT || 8300
-      value.logo = SERVER_URL_UPLOADS + value.logo
+    const logo = value.logo
+    // console.log(logo.startWith('http://'))
+    if (logo != null && logo.length > 0 && !logo.startsWith('http://') && !logo.startsWith('cloud://')) {
+      value.logo = SERVER_URL_UPLOADS + logo
     }
     // console.log(value.logo)
     return value
