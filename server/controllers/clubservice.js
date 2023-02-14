@@ -10,7 +10,7 @@ const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
 
 
-// const RECORD_MAX_COUNT = 100;
+// const RECORD_MAX_COUNT = 100
 
 const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
 
@@ -37,7 +37,7 @@ exports.main = async (request, result) => {
   } else if (action == 'create') {
     data = await createClub(event.info, event.userInfo)
   } else if (action == 'update') {
-    data = await updateClub(event.openid, event.info, event.userInfo)
+    data = await updateClub(event.info, event.userInfo)
   } else if (action == 'statis') {
     data = await statisUserInClub(event.clubid, event.date, event.minMatchCount)
   } else if (action == 'info') {
@@ -103,7 +103,9 @@ searchClub = async (keyword) => {
 //读取俱乐部信息
 getClubInfo = async (clubid) => {
   let club = await sequelizeExecute(
-    db.collection('clubs').findByPk(clubid, { raw: true })
+    db.collection('clubs').findByPk(clubid, {
+      raw: true
+    })
   )
 
   console.log(club)
@@ -111,7 +113,7 @@ getClubInfo = async (clubid) => {
   if (club != null) {
     const logo = club.logo
     // console.log(logo.startWith('http://'))
-    if( logo != null && logo.startsWith('cloud://')){
+    if (logo != null && logo.startsWith('cloud://')) {
       console.log('warning: cloud image exist!')
     }
 
@@ -254,7 +256,7 @@ loadClubData = async (openid, uacs) => {
 
     const logo = value.logo
     // console.log(logo.startWith('http://'))
-    if( logo != null && logo.startsWith('cloud://')){
+    if (logo != null && logo.startsWith('cloud://')) {
       console.log('warning: cloud image exist!')
     }
 
@@ -415,7 +417,7 @@ createClub = async (info, userInfo) => {
   let dt = db.serverDate()
 
   let logo = info.logo
-  if( logo != null && logo.startsWith(SERVER_URL_UPLOADS)){
+  if (logo != null && logo.startsWith(SERVER_URL_UPLOADS)) {
     logo = logo.substring(SERVER_URL_UPLOADS.length)
     console.log('trim logo to: ' + logo)
   }
@@ -449,21 +451,31 @@ createClub = async (info, userInfo) => {
 }
 
 //更新俱乐部信息
-updateClub = async (openid, info, userInfo) => {
+updateClub = async (info, userInfo) => {
   let dt = db.serverDate()
-  let res = await sequelizeExecute(
-    db.collection('clubs')
-    .where({
-      creator: wxContext.OPENID,
-      delete: {
-        [Op.not]: true
+  if (typeof info == 'string') {
+    info = JSON.parse(info)
+  }
+  if (typeof userInfo == 'string') {
+    userInfo = JSON.parse(userInfo)
+  }
+  let openid = userInfo.openid
+
+  let clubs = await sequelizeExecute(
+    db.collection('clubs').findAll({
+      where: {
+        creator: openid,
+        delete: {
+          [Op.not]: true
+        }
       },
+      raw: true
     })
   )
 
-  console.log(res)
+  console.log(clubs)
 
-  let exist = (res.data.length > 0)
+  let exist = (clubs.length > 0)
 
   if (!exist) {
     return {
@@ -483,7 +495,7 @@ updateClub = async (openid, info, userInfo) => {
   // }
 
   let logo = info.logo
-  if( logo != null && logo.startsWith(SERVER_URL_UPLOADS)){
+  if (logo != null && logo.startsWith(SERVER_URL_UPLOADS)) {
     logo = logo.substring(SERVER_URL_UPLOADS.length)
     console.log('trim logo to: ' + logo)
   }
@@ -504,7 +516,9 @@ updateClub = async (openid, info, userInfo) => {
 
   console.log(updated)
 
-  return updated.errMsg
+  return {
+    updated
+  }
 }
 
 
@@ -879,42 +893,143 @@ checkMatchCount = async (clubid) => {
   return (currentMatchCount > maxMatchCountAllow)
 }
 
+// TODO: not tested
 incMatchCountAllow = async (clubid) => {
-  let currentMatchCount = await db.collection('matches')
-    .where({
-      clubid: clubid,
-      delete: {
-        [Op.not]: true
-      },
-    })
-    .count()
-    .then(res => {
-      if (res.total) {
-        return res.total
-      } else {
-        return 0
+  let currentMatchCount = await sequelizeExecute(
+    db.collection('matches').count({
+      where: {
+        clubid: clubid,
+        delete: {
+          [Op.not]: true
+        },
       }
     })
+  )
 
-  return await db.collection('clubs')
+  // .then(res => {
+  //   if (res.total) {
+  //     return res.total
+  //   } else {
+  //     return 0
+  //   }
+  // })
+
+  let updated = await sequelizeExecute(
+    db.collection('clubs')
     .doc(clubid)
     .update({
-      // data 字段表示需新增的 JSON 数据
-      data: {
-        // id: _.inc(1),
-        maxMatchAllow: currentMatchCount + 10,
+      // id: _.inc(1),
+      maxMatchAllow: currentMatchCount + 10,
+    }, {
+      where: {
+        _id: clubid
       }
     })
-    .then(res => {
-      console.log(res)
-      if (res.stats && res.stats.updated == 1) {
-        return {
-          success: true
-        }
-      }
-      return {
-        success: false,
-        errMsg: res.errMsg
+  )
+  return {
+    updated
+  }
+
+  // .then(res => {
+  //   console.log(res)
+  //   if (res.stats && res.stats.updated == 1) {
+  //     return {
+  //       success: true
+  //     }
+  //   }
+  //   return {
+  //     success: false,
+  //     errMsg: res.errMsg
+  //   }
+  // })
+}
+
+//加入俱乐部
+joinClub = async (event) => {
+  let openid = event.openid
+  let clubid = event.clubid
+  let userInfo = event.userInfo
+  let password = event.password
+
+  let count = await sequelizeExecute(
+    db.collection('players').count({
+      where: {
+        openid: openid,
+        clubid: clubid
       }
     })
+  )
+  if (count > 0) {
+    return ({
+      status: "fail",
+      errMsg: '已经加入俱乐部!'
+    })
+  }
+
+  let passwordCheck = await checkPassword(clubid, password)
+  if (passwordCheck == false) {
+    return ({
+      status: "fail",
+      errMsg: '密码错误！'
+    })
+  }
+
+  //add user info
+  return addUserToClub(openid, clubid, userInfo)
+
+}
+
+//密码校验
+checkPassword = async (clubid, password) => {
+
+  let club = await sequelizeExecute(
+    db.collection('clubs').findByPk(clubid, {
+      raw: true
+    }))
+
+  console.log(club)
+
+  let result = false
+  if (club != null) {
+    if (club.password == null || club.password.length == 0) {
+      result = true
+    } else if (club.password == password) {
+      result = true
+    }
+  }
+  return result
+
+}
+
+addUserToClub = async (openid, clubid, userInfo) => {
+  let dt = db.serverDate()
+  let player = await sequelizeExecute(
+    db.collection('players').create({
+      openid: openid,
+      clubid: clubid,
+      enable: true,
+      order: 1,
+      name: userInfo.name,
+      avatarUrl: userInfo.avatarUrl,
+      gender: userInfo.gender,
+      createDate: dt
+    })
+  )
+
+  console.log(player)
+
+  if (player instanceof db.players) {
+
+    return {
+      _id: player._id,
+      openid: openid,
+      clubid: clubid,
+      createDate: dt
+    }
+  }
+
+  // todo
+  return {
+    errMsg: res.errMsg
+  }
 }
