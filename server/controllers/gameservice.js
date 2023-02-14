@@ -86,12 +86,14 @@ saveGameData = async (clubid, gamedata) => {
 // 读取单场数据
 readGameData = async (clubid, gamedata) => {
   let game = await sequelizeExecute(
-    db.collection('games').findByPk(gamedata._id)
+    db.collection('games').findByPk(gamedata._id, {
+      raw: true
+    })
   )
 
-  if( game.dataValues){
-    game = game.dataValues
-  }
+  // if( game.dataValues){
+  //   game = game.dataValues
+  // }
 
   console.log(game)
 

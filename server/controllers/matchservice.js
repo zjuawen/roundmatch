@@ -369,38 +369,45 @@ readMatch = async (clubid, matchid) => {
 
 //删除比赛数据
 deleteMatch = async (clubid, matchid) => {
-  return await db.collection('matches')
-    .doc(matchid)
+  console.log("deleting match: " + matchid)
+
+  let matchUpdated = await sequelizeExecute(
+    db.collection('matches')
     .update({
-      data: {
-        delete: true
-      },
-    })
-    .then(async res => {
-      console.log("delete match...")
-      console.log(res)
-      let matchUpdated = res.stats.updated
-      if (matchUpdated > 0) {
-        return await db.collection('games_' + clubid)
-          .where({
-            matchid: matchid,
-          })
-          .update({
-            data: {
-              delete: true
-            },
-          })
-          .then(async res => {
-            console.log("delete games...")
-            console.log(res)
-            let gameUpdated = res.stats.updated
-            return {
-              matchUpdated: matchUpdated,
-              gameUpdated: gameUpdated,
-            }
-          })
+      delete: true
+    }, {
+      where: {
+        _id: matchid
       }
     })
+  )
+
+  console.log(matchUpdated)
+
+  let gameUpdated = 0
+
+  if (matchUpdated > 0) {
+    console.log("deleting games...")
+
+    gameUpdated = await sequelizeExecute(
+      db.collection('gamess').update({
+        delete: true
+      }, {
+        where: {
+          matchid: matchid,
+          clubid: clubid
+        }
+      })
+    )
+
+    console.log(gameUpdated)
+  }
+
+  return {
+    matchUpdated: matchUpdated,
+    gameUpdated: gameUpdated,
+  }
+
 }
 
 //获取比赛列表
