@@ -28,6 +28,9 @@ function commonCallFuction(that, callback, serviceName, actionName, params) {
             console.log(resData)
             if (resData.code == 0) {
                 let data = resData.data
+                if( typeof data == 'string'){
+                    data = JSON.parse(data)
+                }
                 commonSuccessHandler(data, that, callback)
             }
         },
@@ -117,8 +120,10 @@ function login(code, that, callback) {
 //     })
 // }
 
-function getUserDetail(that, callback) {
-    commonCallFuction(that, callback, 'userService', 'detail')
+function getUserDetail(openid, that, callback) {
+    commonCallFuction(that, callback, 'userService', 'detail', {
+        openid
+    })
 }
 
 function loadClubs(openid, that, callback) {
@@ -310,7 +315,7 @@ function saveGameData(that, clubid, gamedata, callback) {
     })
 }
 
-function uploadImage(that, filePath, type, callback) {
+function uploadImage(filePath, type, that, callback) {
     let uploadApiUrl = ServerUrl + 'api/mediaService?action=upload&type=' + type
     console.log(uploadApiUrl)
     wx.uploadFile({

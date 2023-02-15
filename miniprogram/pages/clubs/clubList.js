@@ -21,6 +21,7 @@ Page({
         detailPedding: false,
         openid: null,
         avatarUrl: '/images/user-unlogin.png',
+        nickname: '',
         loading: false,
 
         clubs: [],
@@ -69,6 +70,8 @@ Page({
         console.log("clublist onload")
         // this.getOpenid()
         await this.userLogin()
+        console.log("userLogin finished")
+
         this.getUserDetail()
         this.isAuditing()
         this.readNotices()
@@ -152,6 +155,49 @@ Page({
         console.log("onClickDebug")
         // this.doUpload()
     },
+    onChooseAvatar: async function(e) {
+        console.log(e)
+        const {
+            avatarUrl
+        } = e.detail
+        await APIs.uploadImage(avatarUrl, 'head', this, (res) => {
+            const {
+                url
+            } = res;
+            if (url != null) {
+                this.setData({
+                    avatarUrl: url
+                })
+            }
+        })
+    },
+    onNickNameChange: function(e) {
+        console.log(e)
+        let nickname = e.detail.value
+        this.setData({
+            nickname,
+        })
+    },
+    onConfirmUserInfo: async function(e) {
+        console.log(e)
+        const userInfo = {
+            avatarUrl: this.data.avatarUrl,
+            name: this.data.nickname,
+            openid: this.data.openid,
+        }
+        console.log(userInfo)
+        saveGlobalData('userInfo', userInfo)
+        this.setData({
+            userInfo
+        })
+        let that = this
+        await APIs.updateUserInfo(this.data.openid, userInfo, this, (res) => {
+            // console.log(res)
+            if( res.count == 1){
+                that.showAuthDialog(false)
+            }
+        })
+    },
 
     loading: function(value) {
         this.setData({
@@ -161,33 +207,77 @@ Page({
 
     userLogin: async function() {
         let openid = getGlobalData('openid')
+        let userInfo = getGlobalData('userInfo')
         if (openid) {
-            console.log('stored openid: ' + openid)
+            // console.log('stored openid: ' + openid)
             this.setData({
-                openid: openid
+                openid: openid,
             })
-            return
+        } 
+        if( userInfo ){
+           this.setData({
+                userInfo: userInfo,
+                avatarUrl: userInfo.avatarUrl,
+                nickname: userInfo.name,
+            })
         }
-        console.log('user not login, login now')
-        let code = await Utils.wxLogin();
-        console.log('Utils.wxLogin return')
-        console.log(code)
-        if (code == null) {
-            Utils.showError('微信授权登录失败')
-            return
-        }
-        let that = this
-        await APIs.login(code, this, (res) => {
-            let openid = res.openid
-            console.log('get openid from userservice: ' + openid)
-            if (openid != null && openid.length > 0) {
-                Utils.saveGlobalData('openid', openid)
-                that.setData({
-                    openid
-                })
-                that.loadClubs(openid)
+        if( openid && userInfo){
+            this.setData({login: true})
+        } else { //if( openid == null){
+            console.log('user not login, login now')
+            let code = await Utils.wxLogin();
+            console.log('Utils.wxLogin return')
+            console.log(code)
+            if (code == null) {
+                Utils.showError('微信授权登录失败')
+                return
             }
-        })
+            let that = this
+            await APIs.login(code, this, (res) => {
+                let {openid, userInfo} = res
+                // console.log('get openid from userservice: ' + openid)
+                if (openid != null && openid.length > 0) {
+                    saveGlobalData('openid', openid)
+                    that.setData({
+                        openid,
+                        login: true
+                    })
+                    that.loadClubs(openid)
+                } else {
+                    that.showAuthDialog(true)
+                    return
+                }
+                if( userInfo ){
+                    saveGlobalData('userInfo', userInfo)
+                
+                    that.setData({
+                        userInfo: userInfo,
+                        avatarUrl: userInfo.avatarUrl,
+                        nickname: userInfo.name,
+                        login: true
+                    })
+                    that.showAuthDialog(false)
+                } else {
+                    that.showAuthDialog(true)
+                }
+                
+            })
+        // } else if( userInfo == null){
+        //     let that = this
+        //     await APIs.getUserDetail(openid, this, (res) => {
+        //         const{userInfo} = res
+        //         if( userInfo != null){
+        //             if( typeof userInfo === 'string'){
+        //                 userInfo = JSON.parse(userInfo)
+        //             }
+        //             that.setData({
+        //                 userInfo: userInfo,
+        //                 avatarUrl: userInfo.avatarUrl,
+        //                 nickname: userInfo.name,
+        //             })
+        //         }
+        //     })
+        }
     },
     loadUserInfo: async function() {
         // 获取用户信息
@@ -289,10 +379,10 @@ Page({
     },
     loadClubs: function(openid = null) {
         let that = this
-        if (!openid) {
+        if (openid == null) {
             openid = getGlobalData('openid')
         }
-        if (!openid) {
+        if (openid == null) {
             console.error('null openid while loadClubs')
             return
         }
@@ -433,7 +523,7 @@ Page({
         if (show) {
             this.setData({
                 authDialogShow: show,
-                authDialogMessage: msg,
+                // authDialogMessage: msg,
             })
             console.log(this.data.authDialogMessage)
         } else {

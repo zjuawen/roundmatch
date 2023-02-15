@@ -13,6 +13,7 @@ const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
 
+const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
 
 // 云函数入口函数
 exports.main = async (request, result) => {
@@ -20,16 +21,17 @@ exports.main = async (request, result) => {
   let event = request.query
 
   console.log('userService')
-  console.log(event)
+  // console.log(event)
   // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
   let action = event.action
-  // console.log("action: " + action)
+  console.log("action: " + action)
+
   let data
   if (action == 'login') {
     data = await login(event.code)
   } else if (action == 'detail') {
-    data = await readUserDetail(wxContext)
+    data = await readUserDetail(event.openid)
   } else if (action == 'list') {
     let pageNum = (event.pageNum == null) ? 1 : event.pageNum
     let pageSize = (event.pageSize == null) ? 10 : event.pageSize
@@ -72,24 +74,17 @@ login = async (code) => {
   console.log(code2Session)
   let openid = code2Session.openid
 
-  let users = await sequelizeExecute(
-    db.collection('users').findOne({
-      where: {
-        openid: openid
-      },
-      raw: true
-    })
-  )
+  let {userInfo} = await readUserDetail(openid)
 
-  console.log(users)
+  console.log(userInfo)
 
-  if (users && users.name) {
+  if (userInfo && userInfo.name) {
     return {
       openid,
-      userInfo: users
+      userInfo
     }
   } else {
-    if (res == null) {
+    if (userInfo == null) {
       await addUserInfo(openid)
     }
     return {
@@ -99,9 +94,9 @@ login = async (code) => {
 
 }
 
-
 upSertUserInfo = async (openid, userInfo) => {
-  if (openid == null) {
+  if (openid == null || userInfo == null) {
+    console.log('upSertUserInfo: all NULL')
     return null
   }
 
@@ -118,6 +113,12 @@ upSertUserInfo = async (openid, userInfo) => {
     })
   )
 
+  let avatarUrl = userInfo.avatarUrl
+  if (avatarUrl != null && avatarUrl.startsWith(SERVER_URL_UPLOADS)) {
+    avatarUrl = avatarUrl.substring(SERVER_URL_UPLOADS.length)
+    console.log('trim avatarUrl to: ' + avatarUrl)
+    userInfo.avatarUrl = avatarUrl
+  }
 
   // console.log(obj)
 
@@ -137,7 +138,7 @@ updateUserInfo = async (openid, userInfo) => {
   // let dt = new Date()
   let users = await sequelizeExecute(
     db.collection('users').update({
-      name: userInfo.nickName,
+      name: userInfo.name,
       avatarUrl: userInfo.avatarUrl,
       gender: userInfo.gender,
       country: userInfo.country,
@@ -173,10 +174,12 @@ addUserInfo = async (openid, userInfo) => {
     userInfo = {}
   }
 
+  console.log('create user with openid: ' + openid)
+
   let user = await sequelizeExecute(
     db.collection('users').create({
       openid: openid,
-      name: userInfo.nickName,
+      name: userInfo.name,
       avatarUrl: userInfo.avatarUrl,
       gender: userInfo.gender,
       country: userInfo.country,
@@ -188,12 +191,8 @@ addUserInfo = async (openid, userInfo) => {
 
   console.log(user)
 
-  // return res.data
-  let data = user.dataValues
-  // let count = await updatePlayerInfo(openid, userInfo)
   return {
-    msg: data,
-    // count: count
+    msg: user
   }
 
 }
@@ -308,21 +307,31 @@ isUserVip = async (openid) => {
   return vip
 }
 
-readUserDetail = async (context) => {
-  let dt = db.serverDate()
-  return await db.collection('users')
-    .where({
-      openid: context.OPENID
-    })
-    .get()
-    .then(res => {
-      console.log(res)
-      if (res.data.length > 0) {
-        return res.data[0]
-      } else {
-        return {}
-      }
-    })
+readUserDetail = async (openid) => {
+  // let dt = db.serverDate()
+  let userInfo = await sequelizeExecute(
+    db.collection('users').findOne({
+      where: {
+        openid: openid
+      },
+      raw: true
+    }))
+
+  console.log(userInfo)
+  if (userInfo != null) {
+    let avatarUrl = userInfo.avatarUrl
+    // console.log(avatarUrl)
+    if ((avatarUrl != null) && (avatarUrl.length > 0) 
+      && !avatarUrl.startsWith('http://') 
+      && !avatarUrl.startsWith('cloud://')) {
+      userInfo.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
+    }
+    // console.log(userInfo)
+  }
+
+  return {
+    userInfo
+  }
 }
 
 //列出俱乐部成员
@@ -367,7 +376,3 @@ searchUserInClub = async (clubid, keyword) => {
 
   return players
 }
-
-
-
-

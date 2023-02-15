@@ -193,7 +193,7 @@ Page({
 		APIs.imageSecCheck(this, contents[0], res => {
 			if (res.errCode == 0) {
 				console.log('uploading: ' + tempFiles[0].path)
-				APIs.uploadImage(this, tempFiles[0].path, 'icon', (res)=> {
+				APIs.uploadImage(tempFiles[0].path, 'icon', this, (res)=> {
 					console.log('APIs.uploadImage callback')
 					console.log(res)
 					let fileObject = {

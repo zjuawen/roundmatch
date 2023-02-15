@@ -24,7 +24,7 @@ exports.main = async (request, result) => {
     let file = request.file
     console.log('receiving ')
     console.log(file)
-    data = await upload(event.type, file)
+    data = await upload(file, event.type)
   }
 
   console.log('mediaService return:')
@@ -35,17 +35,21 @@ exports.main = async (request, result) => {
   })
 }
 
-upload = async (type, file) => {
+upload = async (file, type) => {
   let inputFile = file.path //获取path:
   let fileName = 'icon-' + Date.now() + file.originalname.match(/\.[^.]+?$/)[0]
   if (type == 'icon') {
     fileName = 'clubicons/' + fileName
+  } else if (type == 'head') {
+    fileName = 'heads/' + fileName
+  } else {
+    fileName = 'images/' + fileName
   }
   console.log(fileName)
   fs.renameSync(inputFile, process.env.UPLOAD_LOCAL_DIRECTORY + fileName)
   if (fileName != null && fileName.length > 0 && !fileName.startsWith('http://') && !fileName.startsWith('cloud://')) {
-      fileName = SERVER_URL_UPLOADS + fileName
-    }
+    fileName = SERVER_URL_UPLOADS + fileName
+  }
   return {
     url: fileName
   }
