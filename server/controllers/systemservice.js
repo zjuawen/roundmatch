@@ -24,7 +24,7 @@ exports.main = async (request, result) => {
   if (action == 'notices') {
     data = await getNotices(event.openid, event.page)
   } else if (action == 'auditing') {
-    data = isAuditing()
+    data = await isAuditing()
   } else if (action == 'msgSecCheck') {
     data = await msgSecCheck(event.openid, event.param);
   } else if (action == 'imgSecCheck') {
@@ -39,7 +39,24 @@ exports.main = async (request, result) => {
   })
 }
 
-isAuditing = () => {
+isAuditing = async () => {
+  let audit = await sequelizeExecute(
+    db.collection('system').findOne({
+      where: {
+        key: 'audit',
+      },
+      raw: true
+    })
+  )
+
+  console.log(audit)
+  
+  if (audit != null && audit.value == 'true') {
+    return {
+      auditing: true
+    }
+  }
+
   return {
     auditing: false
   }
