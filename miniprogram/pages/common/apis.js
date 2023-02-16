@@ -1,6 +1,6 @@
 /******** common funtions below *******************/
-const ServerUrl = 'http://localhost:8300/'
-// const ServerUrl = 'https://roundmatch.microripples.cn/'
+// const ServerUrl = 'http://localhost:8300/'
+const ServerUrl = 'https://roundmatch.microripples.cn/' 
 const showError = require('./utils').showError
 
 function commonCallFuction(that, callback, serviceName, actionName, params) {
@@ -28,7 +28,7 @@ function commonCallFuction(that, callback, serviceName, actionName, params) {
             console.log(resData)
             if (resData.code == 0) {
                 let data = resData.data
-                if( typeof data == 'string'){
+                if (typeof data == 'string') {
                     data = JSON.parse(data)
                 }
                 commonSuccessHandler(data, that, callback)
@@ -198,19 +198,9 @@ function updateMatch(that, value, matchid, callback) {
 }
 
 
-function searchClubs(that, keyword) {
-    commonStartCloudFunction(that)
-    let func = 'clubService'
-    let action = 'search'
-    let data = {
-        action: action,
-        keyword: keyword,
-    }
-    console.log(func + " " + action + " with data:")
-    console.log(data)
-    return wx.cloud.callFunction({
-        name: func,
-        data: data,
+function searchClubs(keyword, that, callback) {
+    commonCallFuction(that, callback, 'clubService', 'search', {
+        keyword: keyword
     })
 }
 
@@ -295,14 +285,16 @@ function imageSecCheck(that, imageContent, callback) {
     })
 }
 
-function readUserConfig(that, key, callback) {
+function readUserConfig(openid, key, that, callback) {
     commonCallFuction(that, callback, 'userService', 'readconfig', {
+        openid: openid,
         key: key
     })
 }
 
-function saveUserConfig(that, key, value, callback) {
+function saveUserConfig(openid, key, value, that, callback) {
     commonCallFuction(that, callback, 'userService', 'saveconfig', {
+        openid: openid,
         key: key,
         value: value,
     })
@@ -330,12 +322,12 @@ function uploadImage(filePath, type, that, callback) {
             console.log("uploadImage return")
             console.log(resData)
 
-             if (typeof resData === 'string') {
+            if (typeof resData === 'string') {
                 // console.log('jsonify res data')
                 resData = JSON.parse(resData)
                 // console.log(resData)
             }
-            
+
             if (resData.code == 0) {
                 let data = resData.data
                 // if( typeof data == 'string'){

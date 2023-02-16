@@ -638,16 +638,21 @@ Page({
         console.log("search: " + value)
         if (value.length == 0) {
             this.loading(false)
-            return new Promise((resolve, reject) => {
-                resolve([])
-            })
+            return []
+            // let that = this
+            // return new Promise((resolve, reject) => {
+            //     resolve([])
+            // })
         }
         this.loading(true)
-        return this.searchClubs(value)
+        return new Promise((resolve, reject) => {
+            this.searchClubs(value, resolve)
+        })
     },
-    searchClubs: function(keyword) {
-        return APIs.searchClubs(this, keyword).then(res => {
-            let data = res.result
+    searchClubs: async function(keyword, resolve) {
+        console.log("searchClubs: " + keyword)
+        APIs.searchClubs(keyword, this, (res) => {
+            let data = res
             let clubs = []
             data.forEach((club) => {
                 clubs.push({
@@ -657,7 +662,7 @@ Page({
             })
             this.loading(false)
             console.log(clubs)
-            return clubs
+            resolve (clubs)
         })
     },
     onTapSearchResult: function(e) {

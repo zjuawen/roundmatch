@@ -12,15 +12,13 @@ const errorResponse = require("../utils/util").errorResponse
 
 // 云函数入口函数
 exports.main = async (request, result) => {
-  // const wxContext = context// cloud.getWXContext()
   let event = request.query
 
   console.log('gameService')
   console.log(event)
-  // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
   let action = event.action
-  // console.log("action: " + action)
+  
   let data = null
   if (action == 'save') {
     data = await saveGameData(event.clubid, event.gamedata)

@@ -27,7 +27,7 @@ exports.main = async (request, result) => {
   // console.log("action: " + action)
   let data = null
   if (action == 'join') {
-    data = await joinClub(wxContext, event)
+    data = await joinClub(event.clubid, event.userInfo, event.password)
   } else if (action == 'list') {
     let private = await listPrivateClub(event.openid)
     // let public = await listPublicClub( wxContext )
@@ -74,6 +74,64 @@ trimClubField = (data) => {
     delete item.delete
   }
   return item
+}
+
+//加入俱乐部
+joinClub = async (clubid, userInfo, password = null) => {
+  if( typeof userInfo === 'string') {
+    userInfo = JSON.parse(userInfo)
+  }
+  
+  let openid = userInfo.openid
+  
+  let count = await sequelizeExecute(
+    db.collection('players').count({
+      where: {
+        openid: openid,
+        clubid: clubid
+      }
+    })
+  )
+  if (count > 0) {
+    return ({
+      status: "fail",
+      errMsg: '已经加入俱乐部!'
+    })
+  }
+
+  let passwordCheck = await checkPassword(clubid, password)
+  if (passwordCheck == false) {
+    return ({
+      status: "fail",
+      errMsg: '密码错误！'
+    })
+  }
+
+  //add user info
+  return addUserToClub(openid, clubid, userInfo)
+
+}
+
+//密码校验
+checkPassword = async (clubid, password) => {
+
+  let club = await sequelizeExecute(
+    db.collection('clubs').findByPk(clubid, {
+      raw: true
+    }))
+
+  console.log(club)
+
+  let result = false
+  if (club != null) {
+    if (club.password == null || club.password.length == 0) {
+      result = true
+    } else if (club.password == password) {
+      result = true
+    }
+  }
+  return result
+
 }
 
 //查找包含关键字的俱乐部
@@ -274,96 +332,6 @@ loadClubData = async (openid, uacs) => {
 
 }
 
-// //加入俱乐部
-// joinClub = async (wxContext, event) => {
-//   let clubid = event.clubid
-//   let userInfo = event.userInfo
-//   let password = event.password
-
-//   return await db.collection('players')
-//     .where({
-//       openid: wxContext.OPENID,
-//       clubid: clubid
-//     })
-//     .get()
-//     .then(async res => {
-//       console.log(res)
-//       if (res.data.length > 0) {
-//         return ({
-//           status: "fail",
-//           errMsg: '已经加入俱乐部!'
-//         })
-//       }
-
-//       let passwordCheck = await checkPassword(clubid, password)
-//       if (passwordCheck == false) {
-//         return ({
-//           status: "fail",
-//           errMsg: '密码错误！'
-//         })
-//       }
-
-//       //add user info
-//       return addUserToClub(clubid, wxContext.OPENID, userInfo)
-//     })
-// }
-
-// //密码校验
-// checkPassword = async (clubid, password) => {
-
-//   return await db.collection('clubs')
-//     .doc(clubid)
-//     // .where({
-//     //   _id: clubid
-//     // })
-//     .get()
-//     .then(res => {
-//       console.log(res)
-//       let result = false
-//       if (res.data != null) {
-//         let club = res.data
-//         if (club.password == null || club.password.length == 0) {
-//           result = true
-//         } else if (club.password == password) {
-//           result = true
-//         }
-//       }
-//       return result
-//     })
-// }
-
-addUserToClub = async (clubid, openid, userInfo) => {
-  let dt = db.serverDate()
-
-  let player = await sequelizeExecute(
-      db.collection('players').create({
-        openid: openid,
-        clubid: clubid,
-        enable: true,
-        order: 1,
-        name: userInfo.name,
-        avatarUrl: userInfo.avatarUrl,
-        gender: userInfo.gender,
-        createDate: dt
-      })
-    )
-    .then(res => {
-      console.log(res)
-      if (res.errMsg != "collection.add:ok") {
-        return {
-          errMsg: res.errMsg
-        }
-      } else {
-        return {
-          _id: res._id,
-          openid: openid,
-          clubid: clubid,
-          createDate: dt
-        }
-      }
-    })
-}
-
 checkOwnedClub = async (openid) => {
   let vip = await isVipUser(openid)
   if (vip) {
@@ -433,6 +401,8 @@ createClub = async (info, userInfo) => {
       public: info.public,
       delete: false,
       createDate: dt
+    }, {
+      raw: true
     })
   )
 
@@ -441,13 +411,47 @@ createClub = async (info, userInfo) => {
   if (club instanceof db.clubs) {
     let clubid = club._id
     // let dataTableRes = await createClubGameDataTable(clubid, info)
-    await addUserToClub(clubid, openid, userInfo)
+    await addUserToClub(openid, clubid, userInfo)
 
     return club
   } else {
     return null
   }
 
+}
+
+addUserToClub = async (openid, clubid, userInfo) => {
+  let dt = db.serverDate()
+  let player = await sequelizeExecute(
+    db.collection('players').create({
+      openid: openid,
+      clubid: clubid,
+      enable: true,
+      order: 1,
+      name: userInfo.name,
+      avatarUrl: userInfo.avatarUrl,
+      gender: userInfo.gender,
+      createDate: dt
+    },{
+      raw: true
+    })
+  )
+
+  console.log(player)
+
+  if (player instanceof db.players) {
+    return {
+      _id: player._id,
+      openid: openid,
+      clubid: clubid,
+      createDate: dt
+    }
+  }
+
+  // todo
+  return {
+    errMsg: res.errMsg
+  }
 }
 
 //更新俱乐部信息
@@ -944,92 +948,3 @@ incMatchCountAllow = async (clubid) => {
   // })
 }
 
-//加入俱乐部
-joinClub = async (event) => {
-  let openid = event.openid
-  let clubid = event.clubid
-  let userInfo = event.userInfo
-  let password = event.password
-
-  let count = await sequelizeExecute(
-    db.collection('players').count({
-      where: {
-        openid: openid,
-        clubid: clubid
-      }
-    })
-  )
-  if (count > 0) {
-    return ({
-      status: "fail",
-      errMsg: '已经加入俱乐部!'
-    })
-  }
-
-  let passwordCheck = await checkPassword(clubid, password)
-  if (passwordCheck == false) {
-    return ({
-      status: "fail",
-      errMsg: '密码错误！'
-    })
-  }
-
-  //add user info
-  return addUserToClub(openid, clubid, userInfo)
-
-}
-
-//密码校验
-checkPassword = async (clubid, password) => {
-
-  let club = await sequelizeExecute(
-    db.collection('clubs').findByPk(clubid, {
-      raw: true
-    }))
-
-  console.log(club)
-
-  let result = false
-  if (club != null) {
-    if (club.password == null || club.password.length == 0) {
-      result = true
-    } else if (club.password == password) {
-      result = true
-    }
-  }
-  return result
-
-}
-
-addUserToClub = async (openid, clubid, userInfo) => {
-  let dt = db.serverDate()
-  let player = await sequelizeExecute(
-    db.collection('players').create({
-      openid: openid,
-      clubid: clubid,
-      enable: true,
-      order: 1,
-      name: userInfo.name,
-      avatarUrl: userInfo.avatarUrl,
-      gender: userInfo.gender,
-      createDate: dt
-    })
-  )
-
-  console.log(player)
-
-  if (player instanceof db.players) {
-
-    return {
-      _id: player._id,
-      openid: openid,
-      clubid: clubid,
-      createDate: dt
-    }
-  }
-
-  // todo
-  return {
-    errMsg: res.errMsg
-  }
-}

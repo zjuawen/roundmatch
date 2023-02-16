@@ -17,15 +17,12 @@ const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
 
 // 云函数入口函数
 exports.main = async (request, result) => {
-  // const wxContext = context;// cloud.getWXContext()
   let event = request.query
 
   console.log('userService')
-  // console.log(event)
-  // console.log(cloud.DYNAMIC_CURRENT_ENV)
+  console.log(event)
 
   let action = event.action
-  console.log("action: " + action)
 
   let data
   if (action == 'login') {
@@ -53,9 +50,6 @@ exports.main = async (request, result) => {
   } else if (action == 'readconfig') {
     let key = event.key
     data = await readUserConfig(event.openid, key)
-    // } else if( action == 'info') {
-    //   let key = event.key
-    //   data = await readPlayerInfo(event.openid)
   } else if (action == 'isVip') {
     data = await isUserVip(event.openid)
   }
@@ -74,7 +68,9 @@ login = async (code) => {
   console.log(code2Session)
   let openid = code2Session.openid
 
-  let {userInfo} = await readUserDetail(openid)
+  let {
+    userInfo
+  } = await readUserDetail(openid)
 
   console.log(userInfo)
 
@@ -225,7 +221,8 @@ readUserConfig = async (openid, key) => {
       where: {
         openid: openid,
         key: key,
-      }
+      },
+      raw: true
     })
   )
   console.log(doc)
@@ -235,66 +232,31 @@ readUserConfig = async (openid, key) => {
   return null
 }
 
-
-//读取指定用户信息
-readPlayerInfo = async (openid) => {
-  let doc = await db.collection('players')
-    .where({
-      openid: openid,
-      key: key,
-    })
-    .get()
-    .then(res => {
-      return res.data
-    })
-
-  if (doc != null && doc.length > 0) {
-    return doc[0].value
-  }
-  return null
-}
-
 //更新用户配置
 updateUserConfig = async (openid, key, value) => {
-  let doc = await db.collection('userconfig')
-    .where({
+  console.log('updateUserConfig: ' + openid + ', ' + key + ', ' + value)
+
+  let exist = await sequelizeExecute(
+    db.collection('userconfig').findOne({
+      where: {
+        openid: openid,
+        key: key,
+      },
+      raw: true
+    })
+  )
+
+  let doc = await sequelizeExecute(
+    db.collection('userconfig').upsert({
+      _id: exist ? exist._id : null,
       openid: openid,
       key: key,
+      value: value,
     })
-    .get()
-    .then(res => {
-      return res.data
-    })
-
-  if (doc != null && doc.length > 0) {
-    return await db.collection('userconfig')
-      .doc(doc[0]._id)
-      .update({
-        data: {
-          value: value,
-        }
-      })
-      .then(res => {
-        console.log(res)
-        // return res.data
-        let data = res.errMsg
-        return data
-      })
-  } else {
-    return await db.collection('userconfig')
-      .add({
-        data: {
-          openid: openid,
-          key: key,
-          value: value,
-        }
-      })
-      .then(res => {
-        console.log(res)
-        // return res.data
-        let data = res.errMsg
-        return data
-      })
+  )
+  console.log(doc)
+  return {
+    data: doc
   }
 }
 
@@ -321,9 +283,9 @@ readUserDetail = async (openid) => {
   if (userInfo != null) {
     let avatarUrl = userInfo.avatarUrl
     // console.log(avatarUrl)
-    if ((avatarUrl != null) && (avatarUrl.length > 0) 
-      && !avatarUrl.startsWith('http://') 
-      && !avatarUrl.startsWith('cloud://')) {
+    if ((avatarUrl != null) && (avatarUrl.length > 0) &&
+      !avatarUrl.startsWith('http://') &&
+      !avatarUrl.startsWith('cloud://')) {
       userInfo.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
     }
     // console.log(userInfo)
@@ -368,7 +330,8 @@ searchUserInClub = async (clubid, keyword) => {
       },
       order: [
         ['order', 'DESC']
-      ]
+      ],
+      raw: true
     })
   )
 

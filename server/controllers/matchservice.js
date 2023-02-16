@@ -11,15 +11,13 @@ const errorResponse = require("../utils/util").errorResponse
 
 // 云函数入口函数
 exports.main = async (request, result) => {
-  // const wxContext = context;// cloud.getWXContext()
   let event = request.query
 
   console.log('matchService')
   console.log(event)
-  // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
   let action = event.action
-  // console.log("action: " + action)
+
   let data = null
   if (action == 'create') {
     data = await createMatchData(event.type, event.players)

@@ -12,14 +12,13 @@ const errorResponse = require("../utils/util").errorResponse
 
 // 云函数入口函数
 exports.main = async (request, result) => {
-  // const wxContext = context// cloud.getWXContext()
   let event = request.query
 
   console.log('systemService')
   console.log(event)
-  // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
   let action = event.action
+
   let data = null
   if (action == 'notices') {
     data = await getNotices(event.openid, event.page)
@@ -50,7 +49,7 @@ isAuditing = async () => {
   )
 
   console.log(audit)
-  
+
   if (audit != null && audit.value == 'true') {
     return {
       auditing: true
