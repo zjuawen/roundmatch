@@ -106,12 +106,12 @@ const queryClubs = async (offset, pageSize, accessToken) => {
 
 const main = async () => {
 
-  // let accessToken = await wxappApi.getAccessToken()
-  // console.log('getAccessToken: ')
-  // console.log(accessToken)
-  // accessToken = accessToken.accessToken
+  let accessToken = await wxappApi.getAccessToken()
+  console.log('getAccessToken: ')
+  console.log(accessToken)
+  accessToken = accessToken.accessToken
 
-  let accessToken = '63_oZA4qjlCKQ_1b_ibgV9R4_MVvP1e6mBbd_aNzoJutLF-FK24NUFpRRxbnUmNnbRYPkj-fWTtZQ9TuJdBJhvPAJsbaLq_ByTNLIsGLBiyGNoCkvje0cnHLCgF8NoQSYiADAMOU'
+  // let accessToken = '65_AGCQaNrqyrZLWktDvIcBbAXwACZOzTOtZfRIYvd3gKzWg4o5tCn9074f2Smnh7wTsn90GjsOKmfn0XYRPrYSGw-DbQ916ulpgxRTdfJSLI4RoeOCR5ktU7-0pVEWKVdADAGUF'
 
   let offset = 0
   let page = 1
