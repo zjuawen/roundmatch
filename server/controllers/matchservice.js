@@ -388,7 +388,7 @@ deleteMatch = async (clubid, matchid) => {
     console.log("deleting games...")
 
     gameUpdated = await sequelizeExecute(
-      db.collection('gamess').update({
+      db.collection('games').update({
         delete: true
       }, {
         where: {
