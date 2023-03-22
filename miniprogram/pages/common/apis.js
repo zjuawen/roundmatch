@@ -1,6 +1,6 @@
 /******** common funtions below *******************/
 // const ServerUrl = 'http://localhost:8300/'
-const ServerUrl = 'https://roundmatch.microripples.cn/' 
+const ServerUrl = 'https://roundmatch.microripples.cn/'
 const showError = require('./utils').showError
 
 function commonCallFuction(that, callback, serviceName, actionName, params) {
@@ -14,8 +14,7 @@ function commonCallFuction(that, callback, serviceName, actionName, params) {
         data = params
         data.action = action
     }
-    console.log(func + " " + action + " with data:")
-    console.log(data)
+    console.log(func + " " + action + " with data: " + JSON.stringify(data))
     wx.request({
         url: ServerUrl + 'api/' + serviceName,
         data: data,
@@ -24,8 +23,7 @@ function commonCallFuction(that, callback, serviceName, actionName, params) {
         },
         success(res) {
             let resData = res.data
-            console.log(func + " " + action + " return")
-            console.log(resData)
+            console.log(func + " " + action + " return: " + JSON.stringify(resData))
             if (resData.code == 0) {
                 let data = resData.data
                 if (typeof data == 'string') {
@@ -34,7 +32,7 @@ function commonCallFuction(that, callback, serviceName, actionName, params) {
                 commonSuccessHandler(data, that, callback)
             }
         },
-        fail: err => {
+        fail(err) {
             let service = func + '(' + actionName + ')'
             console.error('[服务] ' + service + ' 调用失败', err)
             commonErrorHandler(that, {
@@ -42,6 +40,50 @@ function commonCallFuction(that, callback, serviceName, actionName, params) {
                 err
             })
         }
+    })
+}
+
+function commonSyncCallFuction(that, serviceName, actionName, params) {
+    commonStartCloudFunction(that)
+    let func = serviceName
+    let action = actionName
+    let data = {
+        action: action
+    }
+    if (params) {
+        data = params
+        data.action = action
+    }
+    console.log(func + " " + action + " with data: " + JSON.stringify(data))
+    return new Promise((resolve, reject) => {
+        wx.request({
+            url: ServerUrl + 'api/' + serviceName,
+            data: data,
+            header: {
+                'content-type': 'application/json'
+            },
+            async success(res) {
+                let resData = res.data
+                console.log(func + " " + action + " return: " + JSON.stringify(resData))
+                if (resData.code == 0) {
+                    let data = resData.data
+                    if (typeof data == 'string') {
+                        data = JSON.parse(data)
+                    }
+                    resolve(data);
+                    // commonSuccessHandler(data, that, callback)
+                }
+            },
+            fail (err) {
+                let service = func + '(' + actionName + ')'
+                reject(err)
+                console.error('[服务] ' + service + ' 调用失败', err)
+                commonErrorHandler(that, {
+                    service,
+                    err
+                })
+            }
+        })
     })
 }
 
@@ -101,9 +143,9 @@ function login(code, that, callback) {
     })
 }
 
-// function loginSync(code, that) {
-//     return await _login(code, that)
-// }
+async function loginSync(code, that) {
+    return await commonSyncCallFuction(that, 'userService', 'login', {code})
+}
 
 // async function _login(code, that){
 //     return new Promise(function(reslove, reject) {
@@ -269,8 +311,8 @@ function getNotices(that, page, callback) {
     })
 }
 
-function isAuditing(that, callback) {
-    commonCallFuction(that, callback, 'systemService', 'auditing')
+async function isAuditing(that) {
+    return await commonSyncCallFuction(that, 'systemService', 'auditing')
 }
 
 function msgSecCheck(that, content, callback) {
@@ -319,8 +361,7 @@ function uploadImage(filePath, type, that, callback) {
         },
         success(res) {
             let resData = res.data
-            console.log("uploadImage return")
-            console.log(resData)
+            console.log("uploadImage return: " + JSON.stringify(resData))
 
             if (typeof resData === 'string') {
                 // console.log('jsonify res data')
@@ -337,7 +378,7 @@ function uploadImage(filePath, type, that, callback) {
             }
         },
         fail: function(err) {
-            console.log(err);
+            console.error(err);
         }
     })
 
@@ -350,6 +391,7 @@ module.exports = {
     login: login,
     getUserDetail: getUserDetail,
     isVip: isVip,
+    loginSync: loginSync,
 
     // club api
     getClubInfo: getClubInfo,

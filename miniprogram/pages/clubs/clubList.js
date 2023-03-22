@@ -68,13 +68,15 @@ Page({
      */
     onLoad: async function(options) {
         console.log("clublist onload")
-        // this.getOpenid()
+        this.loadUserInfoLocal()
         await this.userLogin()
-        console.log("userLogin finished")
+        console.log("onload: userLogin finished: " + this.data.openid)
 
-        this.getUserDetail()
-        this.isAuditing()
+        await this.isAuditing()
+
+        this.getUserDetail(false)
         this.readNotices()
+
         let action = options.action
         if (action == 'sharejoin') {
             let clubid = options.clubid
@@ -83,18 +85,21 @@ Page({
                 sharejoin: true,
                 sharedclubid: clubid
             })
-            if (!this.data.login) {
-                wx.showLoading({
-                    title: '检查授权信息',
-                    mask: true
-                })
-            } else {
-                this.onJoinClub(clubid)
-            }
         }
+
+        if (this.data.openid) {
+            this.loadClubs(this.data.openid)
+        }
+
+        if (action == 'sharejoin') {
+            let clubid = options.clubid
+            this.onJoinClub(clubid)
+        }
+
         if (!this.data.isAuditing) {
             this.checkCreateClubEnable()
         }
+
         this.setData({
             search: this.search.bind(this)
         })
@@ -103,12 +108,8 @@ Page({
      * 生命周期函数--监听页面初次渲染完成
      */
     onReady: function() {
-        // this.getUserDetail()
-        // this.loadUserInfo()
-        if (this.data.openid) {
-            this.loadClubs()
-        }
-        // this.createVideoAd()
+        console.log("onReady")
+
         setTimeout(this.getBannerADHeight, 2000)
     },
     /**
@@ -193,10 +194,13 @@ Page({
         let that = this
         await APIs.updateUserInfo(this.data.openid, userInfo, this, (res) => {
             // console.log(res)
-            if( res.count == 1){
+            if (res.count == 1) {
                 that.showAuthDialog(false)
             }
         })
+        if (this.data.userInfoCallback) {
+            this.data.userInfoCallback()
+        }
     },
 
     loading: function(value) {
@@ -205,79 +209,70 @@ Page({
         })
     },
 
-    userLogin: async function() {
+    loadUserInfoLocal: function() {
+        console.log('loadUserInfoLocal')
         let openid = getGlobalData('openid')
         let userInfo = getGlobalData('userInfo')
         if (openid) {
-            // console.log('stored openid: ' + openid)
+            console.log('load openid: ' + JSON.stringify(openid))
             this.setData({
                 openid: openid,
+                login: true
             })
-        } 
-        if( userInfo ){
-           this.setData({
+        }
+        if (userInfo) {
+            console.log('load userInfo: ' + JSON.stringify(userInfo))
+            this.setData({
                 userInfo: userInfo,
                 avatarUrl: userInfo.avatarUrl,
                 nickname: userInfo.name,
             })
         }
-        if( openid && userInfo){
-            this.setData({login: true})
-        } else { //if( openid == null){
-            console.log('user not login, login now')
-            let code = await Utils.wxLogin();
-            console.log('Utils.wxLogin return')
-            console.log(code)
-            if (code == null) {
-                Utils.showError('微信授权登录失败')
-                return
-            }
-            let that = this
-            await APIs.login(code, this, (res) => {
-                let {openid, userInfo} = res
-                // console.log('get openid from userservice: ' + openid)
-                if (openid != null && openid.length > 0) {
-                    saveGlobalData('openid', openid)
-                    that.setData({
-                        openid,
-                        login: true
-                    })
-                    that.loadClubs(openid)
-                } else {
-                    that.showAuthDialog(true)
-                    return
-                }
-                if( userInfo ){
-                    saveGlobalData('userInfo', userInfo)
-                
-                    that.setData({
-                        userInfo: userInfo,
-                        avatarUrl: userInfo.avatarUrl,
-                        nickname: userInfo.name,
-                        login: true
-                    })
-                    that.showAuthDialog(false)
-                } else {
-                    that.showAuthDialog(true)
-                }
-                
-            })
-        // } else if( userInfo == null){
-        //     let that = this
-        //     await APIs.getUserDetail(openid, this, (res) => {
-        //         const{userInfo} = res
-        //         if( userInfo != null){
-        //             if( typeof userInfo === 'string'){
-        //                 userInfo = JSON.parse(userInfo)
-        //             }
-        //             that.setData({
-        //                 userInfo: userInfo,
-        //                 avatarUrl: userInfo.avatarUrl,
-        //                 nickname: userInfo.name,
-        //             })
-        //         }
-        //     })
+        console.log('loadUserInfoLocal finished')
+    },
+
+    userLogin: async function() {
+        console.log('user not login, login now')
+        let code = await Utils.wxLogin();
+        console.log('Utils.wxLogin return: ' + JSON.stringify(code))
+        if (code == null) {
+            Utils.showError('微信授权登录失败')
+            return
         }
+
+        let that = this
+        console.log('call APIs.login with code: ' + JSON.stringify(code))
+        let res = await APIs.loginSync(code, this)
+        console.log('call APIs.login return: ' + JSON.stringify(res))
+        let {
+            openid,
+            userInfo
+        } = res
+
+        if (userInfo) {
+            saveGlobalData('userInfo', userInfo)
+
+            that.setData({
+                userInfo: userInfo,
+                avatarUrl: userInfo.avatarUrl,
+                nickname: userInfo.name,
+                login: true
+            })
+            // that.showAuthDialog(false)
+        }
+
+        // console.log('get openid from userservice: ' + openid)
+        if (openid != null && openid.length > 0) {
+            saveGlobalData('openid', openid)
+            that.setData({
+                openid,
+                login: true
+            })
+            // that.loadClubs(openid)
+        } else {
+            // return await that.showAuthDialog(true)
+        }
+
     },
     loadUserInfo: async function() {
         // 获取用户信息
@@ -305,7 +300,7 @@ Page({
                 })
                 if (that.data.sharejoin) {
                     wx.hideLoading()
-                    that.showAuthDialog(true, "需要用户昵称，头像等信息以进行下一步操作")
+                    // that.showAuthDialog(true, "需要用户昵称，头像等信息以进行下一步操作")
                 } else {
                     this.showAuthDialog(false)
                 }
@@ -334,12 +329,11 @@ Page({
 
     isAuditing: async function() {
         let that = this
-        await APIs.isAuditing(this, async res => {
-            // console.log('isAuditing')
-            // console.log(res)
-            that.setData({
-                auditing: res.auditing
-            })
+        let res = await APIs.isAuditing(this)
+
+        console.log(res)
+        that.setData({
+            auditing: res.auditing
         })
     },
     // getOpenid: async function() {
@@ -348,36 +342,17 @@ Page({
     //         openid: openid
     //     })
     // },
-    getUserDetail: async function() {
-        this.setData({
-            detailPedding: true
-        })
-        let userInfo = getGlobalData('userInfo')
-        // console.log('userInfo')
-        // console.log(userInfo)
-        if (userInfo != null) {
-            this.setData({
-                login: true,
-                userInfo: userInfo,
-                avatarUrl: userInfo.avatarUrl,
-            })
-            if (this.data.sharejoin) {
-                wx.hideLoading()
-                this.onJoinClub(this.data.sharedclubid)
-            }
-        } else {
+    getUserDetail: function(force = false) {
+        console.log('getUserDetail ' + force)
+        let userInfo = this.data.userInfo
+        if (userInfo == null && force) {
+            console.log('getUserDetail: auth')
             this.showAuthDialog(true, '需要授权获取用户昵称，头像等信息')
-            // if (this.data.sharejoin) {
-            //     wx.hideLoading()
-            //     this.showAuthDialog(true, '需要授权获取用户昵称，头像等信息')
-            // } 
         }
-        this.setData({
-            detailPedding: false
-        })
-
+        console.log('getUserDetail finished')
     },
     loadClubs: function(openid = null) {
+        console.log('loadClubs with: ' + openid)
         let that = this
         if (openid == null) {
             openid = getGlobalData('openid')
@@ -387,12 +362,27 @@ Page({
             return
         }
         APIs.loadClubs(openid, this, res => {
+            let clubs = res.private
             that.setData({
-                clubs: res.private,
+                clubs: clubs,
                 publicClubs: [], //data.public
             })
+            // console.log('loadClubs: ' + clubs)
+            console.log('loadClubs clubs: ' + clubs.length)
+            // 已加入的俱乐部自动隐藏邀请
+            if (this.data.sharejoin && this.data.joinDialogShow) {
+                let found = clubs.find(({
+                    _id
+                }) => _id === this.data.sharedclubid)
+                console.log('loadClubs: club already joined: ' + (found != null))
+                if ((found != null)) {
+                    this.setData({
+                        joinDialogShow: false
+                    })
+                }
+            }
             if (this.data.clubs.length > 0 && !this.data.login && !this.data.detailPedding) {
-                this.showAuthDialog(true, "微信修改授权机制，需要重新授权获取用户信息")
+                // this.showAuthDialog(true, "微信修改授权机制，需要重新授权获取用户信息")
             }
         })
     },
@@ -414,8 +404,12 @@ Page({
                 title: '获取俱乐部信息失败',
                 icon: 'none',
             })
+            console.error(e)
             return
         }
+        this.showJoinConfirm(data)
+    },
+    showJoinConfirm: function(data) {
         this.setData({
             selected: data,
             joinDialogShow: true,
@@ -428,7 +422,7 @@ Page({
             password: data
         })
     },
-    tapDialogButton(e) {
+    onTapJoinClub(e) {
         let btnIndex = e.detail.index
         if (btnIndex === 1) {
             this.loading(true)
@@ -480,28 +474,42 @@ Page({
     },
     joinClub: function(clubid) {
         let that = this
-        APIs.joinClub(clubid, this.data.userInfo, this.data.password,
+        let needAuth = false
+        let userInfo = this.data.userInfo
+        if (!userInfo) {
+            needAuth = true
+            userInfo = {
+                openid: this.data.openid,
+                avatarUrl: "/images/user-unlogin.png"
+            }
+        }
+        APIs.joinClub(clubid, userInfo, this.data.password,
             this, res => {
                 let data = res
                 if (data.status == 'fail') {
                     wx.showToast({
                         title: data.errMsg,
-                        icon: 'none',
+                        icon: 'none'
                     })
                 } else if (data._id.length > 0) {
                     wx.showToast({
-                        icon: 'success'
+                        icon: 'success',
+                        duration: 300,
                     })
                     that.data.clubs.push(that.data.selected)
                     that.setData({
                         clubs: that.data.clubs
                     })
+                    if (needAuth) {
+                        this.showAuthDialog(true)
+                    }
                 }
                 that.setData({
                     joinDialogShow: false
                 })
             }
         )
+
     },
     onGetUserInfo: function(e) {
         console.log(e)
@@ -519,13 +527,16 @@ Page({
             this.onClickPublicClub(e)
         }
     },
-    showAuthDialog: function(show, msg) {
+    showAuthDialog: function(show, msg, callback) {
         if (show) {
             this.setData({
                 authDialogShow: show,
                 // authDialogMessage: msg,
             })
             console.log(this.data.authDialogMessage)
+            this.setData({
+                userInfoCallback: callback
+            })
         } else {
             this.setData({
                 authDialogShow: show,
@@ -533,29 +544,27 @@ Page({
         }
     },
     onJoinClub: function(clubid) {
-        if (!this.data.login) {
-            wx.showToast({
-                title: '请先授权',
-                icon: 'error'
-            })
-            return
-        }
         wx.showLoading({
             title: '获取俱乐部信息',
             mask: true
         })
+        let clubs = this.data.clubs
+        console.log('onJoinClub clubs: ' + clubs.length)
+        if (clubs && clubs.length > 0) {
+            // console.log(clubs)
+            let found = clubs.find(({
+                _id
+            }) => _id === clubid)
+            // console.log(found)
+            console.log('onJoinClub: club already joined: ' + (found != null))
+            wx.hideLoading()
+            return
+        }
         APIs.getClubInfo(clubid, this, res => {
             wx.hideLoading()
             let data = res
-            let e = {
-                currentTarget: {
-                    dataset: {
-                        item: data
-                    }
-                }
-            }
             if (data != null) {
-                this.onClickPublicClub(e)
+                this.showJoinConfirm(data)
             } else {
                 wx.showToast({
                     title: '错误：俱乐部信息不存在'
@@ -662,7 +671,7 @@ Page({
             })
             this.loading(false)
             console.log(clubs)
-            resolve (clubs)
+            resolve(clubs)
         })
     },
     onTapSearchResult: function(e) {

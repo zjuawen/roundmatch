@@ -114,7 +114,7 @@
 
 </mp-dialog>
 
-<mp-dialog title="加入俱乐部" show="{{joinDialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
+<mp-dialog title="加入俱乐部" show="{{joinDialogShow}}" bindbuttontap="onTapJoinClub" buttons="{{buttons}}">
 	<block wx:if="{{!selected.locked}}">
 		<view>确定要加入"{{selected.wholeName}}"?</view>
 	</block>

@@ -3,14 +3,10 @@
     "miniprogram": {
       "list": [
         {
-          "name": "db guide",
-          "pathName": "pages/databaseGuide/databaseGuide",
-          "query": ""
-        },
-        {
-          "name": "pages/players/playerList",
-          "pathName": "pages/players/playerList",
-          "query": "clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0&action=new&type=group",
+          "name": "sharejoin",
+          "pathName": "pages/clubs/clubList",
+          "query": "action=sharejoin&clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv",
+          "launchMode": "default",
           "scene": null
         }
       ]
