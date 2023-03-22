@@ -1,0 +1,8 @@
+<!--error.wxml-->
+<view class="container">
+
+  <view >
+    错误信息
+  </view>
+
+</view>

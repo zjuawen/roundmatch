@@ -97,16 +97,24 @@
 </button>
 
 
-<mp-dialog title="用户授权" show="{{authDialogShow}}" bindbuttontap="onCancelAuthDialog" buttons="{{[{text: '取消'}]}}">
-	<view style="margin: 40rpx;" >{{authDialogMessage}}</view>
-	<button 
+<mp-dialog title="完善用户信息" show="{{authDialogShow}}" bindbuttontap="onCancelAuthDialog" buttons="{{[{text: '取消'}]}}">
+	<view wx:if="{{authDialogMessage != null}}" style="margin: 40rpx;" >{{authDialogMessage}}</view>
+	<button class="avatar-wrapper" open-type="chooseAvatar" bind:chooseavatar="onChooseAvatar">
+  <image class="avatar" src="{{avatarUrl}}"></image>
+</button> 
+<input type="nickname" class="weui-input" value="{{nickname}}"  placeholder="请输入昵称" bindchange="onNickNameChange"/>
+	<!-- <button 
 		class="weui-btn" type="primary" size="default"
 		bindtap="loadUserInfo">
 			点击获取授权
-		</button>
+		</button> -->
+
+	<view style="height: 40rpx;" />
+	<button  class="weui-btn" type="primary" size="default" bindtap="onConfirmUserInfo">确定</button>
+
 </mp-dialog>
 
-<mp-dialog title="加入俱乐部" show="{{joinDialogShow}}" bindbuttontap="tapDialogButton" buttons="{{buttons}}">
+<mp-dialog title="加入俱乐部" show="{{joinDialogShow}}" bindbuttontap="onTapJoinClub" buttons="{{buttons}}">
 	<block wx:if="{{!selected.locked}}">
 		<view>确定要加入"{{selected.wholeName}}"?</view>
 	</block>

@@ -1,0 +1,21 @@
+{
+  "name": "exported",
+  "version": "1.0.0",
+  "description": "",
+  "main": "exportData.js",
+  "type": "module",
+  "scripts": {
+    "start": "node exportData.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@cloudbase/manager-node": "^4.2.0",
+    "axios": "^1.1.3",
+    "co-wechat-api": "^3.11.0",
+    "download": "^8.0.0",
+    "sleep": "^6.3.0"
+  }
+}
