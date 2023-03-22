@@ -120,11 +120,27 @@ upSertUserInfo = async (openid, userInfo) => {
 
   if (obj != null) {
     console.log('updateUserInfo')
+
+    let playerCount = await sequelizeExecute(
+      db.collection('players').update({
+        name: userInfo.name,
+        avatarUrl: userInfo.avatarUrl,
+        gender: userInfo.gender,
+      },{
+        where: {
+          openid: openid
+        }
+      })
+    )
+    console.log('update player count: ' + playerCount)
+
     return await updateUserInfo(openid, userInfo)
   } else {
     console.log('addUserInfo')
     return await addUserInfo(openid, userInfo)
   }
+
+
 
 }
 
