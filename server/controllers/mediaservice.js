@@ -47,7 +47,7 @@ upload = async (file, type) => {
   }
   console.log(fileName)
   fs.renameSync(inputFile, process.env.UPLOAD_LOCAL_DIRECTORY + fileName)
-  if (fileName != null && fileName.length > 0 && !fileName.startsWith('http://') && !fileName.startsWith('cloud://')) {
+  if (fileName != null && fileName.length > 0 && !fileName.startsWith('http') && !fileName.startsWith('cloud://')) {
     fileName = SERVER_URL_UPLOADS + fileName
   }
   return {

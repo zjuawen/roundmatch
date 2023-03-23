@@ -175,7 +175,7 @@ getClubInfo = async (clubid) => {
       console.log('warning: cloud image exist!')
     }
 
-    if (logo != null && logo.length > 0 && !logo.startsWith('http://') && !logo.startsWith('cloud://')) {
+    if (logo != null && logo.length > 0 && !logo.startsWith('http') && !logo.startsWith('cloud://')) {
       club.logo = SERVER_URL_UPLOADS + logo
     }
 
@@ -318,7 +318,7 @@ loadClubData = async (openid, uacs) => {
       console.log('warning: cloud image exist!')
     }
 
-    if (logo != null && logo.length > 0 && !logo.startsWith('http://') && !logo.startsWith('cloud://')) {
+    if (logo != null && logo.length > 0 && !logo.startsWith('http') && !logo.startsWith('cloud://')) {
       value.logo = SERVER_URL_UPLOADS + logo
     }
     // console.log(value.logo)

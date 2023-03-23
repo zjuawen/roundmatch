@@ -300,7 +300,7 @@ readUserDetail = async (openid) => {
     let avatarUrl = userInfo.avatarUrl
     // console.log(avatarUrl)
     if ((avatarUrl != null) && (avatarUrl.length > 0) &&
-      !avatarUrl.startsWith('http://') &&
+      !avatarUrl.startsWith('http') &&
       !avatarUrl.startsWith('cloud://')) {
       userInfo.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
     }
@@ -328,7 +328,17 @@ listUserInClub = async (clubid, pageNum, pageSize) => {
     })
   )
 
+  players.forEach(player => {
+    let avatarUrl = player.avatarUrl
+    if ((avatarUrl != null) && (avatarUrl.length > 0) &&
+      !avatarUrl.startsWith('http') &&
+      !avatarUrl.startsWith('cloud://')) {
+      player.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
+    }
+  })
+   
   console.log(players)
+
 
   return players
 }
