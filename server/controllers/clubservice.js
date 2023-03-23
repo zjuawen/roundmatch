@@ -548,6 +548,15 @@ statisUserInClub = async (clubid, date, minMatchCount) => {
     })
   )
 
+  players.forEach(player => {
+    let avatarUrl = player.avatarUrl
+    if ((avatarUrl != null) && (avatarUrl.length > 0) &&
+      !avatarUrl.startsWith('http') &&
+      !avatarUrl.startsWith('cloud://')) {
+      player.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
+    }
+  })
+
   console.log(players)
   // let players = res.data
   let matches = await listClubMatches(clubid, date)
