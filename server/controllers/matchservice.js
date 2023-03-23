@@ -8,6 +8,7 @@ const validateSession = require("../utils/util").validateSession
 const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
+const userAvatarFix = require("../utils/util").userAvatarFix
 
 // 云函数入口函数
 exports.main = async (request, result) => {
@@ -349,6 +350,8 @@ readMatch = async (clubid, matchid) => {
     })
   )
 
+  players = userAvatarFix(players)
+  
   console.log(players)
 
   await games.forEach(game => {

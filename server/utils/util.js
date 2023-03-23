@@ -16,6 +16,22 @@ const password = 'Simple'
 const key = crypto.scryptSync(password, 'salt', 24)
 const iv = Buffer.alloc(16, 0)
 
+const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
+
+exports.userAvatarFix = (players) => {
+  players.forEach(player => {
+    let avatarUrl = player.avatarUrl
+    if ((avatarUrl != null) && (avatarUrl.length > 0) &&
+      !avatarUrl.startsWith('http') &&
+      !avatarUrl.startsWith('cloud://')) {
+      player.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
+    }
+  })
+  console.log( 'after userAvatarFix: ' + JSON.stringify(players))
+  
+  return players
+}
+
 exports.queryLike = (keyword, likeColumns) => {
     // console.log(likeColumns)
     let query = {}
@@ -150,47 +166,3 @@ exports.saveBase64ToFile = (base64, filepath) => {
     })
 }
 
-// exports.exportDocument = async (url, callback) => {
-//     await phantom.create().then(async function(ph) {
-//         await ph.createPage().then(async function(page) {
-//             page.property('paperSize', {
-//                 format: 'A4',
-//                 orientation: 'portrait',
-//                 // margin: '1.5cm'
-//                 margin: {
-//                     left: '25mm',
-//                     top: '29mm',
-//                     right: '21mm',
-//                     bottom: '29mm'
-//                 }
-//             })
-//             page.property('viewportSize', {
-//                 width: 842,
-//                 height: 595
-//             })
-//             let tempFileName = './temp/' + Math.round(Math.random() * 10000) + '.pdf'
-//             await page.open(url).then(async function(status) {
-//                 console.log('status: ' + status)
-//                 // const content = await page.property('content')
-//                 // console.log('content' + content)
-//                 setTimeout(async () => {
-//                     await page.render(tempFileName).then(async function() {
-//                         console.log('Page rendered to ' + tempFileName)
-//                         // callback && callback("test")
-//                         await fs.readFile(tempFileName, async (err, data) => {
-//                             await minioClient.putObject(data, 'output/', Math.round(Math.random() * 10000) + '.pdf', async (storage) => {
-//                                 console.log('Page store to ' + storage)
-//                                 fs.unlinkSync(tempFileName)
-//                                 let url = await minioClient.getObjectUrl(storage, (storageUrl) => {
-//                                     // console.log(storageUrl)
-//                                     callback && callback(storageUrl)
-//                                 })
-//                             })
-//                         })
-//                         ph.exit()
-//                     })
-//                 }, 2000)
-//             })
-//         })
-//     })
-// };

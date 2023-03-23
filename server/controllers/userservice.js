@@ -12,6 +12,7 @@ const validateSession = require("../utils/util").validateSession
 const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/util").successResponse
 const errorResponse = require("../utils/util").errorResponse
+const userAvatarFix = require("../utils/util").userAvatarFix
 
 const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
 
@@ -328,17 +329,9 @@ listUserInClub = async (clubid, pageNum, pageSize) => {
     })
   )
 
-  players.forEach(player => {
-    let avatarUrl = player.avatarUrl
-    if ((avatarUrl != null) && (avatarUrl.length > 0) &&
-      !avatarUrl.startsWith('http') &&
-      !avatarUrl.startsWith('cloud://')) {
-      player.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
-    }
-  })
+  players = userAvatarFix(players)
    
   console.log(players)
-
 
   return players
 }
