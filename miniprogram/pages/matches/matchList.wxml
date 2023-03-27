@@ -32,7 +32,7 @@
     binderror="adError" bindclose="adClose" />
 </view> -->
 
-<view style="margin-bottom: 140rpx; width: 100%; overflow-x:hidden;">
+<view class="scrolling-wrapper">
 
   <!-- start of match-list -->
   <block wx:if="{{tabIndex==0}}">
@@ -58,11 +58,9 @@
       data-index="{{ index }}"
       style="width: 100%; background-color: red;">
 
-      <view wx:if="{{(item.finish>=item.total)}}"
-        class="match-list-block"  style="background-color:#eaeaea " >
+      <view wx:if="{{(item.finish>=item.total)}}" class="match-list-block-finish">
 
-        <view class="match-date">
-          {{item.name}}
+        <view class="match-date">{{item.name}}
             <image wx:if="{{(item.owner)}}" src="/images/edit.svg" class="img-edit"
               data-index="{{index}}" catchtap="onEditMatchTitle" ></image> 
           </view>
@@ -70,20 +68,15 @@
           <view class="match-info-seperator"/> 
 
           <view class="match-info-finish" > 
-            <view class="match-info-content">
-                参赛人数 : {{item.playerCount}}人
-              </view>
-            <view class="match-info-content">
-              比赛场数 : {{item.finish}}场
-              </view>
+            <view class="match-info-content">参赛人数 : \n{{item.playerCount}}人</view>
+            <view class="match-info-content">比赛场数 : \n{{item.finish}}场</view>
 
             <image src="/images/finish.png" class="img-finish" />
           </view>  
 
       </view>
 
-      <view wx:else
-        class="match-list-block" style="background-color: #7cbe31" >
+      <view wx:else class="match-list-block-unfinish">
 
         <view class="match-date">
           {{item.name}}
@@ -108,33 +101,19 @@
           <view class="match-info-block"> 
 
             <view class="match-info-line"> 
-              <view class="match-info-title">
-                参赛人数
-              </view>
-              <view class="match-info-content">
-                {{item.playerCount}}人
-              </view>
+              <view class="match-info-title">参赛人数</view>
+              <view class="match-info-content">{{item.playerCount}}人</view>
             </view>
 
             <view class="match-info-line"
               style="border-left: 1px solid #E5E5E5; border-right: 1px solid #E5E5E5;"> 
-              <view class="match-info-title">
-                完成场数
-              </view>
-              <view class="match-info-content"
-                style="color: blue">
-                {{item.finish}}场
-              </view>
+              <view class="match-info-title">完成场数</view>
+              <view class="match-info-content" style="color: blue">{{item.finish}}场</view>
             </view>
 
             <view class="match-info-line"> 
-              <view class="match-info-title">
-                总场数
-              </view>
-              <view class="match-info-content"
-                style="color: orange">
-                {{item.total}}场
-              </view>
+              <view class="match-info-title">总场数</view>
+              <view class="match-info-content">{{item.total}}场</view>
             </view>
 
           </view>  

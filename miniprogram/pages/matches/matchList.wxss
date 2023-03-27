@@ -2,7 +2,15 @@
 
 /* @import "../../style/styles.wxss"; */
 
-.match-list-block {
+.scrolling-wrapper {
+	margin-bottom: 140rpx; 
+	width: 100%; 
+	overflow-x:hidden;
+	padding-bottom: constant(safe-area-inset-bottom); 
+	padding-bottom: env(safe-area-inset-bottom); 
+}
+
+.match-list-block-unfinish {
 	/*padding: 40 0 0 40rpx;*/
 	display: flex;
 	flex-direction: column;
@@ -14,6 +22,22 @@
 	margin-right: 30rpx;
 	margin-bottom: 30rpx;
 	border-radius: 10rpx;
+	background-color: #62c0ff;
+}
+
+.match-list-block-finish {
+	/*padding: 40 0 0 40rpx;*/
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	box-sizing: border-box;
+	box-shadow: 3px 2px 3px #758792;
+	background-color: white;
+	margin-left: 30rpx;
+	margin-right: 30rpx;
+	margin-bottom: 30rpx;
+	border-radius: 10rpx;
+	background-color:#67f547;
 }
 
 .match-list-navigator {
@@ -24,6 +48,7 @@
 
 .match-date {
 	margin: 20rpx;
+	margin-left: 50rpx;
 	width: 90%;
 }
 
@@ -38,14 +63,14 @@
 
 .match-progress-finish {
 	height: 100%;
-	background-color: blue;
+	background-color: rgb(252, 164, 2);
 	border-top-left-radius: 20rpx;
 	border-bottom-left-radius: 20rpx;
 }
 
 .match-progress {
 	height: 100%;
-	background-color: orange;
+	background-color: rgb(253, 241, 218);
 	border-top-right-radius: 20rpx;
 	border-bottom-right-radius: 20rpx;
 }
@@ -53,14 +78,14 @@
 .match-progress-progress-full {
 	height: 100%;
 	flex: 1;
-	background-color: orange;
+	background-color: rgb(253, 241, 218);
 	border-radius: 20rpx;
 }
 
 .match-progress-finish-full {
 	height: 100%;
 	flex: 1;
-	background-color: blue;
+	background-color: rgb(255, 238, 0);
 	border-radius: 20rpx;
 }
 
@@ -94,6 +119,7 @@
   flex-direction: row;
   color:#0a68ff;
   margin-left: 10px;
+  width: 75%;
 	/* border-top: 2px solid #FFFFFF; */
 }
 
@@ -102,15 +128,18 @@
 	flex-direction: column;
 	align-items: center;
 	margin: 20rpx;
+	margin-bottom: 0rpx;
 }
 
 .match-info-content {
+	flex: 1;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
   margin: 20rpx;
-  margin-right: 40px;
+  /*margin-right: 40px;*/
   /* margin-bottom: 20rpx; */
+  white-space:pre-wrap;
 }
 
 .player-list-item {
@@ -236,12 +265,14 @@
 }
 
 .img-finish {
+	position: absolute;
+	right: 50rpx;
 	height: 100rpx; 
-	width: 100rpx;
-  margin-left: -20rpx;
-  margin-right: 20rpx;
+	width: 105rpx;
+  /*margin-left: -20rpx;*/
+  /*margin-right: 20rpx;*/
   margin-top: -20rpx;
-	margin-bottom: 10rpx;
+	/*margin-bottom: 10rpx;*/
 	/*border: 1px;*/
 }
 

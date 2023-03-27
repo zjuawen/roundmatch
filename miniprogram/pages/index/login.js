@@ -16,11 +16,11 @@ Page({
 
   redirect: function() {
     wx.redirectTo({
-      url: '../clubs/clubList',
+      // url: '../clubs/clubList',
       // url: '../clubs/create',
       // url: '/pages/clubs/clubList?action=sharejoin&clubid=1b64dd7b5f688b9b0036ea5e65c0b470',
       // url: '/pages/clubs/clubList?action=sharejoin&clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0',
-      // url: '/pages/matches/matchList?clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0',
+      url: '/pages/matches/matchList?clubid=lxRi1uqXpsdGrYSCQXkhteL2l70UPfj3F3lXV1xrLkTCSfyv',
       // url: '/pages/players/playerList?clubid=2f53b990-5a2e-42b0-bc70-3a3dfe6a73b0&action=new&type=fixpair',
       // url: '../matches/detail?action=old&clubid=' + 'cbddf0af60952f6906fa62640d859ca2' + '&matchid=' + '17453ede60961476082de5384e44dc48',
     })

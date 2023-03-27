@@ -21,7 +21,7 @@
 </view>
 <!-- 公告 end -->
 
-<view style="margin-bottom:140rpx" >
+<view class="scrolling-wrapper">
 
   <!-- games -->
   <view wx:if="{{tabIndex==0}}" >
@@ -32,7 +32,7 @@
       wx:for-index="index" 
       id="game:{{ item._id }}"
       class="{{ expand? 'detail-block' : 'detail-block-shrink' }}"
-      style="background-color: {{(item.score1>=0 && item.score2>=0)? '#DDFFDD' : 'white' }};" >
+      style="background-color: {{(item.score1>=0 && item.score2>=0)? null : 'white' }};" >
       
       <view class="detail-title">
         <image wx:if="{{(item.score1>=0 && item.score2>=0)}}"
