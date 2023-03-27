@@ -631,30 +631,31 @@ Page({
 
   //开始监听比分更新
   initWatch: async function() {
-    this.stopWatch()
-    this.try(() => {
-      const db = wx.cloud.database()
-      const _ = db.command
+    console.log('disabled')
+    // this.stopWatch()
+    // this.try(() => {
+    //   const db = wx.cloud.database()
+    //   const _ = db.command
 
-      console.log(`initWatch`)
+    //   console.log(`initWatch`)
 
-      const messageListener =
-        db.collection('games')
-        .where({
-          matchid: this.data.matchid,
-        })
-        .watch({
-          onChange: this.onGamesDataChange.bind(this),
-          onError: e => {
-            console.log("监听错误：" + e)
-            this.initWatch()
-          }
-        })
+    //   const messageListener =
+    //     db.collection('games')
+    //     .where({
+    //       matchid: this.data.matchid,
+    //     })
+    //     .watch({
+    //       onChange: this.onGamesDataChange.bind(this),
+    //       onError: e => {
+    //         console.log("监听错误：" + e)
+    //         this.initWatch()
+    //       }
+    //     })
 
-      this.setData({
-        messageListener: messageListener
-      })
-    }, '初始化监听失败')
+    //   this.setData({
+    //     messageListener: messageListener
+    //   })
+    // }, '初始化监听失败')
   },
 
   //停止监听更新
