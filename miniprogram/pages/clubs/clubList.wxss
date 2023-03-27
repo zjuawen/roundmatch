@@ -43,7 +43,7 @@
 }
 
 .club-shortname {
-	flex:3; 
+	/*flex:3; */
 	align-content: left; 
 	height: 50rpx;
 	overflow: hidden;
