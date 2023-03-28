@@ -1,6 +1,6 @@
 /******** common funtions below *******************/
-// const ServerUrl = 'http://localhost:8300/'
-const ServerUrl = 'https://roundmatch.microripples.cn/'
+const ServerUrl = 'http://localhost:8300/'
+// const ServerUrl = 'https://roundmatch.microripples.cn/'
 const showError = require('./utils').showError
 
 function commonCallFuction(that, callback, serviceName, actionName, params) {
