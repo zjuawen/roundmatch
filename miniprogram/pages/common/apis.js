@@ -1,6 +1,6 @@
 /******** common funtions below *******************/
-const ServerUrl = 'http://localhost:8300/'
-// const ServerUrl = 'https://roundmatch.microripples.cn/'
+// const ServerUrl = 'http://localhost:8300/'
+const ServerUrl = 'https://roundmatch.microripples.cn/'
 const showError = require('./utils').showError
 
 function commonCallFuction(that, callback, serviceName, actionName, params) {
@@ -70,8 +70,8 @@ function commonSyncCallFuction(that, serviceName, actionName, params) {
                     if (typeof data == 'string') {
                         data = JSON.parse(data)
                     }
-                    resolve(data);
-                    // commonSuccessHandler(data, that, callback)
+                    commonSuccessHandler(data, that, null)
+                    resolve(data)
                 }
             },
             fail (err) {

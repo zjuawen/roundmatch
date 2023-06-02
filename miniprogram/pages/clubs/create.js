@@ -290,11 +290,9 @@ Page({
 	},
 
 	isAuditing: async function() {
-		let that = this
-		await APIs.isAuditing(this, async res => {
-			that.setData({
-				auditing: res.auditing
-			})
+		let res = await APIs.isAuditing(this)
+		this.setData({
+			auditing: res.auditing
 		})
 	},
 
