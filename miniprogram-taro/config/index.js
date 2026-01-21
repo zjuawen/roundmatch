@@ -13,6 +13,8 @@ export default defineConfig({
   outputRoot: 'dist',
   plugins: [],
   defineConstants: {
+    // 可以通过这里定义常量，在代码中使用
+    // 例如：SERVER_URL: JSON.stringify('http://your-server.com')
   },
   copy: {
     patterns: [

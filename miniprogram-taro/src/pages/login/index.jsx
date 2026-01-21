@@ -151,7 +151,14 @@ export default class Login extends Component {
     return (
       <View className='login-page'>
         <View className='login-content'>
-          <Image className='avatar' src={this.state.avatarUrl} />
+          <Image 
+            className='avatar' 
+            src={this.state.avatarUrl || '/images/user-unlogin.png'}
+            onError={(e) => {
+              console.error('头像加载失败:', e)
+              this.setState({ avatarUrl: '/images/user-unlogin.png' })
+            }}
+          />
           {canIUseGetUserProfile ? (
             <Button 
               className='login-button' 

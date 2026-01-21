@@ -12,7 +12,9 @@ const password = 'Simple'
 const key = crypto.scryptSync(password, 'salt', 24)
 const iv = Buffer.alloc(16, 0)
 
-const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
+// RustFS 文件基础 URL（替代原来的 SERVER_URL_UPLOADS）
+const { getFileBaseUrl } = require("../config/storage.config")
+const SERVER_URL_UPLOADS = getFileBaseUrl()
 
 exports.userAvatarFix = (players) => {
   players.forEach(player => {

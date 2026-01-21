@@ -150,8 +150,12 @@ export default class ClubList extends Component {
         <View className='page-header'>
           <Image 
             className='avatar-user' 
-            src={avatarUrl}
+            src={avatarUrl || '/assets/images/user-unlogin.png'}
             onClick={this.handleUserAvatarClick}
+            onError={(e) => {
+              console.error('用户头像加载失败:', avatarUrl, e)
+              this.setState({ avatarUrl: '/assets/images/user-unlogin.png' })
+            }}
           />
           <View className='search-container'>
             <Input 
@@ -176,7 +180,7 @@ export default class ClubList extends Component {
             <View className='clubs-section'>
               <View className='section-title'>已加入的俱乐部</View>
               <View className='club-list'>
-                {clubs.map(club => (
+                {clubs.map((club, index) => (
                   <View 
                     key={club._id} 
                     className='club-item'
@@ -187,6 +191,16 @@ export default class ClubList extends Component {
                         className='club-avatar' 
                         src={club.logo || '/assets/images/default-club-logo.svg'}
                         mode='aspectFit'
+                        onError={(e) => {
+                          console.error('俱乐部 Logo 加载失败:', club.logo, e)
+                          // 如果加载失败，更新状态使用默认图片
+                          const updatedClubs = this.state.clubs.map((c, idx) => 
+                            idx === index 
+                              ? { ...c, logo: '/assets/images/default-club-logo.svg' }
+                              : c
+                          )
+                          this.setState({ clubs: updatedClubs })
+                        }}
                       />
                       {club.vip && (
                         <Image 

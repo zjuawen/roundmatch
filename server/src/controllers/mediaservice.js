@@ -4,8 +4,7 @@ const successResponse = require("../utils/response").successResponse
 const errorResponse = require("../utils/response").errorResponse
 
 const fs = require('fs');
-
-const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
+const { uploadFile } = require("../utils/storage")
 
 
 // 云函数入口函数
@@ -19,6 +18,7 @@ exports.main = async (request, result) => {
   // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
   let action = event.action
+  let data = null
 
   if (action == 'upload') {
     let file = request.file
@@ -36,22 +36,48 @@ exports.main = async (request, result) => {
 }
 
 upload = async (file, type) => {
-  let inputFile = file.path //获取path:
-  let fileName = 'icon-' + Date.now() + file.originalname.match(/\.[^.]+?$/)[0]
-  if (type == 'icon') {
-    fileName = 'clubicons/' + fileName
-  } else if (type == 'head') {
-    fileName = 'heads/' + fileName
-  } else {
-    fileName = 'images/' + fileName
-  }
-  console.log(fileName)
-  fs.renameSync(inputFile, process.env.UPLOAD_LOCAL_DIRECTORY + fileName)
-  if (fileName != null && fileName.length > 0 && !fileName.startsWith('http') && !fileName.startsWith('cloud://')) {
-    fileName = SERVER_URL_UPLOADS + fileName
-  }
-  return {
-    url: fileName
+  try {
+    let inputFile = file.path // 获取临时文件路径
+    let fileName = 'icon-' + Date.now() + file.originalname.match(/\.[^.]+?$/)[0]
+    
+    // 根据类型确定存储路径
+    let objectKey = ''
+    if (type == 'icon') {
+      objectKey = 'clubicons/' + fileName
+    } else if (type == 'head') {
+      objectKey = 'heads/' + fileName
+    } else {
+      objectKey = 'images/' + fileName
+    }
+    
+    console.log('上传文件到 RustFS:', objectKey)
+    
+    // 上传到 RustFS 对象存储
+    const fileUrl = await uploadFile(inputFile, objectKey)
+    
+    // 删除临时文件
+    try {
+      fs.unlinkSync(inputFile)
+    } catch (err) {
+      console.warn('删除临时文件失败:', err)
+    }
+    
+    console.log('文件上传成功，URL:', fileUrl)
+    
+    return {
+      url: fileUrl
+    }
+  } catch (error) {
+    console.error('文件上传失败:', error)
+    // 确保临时文件被清理
+    try {
+      if (file && file.path) {
+        fs.unlinkSync(file.path)
+      }
+    } catch (err) {
+      console.warn('清理临时文件失败:', err)
+    }
+    throw error
   }
 }
 

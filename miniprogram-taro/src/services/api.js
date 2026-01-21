@@ -3,12 +3,22 @@
  * Project : roundmatch
  **/
 import Taro from '@tarojs/taro'
+import { getApiBaseUrl } from '../config/api.config'
 
-// 微信小程序不能访问 localhost，需要使用局域网 IP
-// 获取本机 IP: ifconfig | grep "inet " | grep -v 127.0.0.1
-const SERVER_URL = process.env.NODE_ENV === 'development' 
-  ? 'http://10.1.21.185:8300/' 
-  : 'https://roundmatch.microripples.cn/'
+// 获取服务器地址（根据运行环境和平台自动判断）
+const SERVER_URL = getApiBaseUrl()
+
+// 开发环境下输出当前使用的服务器地址
+// Taro 编译时会替换 process.env.XXX 为字符串常量
+// @ts-ignore - Taro 编译时会替换
+const NODE_ENV = process.env.NODE_ENV || 'production'
+if (NODE_ENV === 'development') {
+  console.log('[API] 当前服务器地址:', SERVER_URL)
+  // @ts-ignore
+  console.log('[API] TARO_ENV:', process.env.TARO_ENV)
+  // @ts-ignore
+  console.log('[API] NODE_ENV:', NODE_ENV)
+}
 
 class ApiService {
   request(options) {

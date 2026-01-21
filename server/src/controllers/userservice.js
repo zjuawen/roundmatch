@@ -14,7 +14,9 @@ const successResponse = require("../utils/response").successResponse
 const errorResponse = require("../utils/response").errorResponse
 const userAvatarFix = require("../utils/util").userAvatarFix
 
-const SERVER_URL_UPLOADS = process.env.SERVER_URL_UPLOADS
+// RustFS 文件基础 URL（替代原来的 SERVER_URL_UPLOADS）
+const { getFileBaseUrl } = require("../config/storage.config")
+const SERVER_URL_UPLOADS = getFileBaseUrl()
 
 // 云函数入口函数
 exports.main = async (request, result) => {
