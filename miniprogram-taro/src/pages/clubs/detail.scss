@@ -1,0 +1,32 @@
+.club-detail-page {
+  padding: 20px;
+  background-color: #F6F6F6;
+  min-height: 100vh;
+}
+
+.club-info {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.club-name {
+  font-size: 20px;
+  font-weight: bold;
+  color: #333;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.club-short-name {
+  font-size: 16px;
+  color: #666;
+  display: block;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}

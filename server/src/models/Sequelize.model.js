@@ -1,0 +1,408 @@
+/**
+ * Sequelize models adapted for PostgreSQL
+ * Project : roundmatch
+ * Filename : Sequelize.model.js
+ * Updated: Migrated to PostgreSQL
+ **/
+
+module.exports.clubs = (database, Sequelize) => {
+    return database.define("clubs", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        wholeName: {
+            type: Sequelize.STRING
+        },
+        shortName: {
+            type: Sequelize.STRING
+        },
+        logo: {
+            type: Sequelize.STRING
+        },
+        password: {
+            type: Sequelize.STRING
+        },
+        vip: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
+        },
+        creator: {
+            type: Sequelize.STRING
+        },
+        delete: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
+        },
+        public: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
+        },
+        maxMatchAllow: {
+            type: Sequelize.INTEGER,
+            defaultValue: 10
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    this.setDataValue('createDate', value['$date'])
+                } else {
+                    this.setDataValue('createDate', value)
+                }
+            }
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime',
+        indexes: [
+            { fields: ['creator'] },
+            { fields: ['public'] }
+        ]
+    })
+}
+
+module.exports.users = (database, Sequelize) => {
+    return database.define("users", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        avatarUrl: {
+            type: Sequelize.STRING
+        },
+        name: {
+            type: Sequelize.STRING
+        },
+        gender: {
+            type: Sequelize.INTEGER
+        },
+        openid: {
+            type: Sequelize.STRING,
+            unique: true
+        },
+        unionid: {
+            type: Sequelize.STRING
+        },
+        city: {
+            type: Sequelize.STRING
+        },
+        province: {
+            type: Sequelize.STRING
+        },
+        country: {
+            type: Sequelize.STRING
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    this.setDataValue('createDate', value['$date'])
+                } else {
+                    this.setDataValue('createDate', value)
+                }
+            }
+        },
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime',
+        indexes: [
+            { fields: ['openid'] },
+            { fields: ['unionid'] }
+        ]
+    })
+}
+
+module.exports.players = (database, Sequelize) => {
+    return database.define("players", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        clubid: {
+            type: Sequelize.UUID
+        },
+        avatarUrl: {
+            type: Sequelize.STRING
+        },
+        name: {
+            type: Sequelize.STRING
+        },
+        gender: {
+            type: Sequelize.INTEGER
+        },
+        openid: {
+            type: Sequelize.STRING
+        },
+        enable: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: true
+        },
+        order: {
+            type: Sequelize.INTEGER
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    this.setDataValue('createDate', value['$date'])
+                } else {
+                    this.setDataValue('createDate', value)
+                }
+            }
+        },
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime',
+        indexes: [
+            { fields: ['clubid'] },
+            { fields: ['openid'] },
+            { fields: ['clubid', 'openid'] }
+        ]
+    })
+}
+
+module.exports.matches = (database, Sequelize) => {
+    return database.define("matches", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        name: {
+            type: Sequelize.STRING
+        },
+        playerCount: {
+            type: Sequelize.INTEGER
+        },
+        clubid: {
+            type: Sequelize.UUID
+        },
+        owner: {
+            type: Sequelize.STRING
+        },
+        finish: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0
+        },
+        total: {
+            type: Sequelize.INTEGER
+        },
+        type: {
+            type: Sequelize.STRING
+        },
+        delete: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
+        },
+        remark: {
+            type: Sequelize.STRING
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    this.setDataValue('createDate', value['$date'])
+                } else {
+                    this.setDataValue('createDate', value)
+                }
+            }
+        },
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime',
+        indexes: [
+            { fields: ['clubid'] },
+            { fields: ['owner'] },
+            { fields: ['createDate'] },
+            { fields: ['clubid', 'delete'] }
+        ]
+    })
+}
+
+module.exports.games = (database, Sequelize) => {
+    return database.define("games", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        clubid: {
+            type: Sequelize.UUID
+        },
+        matchid: {
+            type: Sequelize.UUID
+        },
+        player1: {
+            type: Sequelize.UUID
+        },
+        player2: {
+            type: Sequelize.UUID
+        },
+        player3: {
+            type: Sequelize.UUID
+        },
+        player4: {
+            type: Sequelize.UUID
+        },
+        score1: {
+            type: Sequelize.INTEGER
+        },
+        score2: {
+            type: Sequelize.INTEGER
+        },
+        order: {
+            type: Sequelize.INTEGER
+        },
+        delete: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    this.setDataValue('createDate', value['$date'])
+                } else {
+                    this.setDataValue('createDate', value)
+                }
+            }
+        },
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime',
+        indexes: [
+            { fields: ['matchid'] },
+            { fields: ['clubid'] },
+            { fields: ['matchid', 'order'] }
+        ]
+    })
+}
+
+module.exports.system = (database, Sequelize) => {
+    return database.define("system", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        name: {
+            type: Sequelize.STRING
+        },
+        key: {
+            type: Sequelize.STRING,
+            unique: true
+        },
+        value: {
+            type: Sequelize.TEXT
+        },
+        type: {
+            type: Sequelize.STRING
+        },
+        nosort: {
+            type: Sequelize.STRING
+        },
+        order: {
+            type: Sequelize.INTEGER
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime',
+        indexes: [
+            { fields: ['key'] },
+            { fields: ['type'] }
+        ]
+    })
+}
+
+module.exports.notices = (database, Sequelize) => {
+    return database.define("notices", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        content: {
+            type: Sequelize.TEXT
+        },
+        enable: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: true
+        },
+        page: {
+            type: Sequelize.STRING
+        },
+        order: {
+            type: Sequelize.INTEGER
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            set(value) {
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    this.setDataValue('createDate', value['$date'])
+                } else {
+                    this.setDataValue('createDate', value)
+                }
+            }
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime',
+        indexes: [
+            { fields: ['enable'] },
+            { fields: ['page'] },
+            { fields: ['enable', 'page'] }
+        ]
+    })
+}
+
+module.exports.userconfig = (database, Sequelize) => {
+    return database.define("userconfig", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        openid: {
+            type: Sequelize.STRING
+        },
+        key: {
+            type: Sequelize.STRING
+        },
+        value: {
+            type: Sequelize.TEXT
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime',
+        indexes: [
+            { fields: ['openid'] },
+            { fields: ['openid', 'key'] },
+            { unique: true, fields: ['openid', 'key'] }
+        ]
+    })
+}
+

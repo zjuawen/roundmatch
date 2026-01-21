@@ -3,3 +3,5 @@ node_modules
 server/exported/games/**
 logs/
 uploads/
+miniprogram-taro/dist
+miniprogram-taro/.swc

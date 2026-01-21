@@ -1,0 +1,45 @@
+.club-create-page {
+  padding: 20px;
+  background-color: #F6F6F6;
+  min-height: 100vh;
+}
+
+.form {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.form-item {
+  margin-bottom: 24px;
+}
+
+.label {
+  display: block;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+  box-sizing: border-box;
+}
+
+.submit-button {
+  width: 100%;
+  margin-top: 20px;
+  background-color: #07c160;
+  color: #fff;
+  border-radius: 8px;
+  padding: 14px;
+  font-size: 16px;
+}
+
+.submit-button[disabled] {
+  background-color: #ccc;
+}

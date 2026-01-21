@@ -1,0 +1,80 @@
+module.exports = (function() {
+var __MODS__ = {};
+var __DEFINE__ = function(modId, func, req) { var m = { exports: {}, _tempexports: {} }; __MODS__[modId] = { status: 0, func: func, req: req, m: m }; };
+var __REQUIRE__ = function(modId, source) { if(!__MODS__[modId]) return require(source); if(!__MODS__[modId].status) { var m = __MODS__[modId].m; m._exports = m._tempexports; var desp = Object.getOwnPropertyDescriptor(m, "exports"); if (desp && desp.configurable) Object.defineProperty(m, "exports", { set: function (val) { if(typeof val === "object" && val !== m._exports) { m._exports.__proto__ = val.__proto__; Object.keys(val).forEach(function (k) { m._exports[k] = val[k]; }); } m._tempexports = val }, get: function () { return m._tempexports; } }); __MODS__[modId].status = 1; __MODS__[modId].func(__MODS__[modId].req, m, m.exports); } return __MODS__[modId].m.exports; };
+var __REQUIRE_WILDCARD__ = function(obj) { if(obj && obj.__esModule) { return obj; } else { var newObj = {}; if(obj != null) { for(var k in obj) { if (Object.prototype.hasOwnProperty.call(obj, k)) newObj[k] = obj[k]; } } newObj.default = obj; return newObj; } };
+var __REQUIRE_DEFAULT__ = function(obj) { return obj && obj.__esModule ? obj.default : obj; };
+__DEFINE__(1768876401349, function(require, module, exports) {
+
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _helperPluginUtils = require("@babel/helper-plugin-utils");
+var _helperReplaceSupers = require("@babel/helper-replace-supers");
+var _core = require("@babel/core");
+function replacePropertySuper(path, getObjectRef, file) {
+  const replaceSupers = new _helperReplaceSupers.default({
+    getObjectRef: getObjectRef,
+    methodPath: path,
+    file: file
+  });
+  replaceSupers.replace();
+}
+var _default = exports.default = (0, _helperPluginUtils.declare)(api => {
+  api.assertVersion(7);
+  const newLets = new Set();
+  return {
+    name: "transform-object-super",
+    visitor: {
+      Loop: {
+        exit(path) {
+          newLets.forEach(v => {
+            if (v.scopePath === path) {
+              path.scope.push({
+                id: v.id,
+                kind: "let"
+              });
+              path.scope.crawl();
+              path.requeue();
+              newLets.delete(v);
+            }
+          });
+        }
+      },
+      ObjectExpression(path, state) {
+        let objectRef;
+        const getObjectRef = () => objectRef = objectRef || path.scope.generateUidIdentifier("obj");
+        path.get("properties").forEach(propPath => {
+          if (!propPath.isMethod()) return;
+          replacePropertySuper(propPath, getObjectRef, state.file);
+        });
+        if (objectRef) {
+          const scopePath = path.findParent(p => p.isFunction() || p.isProgram() || p.isLoop());
+          const useLet = scopePath.isLoop();
+          if (useLet) {
+            newLets.add({
+              scopePath,
+              id: _core.types.cloneNode(objectRef)
+            });
+          } else {
+            path.scope.push({
+              id: _core.types.cloneNode(objectRef),
+              kind: "var"
+            });
+          }
+          path.replaceWith(_core.types.assignmentExpression("=", _core.types.cloneNode(objectRef), path.node));
+        }
+      }
+    }
+  };
+});
+
+//# sourceMappingURL=index.js.map
+
+}, function(modId) {var map = {}; return __REQUIRE__(map[modId], modId); })
+return __REQUIRE__(1768876401349);
+})()
+//miniprogram-npm-outsideDeps=["@babel/helper-plugin-utils","@babel/helper-replace-supers","@babel/core"]
+//# sourceMappingURL=index.js.map

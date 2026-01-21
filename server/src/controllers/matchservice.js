@@ -1,0 +1,515 @@
+const db = require("../models")
+const Op = require("sequelize").Op
+// utils
+const paginate = require("../utils/util").paginate
+const md5String = require("../utils/util").md5String
+const queryLike = require("../utils/util").queryLike
+const validateSession = require("../utils/util").validateSession
+const sequelizeExecute = require("../utils/util").sequelizeExecute
+const successResponse = require("../utils/response").successResponse
+const errorResponse = require("../utils/response").errorResponse
+const userAvatarFix = require("../utils/util").userAvatarFix
+
+// 云函数入口函数
+exports.main = async (request, result) => {
+  let event = request.query
+
+  console.log('matchService')
+  console.log(event)
+
+  let action = event.action
+
+  let data = null
+  if (action == 'create') {
+    data = await createMatchData(event.type, event.players)
+  } else if (action == 'list') {
+    let pageNum = (event.pageNum == null) ? 1 : event.pageNum
+    let pageSize = (event.pageSize == null) ? 10 : event.pageSize
+    data = await listMatch(event.openid, event.clubid, pageNum, pageSize)
+  } else if (action == 'save') {
+    data = await saveMatchData(event.openid, event.type, event.clubid,
+      event.matchdata, event.playerCount)
+  } else if (action == 'read') {
+    data = await readMatch(event.clubid, event.matchid)
+  } else if (action == 'delete') {
+    data = await deleteMatch(event.clubid, event.matchid)
+  } else if (action == 'update') {
+    data = await updateMatch(event.matchid, event.value)
+  }
+
+  console.log('matchService return:')
+  console.log(data)
+
+  successResponse(result, {
+    data
+  })
+}
+
+
+//更新比赛信息
+updateMatch = async (matchid, value) => {
+  if (typeof value === 'string') {
+    value = JSON.parse(value)
+  }
+
+  let updated = await sequelizeExecute(
+    db.collection('matches').update({
+      name: value.name
+    }, {
+      where: {
+        _id: matchid
+      }
+    })
+  )
+
+  console.log("update match record: " + updated)
+
+  return {
+    updated: updated
+  }
+}
+
+//保存新增的比赛数据
+saveMatchData = async (owner, type, clubid, games, playerCount, remark = "") => {
+  if (typeof games === 'string') {
+    games = JSON.parse(games)
+  }
+
+  let saved = await sequelizeExecute(
+    db.collection('matches').create({
+      // id: _.inc(1),
+      clubid: clubid,
+      createDate: db.serverDate(),
+      total: games.length,
+      finish: 0,
+      playerCount: playerCount,
+      type: type,
+      delete: false,
+      owner: owner,
+      remark: remark,
+    })
+  )
+
+  console.log("added new match")
+  console.log(saved)
+
+  let matchid = saved._id
+  console.log("added new match: " + matchid)
+  return await savaGames(clubid, matchid, games)
+}
+
+//保存对阵数据
+savaGames = async (clubid, matchid, games) => {
+
+  let data = games
+  console.log("saving games' data")
+  console.log(data)
+
+
+  let playerWeight = []
+
+  let count = 0
+  for (let i = 0; i < data.length; i++) {
+    let gamedata = {
+      clubid: clubid,
+      matchid: matchid,
+      order: data[i].order,
+      player1: (data[i].player1._id) ? data[i].player1._id : data[i].player1.toString(),
+      player2: (data[i].player2._id) ? data[i].player2._id : data[i].player2.toString(),
+      player3: (data[i].player3._id) ? data[i].player3._id : data[i].player3.toString(),
+      player4: (data[i].player4._id) ? data[i].player4._id : data[i].player4.toString(),
+      score1: -1,
+      score2: -1,
+      createDate: db.serverDate(),
+    }
+
+    let res = await sequelizeExecute(
+      db.collection('games')
+      .create(gamedata)
+    )
+
+    if (res) {
+      count += 1
+      collectPlayerWeight(playerWeight, data[i])
+    }
+  }
+
+  console.log("playerWeight:")
+  console.log(playerWeight)
+
+  //增加参与人员权重
+  await playerWeight.forEach(async function(pWeight) {
+    await justifyPlayerOrder(pWeight)
+  })
+
+  return {
+    gamecount: count,
+    matchid: matchid
+  }
+}
+
+//收集权重信息
+collectPlayerWeight = (playerWeight, data) => {
+  let players = [data.player1, data.player2, data.player3, data.player4]
+
+  players.forEach(function(playerid) {
+    let found = false
+
+    for (let i = 0; i < playerWeight.length; i++) {
+      let weightObj = playerWeight[i]
+      if (weightObj.playerid == playerid) {
+        found = true
+        weightObj.weight++
+        break
+      }
+    }
+
+    if (!found) {
+      playerWeight.push({
+        playerid: playerid,
+        weight: 1
+      })
+    }
+  })
+}
+
+//调整用户权重
+justifyPlayerOrder = async (weightObj) => {
+  console.log("justifyPlayerOrder")
+  console.log(weightObj)
+  let res = await sequelizeExecute(
+    db.collection('players')
+    .update({
+      order: weightObj.weight + 1
+    }, {
+      where: {
+        _id: weightObj.playerid._id
+      }
+    })
+  )
+
+  console.log(res)
+  return res
+}
+
+//创建比赛数据（排阵，未保存）
+createMatchData = async (type, playerArray) => {
+  // let playerArray = event.data
+  if (typeof playerArray === 'string') {
+    playerArray = JSON.parse(playerArray)
+  }
+
+  var orderArraies = null
+  var typeValue = 'none'
+  if (type == 'fixpair') {
+    typeValue = 'fix'
+  } else if (type == 'group') {
+    typeValue = 'group'
+  } else {
+    typeValue = 'none'
+  }
+
+  let count = playerArray.length
+
+  if (type == 'fixpair' || type == 'group') {
+    var playerArrayFlat = flatPlayerArray(playerArray)
+    count = playerArrayFlat.length
+  }
+
+  // let count = playerArray.length
+  var orderArraies = await loadOrders(count, typeValue)
+  // {orderArraies, nosort} = orders
+
+  //save clone array 
+  var playerArraySave = JSON.parse(JSON.stringify(playerArray))
+
+  let allgames = []
+  for (let n = 0; n < orderArraies.length; n++) {
+    let games = []
+    let value = orderArraies[n].value
+    let orderArray = JSON.parse(value)
+    let nosort = []
+    if (orderArraies[n].nosort != undefined) {
+      nosort = JSON.parse(orderArraies[n].nosort)
+    }
+    var playerArrayOnce = null
+    if (type == 'group') {
+      sortgroups = JSON.parse(orderArraies[n].sortgroups)
+      playerArrayOnce = shuffleArrayGroup(playerArraySave, sortgroups)
+    } else {
+      playerArrayOnce = shuffleArray(playerArraySave, nosort)
+      if (type == 'fixpair') {
+        playerArrayOnce = flatPlayerArray(playerArrayOnce)
+      }
+    }
+
+    console.log('after shuffle: ' + playerArrayOnce)
+
+    for (let i = 0; i < orderArray.length; i++) {
+      let game = {
+        order: i + 1,
+        player1: playerArrayOnce[orderArray[i][0][0]],
+        player2: playerArrayOnce[orderArray[i][0][1]],
+        player3: playerArrayOnce[orderArray[i][1][0]],
+        player4: playerArrayOnce[orderArray[i][1][1]],
+        score1: -1,
+        score2: -1,
+      }
+      games.push(game)
+    }
+
+    allgames.push({
+      name: orderArraies[n].name,
+      data: games,
+    })
+  }
+
+  return allgames
+}
+
+flatPlayerArray = (array) => {
+  var newArray = []
+  array.forEach(pair => {
+    newArray.push(pair.player1)
+    newArray.push(pair.player2)
+  })
+
+  return newArray
+}
+
+loadOrders = async (playerNum, typeValue) => {
+  var key = 'ORDERS_' + playerNum
+  if (typeValue == 'fix') {
+    key = 'PAIR_ORDERS_' + playerNum
+  }
+  if (typeValue == 'group') {
+    key = 'GROUP_ORDERS_' + playerNum
+  }
+  let config = await sequelizeExecute(
+    db.collection('system').findAll({
+      where: {
+        key: key,
+      },
+      order: [
+        ['order', 'DESC']
+      ],
+      raw: true
+    })
+  )
+
+  console.log(config)
+  return config
+}
+
+//读取比赛对阵数据
+readMatch = async (clubid, matchid) => {
+  console.log('readMatch')
+  let games = await sequelizeExecute(
+    db.collection('games').findAll({
+      attributes: ['_id', 'matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+      where: {
+        clubid: clubid,
+        matchid: matchid,
+        delete: {
+          [Op.ne]: 1  // PostgreSQL 中 delete 字段是 INTEGER 类型，0=未删除，1=已删除
+        },
+      },
+      order: [
+        ['order', 'DESC']
+      ],
+      raw: true,
+    })
+  )
+
+  console.log(games)
+
+  let players = []
+  await games.forEach(game => {
+    // console.log(game['player_1'])
+    for (let i = 1; i < 5; i++) {
+      let player = game['player' + i]
+      // console.log(player)
+      if (players.includes(player)) {
+        continue
+      }
+      players.push(player)
+    }
+  })
+
+  console.log(players)
+
+  players = await sequelizeExecute(
+    db.collection('players').findAll({
+      attributes: ['_id', 'name', 'avatarUrl'],
+      where: {
+        _id: {
+          [Op.in]: players
+        },
+      },
+      raw: true
+    })
+  )
+
+  players = userAvatarFix(players)
+  
+  console.log(players)
+
+  await games.forEach(game => {
+    for (let i = 1; i < 5; i++) {
+      let player = game['player' + i]
+      game['player' + i] = players.find((player) => {
+        return player._id === game['player' + i];
+      })
+    }
+  })
+
+  console.log(games)
+
+  return games
+}
+
+//删除比赛数据
+deleteMatch = async (clubid, matchid) => {
+  console.log("deleting match: " + matchid)
+
+  let matchUpdated = await sequelizeExecute(
+    db.collection('matches')
+    .update({
+      delete: true
+    }, {
+      where: {
+        _id: matchid
+      }
+    })
+  )
+
+  console.log(matchUpdated)
+
+  let gameUpdated = 0
+
+  if (matchUpdated > 0) {
+    console.log("deleting games...")
+
+    gameUpdated = await sequelizeExecute(
+      db.collection('games').update({
+        delete: true
+      }, {
+        where: {
+          matchid: matchid,
+          clubid: clubid
+        }
+      })
+    )
+
+    console.log(gameUpdated)
+  }
+
+  return {
+    matchUpdated: matchUpdated,
+    gameUpdated: gameUpdated,
+  }
+
+}
+
+//获取比赛列表
+listMatch = async (owner, clubid, pageNum, pageSize) => {
+
+  let matches = await sequelizeExecute(
+    db.collection('matches').findAll({
+      where: {
+        clubid: clubid,
+        delete: {
+          [Op.ne]: 1  // PostgreSQL 中 delete 字段是 INTEGER 类型，0=未删除，1=已删除
+        },
+      },
+      order: [
+        ['createDate', 'DESC']
+      ],
+      attributes: {
+        exclude: ['delete', 'updateTime'],
+        // [sequelize.fn('EQUAL', sequelize.col('owner')), 'owner']
+      },
+      raw: true,
+      offset: (pageNum - 1) * pageSize,
+      limit: 1 * pageSize,
+    })
+  )
+
+  console.log(matches)
+
+  return matches
+}
+
+shuffleArrayGroup = (arraySaved, groups) => {
+  let array = flatPlayerArray(arraySaved)
+  for (let n = 0; n < groups.length; n++) {
+    let group = groups[n]
+    for (let i = group.length; i; i--) {
+      let j = Math.floor(Math.random() * group.length)
+      // console.log("swap: " + array[group[i-1]].name + "-" + array[group[j]].name)
+      let t = array[group[i - 1]]
+      array[group[i - 1]] = array[group[j]]
+      array[group[j]] = t
+    }
+  }
+  return array
+}
+
+shuffleArray = (arraySaved, skiparray) => {
+  let array = JSON.parse(JSON.stringify(arraySaved))
+  console.log('debug')
+  console.log(array)
+  let returnArray = []
+  for (let n = 0; n < skiparray.length; n++) {
+    let index = skiparray[n]
+    returnArray[index] = array[index]
+    array[index] = null
+  }
+  for (let i = array.length; i; i--) {
+    let j = Math.floor(Math.random() * i)
+    console.log('j: ' + j)
+    console.log(array)
+    var temp = array[i - 1]
+    array[i - 1] = array[j]
+    array[j] = temp
+    // [array[i - 1], array[j]] = [array[j], array[i - 1]]
+  }
+  var i = 0
+  for (let n = 0; n < arraySaved.length && i < arraySaved.length; n++) {
+    if (returnArray[n] == null) {
+      while (array[i] == null && i < arraySaved.length) {
+        i++
+      }
+      returnArray[n] = array[i]
+      i++
+    }
+  }
+
+  return returnArray
+}
+
+//保持一对
+shuffleArray2 = (array) => {
+  if (array.length % 2 != 0) {
+    console.log("shuffleArray2: array length = " + array.length + " incorrect")
+    return null
+  }
+  for (let i = 0; i < array.length / 2; i++) {
+    let j = Math.floor(Math.random() * i)[array[2 * i], array[2 * j]] = [array[2 * j], array[2 * i]]
+      [array[2 * i + 1], array[2 * j + 1]] = [array[2 * j + 1], array[2 * i + 1]]
+  }
+  return array
+}
+
+//清除matches和games数据
+// debug = () => {
+//   let collectionName = 'games'
+//   db.collection(collectionName)
+//   .where({
+//     score1: -1
+//   })
+//   .remove()
+//   .then(res => {
+//     console.log(res)
+//   })
+// }

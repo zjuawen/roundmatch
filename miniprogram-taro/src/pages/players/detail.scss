@@ -1,0 +1,23 @@
+.player-detail-page {
+  padding: 20px;
+  background-color: #F6F6F6;
+  min-height: 100vh;
+}
+
+.player-info {
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+}
+
+.player-name {
+  font-size: 18px;
+  color: #333;
+}
+
+.loading,
+.empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+}

@@ -1,0 +1,57 @@
+{
+    // 使用 IntelliSense 了解相关属性。 
+    // 悬停以查看现有属性的描述。
+    // 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "启动程序",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "program": "${workspaceFolder}/miniprogram-taro/babel.config.js"
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Server: 开发模式 (yarn dev)",
+            "runtimeExecutable": "nodemon",
+            "runtimeArgs": [
+                "--max-http-header-size=64000",
+                "${workspaceFolder}/server/src/index.js"
+            ],
+            "cwd": "${workspaceFolder}/server",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "console": "integratedTerminal",
+            "outputCapture": "std",
+            "env": {
+                "NODE_ENV": "dev"
+            },
+            "restart": true,
+            "autoAttachChildProcesses": true
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Server: 生产模式 (yarn start)",
+            "runtimeExecutable": "node",
+            "runtimeArgs": [
+                "--max-http-header-size=64000"
+            ],
+            "program": "${workspaceFolder}/server/src/index.js",
+            "cwd": "${workspaceFolder}/server",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "console": "integratedTerminal",
+            "outputCapture": "std",
+            "env": {
+                "NODE_ENV": "production"
+            }
+        }
+    ]
+}
