@@ -13,6 +13,7 @@ const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/response").successResponse
 const errorResponse = require("../utils/response").errorResponse
 const userAvatarFix = require("../utils/util").userAvatarFix
+const ErrorCode = require("./errorcode")
 
 // RustFS 文件基础 URL（替代原来的 SERVER_URL_UPLOADS）
 const { getFileBaseUrl } = require("../config/storage.config")
@@ -346,7 +347,7 @@ searchUserInClub = async (clubid, keyword) => {
       where: {
         clubid: clubid,
         name: {
-          [OP.substring]: keyword
+          [Op.substring]: keyword
         }
       },
       order: [
@@ -359,4 +360,235 @@ searchUserInClub = async (clubid, keyword) => {
   console.log(players)
 
   return players
+}
+
+// ========== 管理台专用 API ==========
+
+// 规范化用户字段名（处理 PostgreSQL 小写字段名）
+const normalizeUserFields = (user) => {
+  if (!user) return user
+  const normalized = { ...user }
+  // 转换字段名
+  if (user.createdate !== undefined) {
+    normalized.createDate = user.createdate
+    delete normalized.createdate
+  }
+  if (user.updatetime !== undefined) {
+    normalized.updateTime = user.updatetime
+    delete normalized.updatetime
+  }
+  if (user.avatarurl !== undefined) {
+    normalized.avatarUrl = user.avatarurl
+    delete normalized.avatarurl
+  }
+  return normalized
+}
+
+// 获取所有用户列表（管理台）
+exports.listAll = async (request, result) => {
+  try {
+    let pageNum = parseInt(request.query.pageNum) || 1
+    let pageSize = parseInt(request.query.pageSize) || 10
+    let keyword = request.query.keyword || ''
+
+    let whereCondition = {}
+
+    // 搜索条件 - PostgreSQL 字段名是小写的
+    if (keyword) {
+      whereCondition = {
+        ...queryLike(keyword, ['name', 'openid'])
+      }
+    }
+
+    let { count, rows } = await sequelizeExecute(
+      db.collection('users').findAndCountAll({
+        where: whereCondition,
+        order: [['createdate', 'DESC']],
+        limit: pageSize,
+        offset: (pageNum - 1) * pageSize,
+        raw: true
+      })
+    )
+
+    // 收集所有用户的 openid
+    const userOpenids = rows.map(user => user.openid).filter(Boolean)
+    
+    // 批量查询用户所属的俱乐部
+    let clubsMap = {}
+    if (userOpenids.length > 0) {
+      const players = await sequelizeExecute(
+        db.collection('players').findAll({
+          where: {
+            openid: {
+              [Op.in]: userOpenids
+            },
+            enable: {
+              [Op.ne]: 0  // PostgreSQL 中 enable 是 INTEGER，0=禁用，非0=启用
+            }
+          },
+          attributes: ['openid', 'clubid'],
+          raw: true
+        })
+      )
+
+      // 收集所有俱乐部ID（添加空值检查）
+      const clubIds = players && players.length > 0 
+        ? [...new Set(players.map(p => p.clubid).filter(Boolean))]
+        : []
+      
+      // 查询俱乐部信息
+      if (clubIds.length > 0) {
+        const clubs = await sequelizeExecute(
+          db.collection('clubs').findAll({
+            where: {
+              _id: {
+                [Op.in]: clubIds
+              },
+              delete: {
+                [Op.ne]: 1
+              }
+            },
+            attributes: ['_id', 'shortname', 'wholename'],
+            raw: true
+          })
+        )
+
+        // 构建 clubid -> club info 的映射
+        const clubsInfoMap = {}
+        clubs.forEach(club => {
+          clubsInfoMap[club._id] = {
+            _id: club._id,
+            shortName: club.shortname || '',
+            wholeName: club.wholename || ''
+          }
+        })
+
+        // 构建 openid -> clubs 的映射（添加空值检查）
+        if (players && players.length > 0) {
+          players.forEach(player => {
+            if (!clubsMap[player.openid]) {
+              clubsMap[player.openid] = []
+            }
+            if (clubsInfoMap[player.clubid]) {
+              clubsMap[player.openid].push(clubsInfoMap[player.clubid])
+            }
+          })
+        }
+      }
+    }
+
+    // 处理 avatar URL 并规范化字段名，添加所属俱乐部信息
+    rows = rows.map(user => {
+      let normalized = normalizeUserFields(user)
+      
+      // 处理 avatar URL
+      const avatarUrl = normalized.avatarUrl
+      if (avatarUrl != null && avatarUrl.length > 0 && 
+          !avatarUrl.startsWith('http') && 
+          !avatarUrl.startsWith('cloud://')) {
+        normalized.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
+      }
+      
+      // 添加所属俱乐部信息
+      normalized.clubs = clubsMap[normalized.openid] || []
+      
+      return normalized
+    })
+
+    successResponse(result, {
+      data: {
+        list: rows,
+        total: count,
+        pageNum: pageNum,
+        pageSize: pageSize
+      }
+    })
+  } catch (error) {
+    console.error('listAll users error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '获取用户列表失败')
+  }
+}
+
+// 根据ID获取用户详情（管理台）
+exports.getById = async (request, result) => {
+  try {
+    const openid = request.params.id
+    if (!openid) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '用户OpenID不能为空')
+    }
+
+    let user = await sequelizeExecute(
+      db.collection('users').findOne({
+        where: {
+          openid: openid
+        },
+        raw: true
+      })
+    )
+
+    if (!user) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '用户不存在')
+    }
+
+    // 规范化字段名
+    user = normalizeUserFields(user)
+
+    // 处理 avatar URL
+    const avatarUrl = user.avatarUrl
+    if (avatarUrl != null && avatarUrl.length > 0 && 
+        !avatarUrl.startsWith('http') && 
+        !avatarUrl.startsWith('cloud://')) {
+      user.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
+    }
+
+    // 查询用户所属的俱乐部
+    const players = await sequelizeExecute(
+      db.collection('players').findAll({
+        where: {
+          openid: openid,
+          enable: {
+            [Op.ne]: 0  // PostgreSQL 中 enable 是 INTEGER，0=禁用，非0=启用
+          }
+        },
+        attributes: ['clubid'],
+        raw: true
+      })
+    )
+
+    const clubIds = players && players.length > 0 
+      ? players.map(p => p.clubid).filter(Boolean)
+      : []
+    
+    if (clubIds.length > 0) {
+      const clubs = await sequelizeExecute(
+        db.collection('clubs').findAll({
+          where: {
+            _id: {
+              [Op.in]: clubIds
+            },
+            delete: {
+              [Op.ne]: 1
+            }
+          },
+          attributes: ['_id', 'shortname', 'wholename'],
+          raw: true
+        })
+      )
+
+      user.clubs = clubs.map(club => ({
+        _id: club._id,
+        shortName: club.shortname || '',
+        wholeName: club.wholename || ''
+      }))
+    } else {
+      user.clubs = []
+    }
+
+    successResponse(result, {
+      data: user
+    })
+  } catch (error) {
+    console.error('getUserById error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '获取用户详情失败')
+  }
 }

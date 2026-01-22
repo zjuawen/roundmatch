@@ -9,6 +9,7 @@ const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/response").successResponse
 const errorResponse = require("../utils/response").errorResponse
 const userAvatarFix = require("../utils/util").userAvatarFix
+const ErrorCode = require("./errorcode")
 
 // 云函数入口函数
 exports.main = async (request, result) => {
@@ -513,3 +514,230 @@ shuffleArray2 = (array) => {
 //     console.log(res)
 //   })
 // }
+
+// ========== 管理台专用 API ==========
+
+// 获取所有赛事列表（管理台）
+exports.listAll = async (request, result) => {
+  try {
+    let pageNum = parseInt(request.query.pageNum) || 1
+    let pageSize = parseInt(request.query.pageSize) || 10
+    let clubid = request.query.clubid || ''
+    let keyword = request.query.keyword || ''
+
+    let whereCondition = {
+      delete: {
+        [Op.ne]: 1
+      }
+    }
+
+    // 俱乐部筛选
+    if (clubid) {
+      whereCondition.clubid = clubid
+    }
+
+    // 搜索条件（按名称搜索）
+    if (keyword) {
+      whereCondition.name = {
+        [Op.like]: `%${keyword}%`
+      }
+    }
+
+    let { count, rows } = await sequelizeExecute(
+      db.collection('matches').findAndCountAll({
+        where: whereCondition,
+        order: [['createDate', 'DESC']],
+        limit: pageSize,
+        offset: (pageNum - 1) * pageSize,
+        raw: true
+      })
+    )
+
+    successResponse(result, {
+      data: {
+        list: rows,
+        total: count,
+        pageNum: pageNum,
+        pageSize: pageSize
+      }
+    })
+  } catch (error) {
+    console.error('listAll matches error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '获取赛事列表失败')
+  }
+}
+
+// 根据ID获取赛事详情（管理台）
+exports.getById = async (request, result) => {
+  try {
+    const matchId = request.params.id
+    if (!matchId) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '赛事ID不能为空')
+    }
+
+    let match = await sequelizeExecute(
+      db.collection('matches').findByPk(matchId, {
+        raw: true
+      })
+    )
+
+    if (!match) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '赛事不存在')
+    }
+
+    successResponse(result, {
+      data: match
+    })
+  } catch (error) {
+    console.error('getMatchById error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '获取赛事详情失败')
+  }
+}
+
+// 创建赛事（管理台）
+exports.create = async (request, result) => {
+  try {
+    const { clubid, name, type, playerCount, owner, remark } = request.body
+
+    if (!clubid) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
+    }
+
+    // 检查俱乐部是否存在
+    const club = await sequelizeExecute(
+      db.collection('clubs').findByPk(clubid, {
+        raw: true
+      })
+    )
+
+    if (!club) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '俱乐部不存在')
+    }
+
+    const match = await sequelizeExecute(
+      db.collection('matches').create({
+        clubid: clubid,
+        name: name || '',
+        createDate: db.serverDate(),
+        total: 0,
+        finish: 0,
+        playerCount: playerCount || 0,
+        type: type || 'none',
+        delete: false,
+        owner: owner || 'admin',
+        remark: remark || ''
+      }, {
+        raw: true
+      })
+    )
+
+    if (match) {
+      successResponse(result, {
+        data: match
+      })
+    } else {
+      errorResponse(result, ErrorCode.DATABASE_ERROR, '创建赛事失败')
+    }
+  } catch (error) {
+    console.error('createMatch error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '创建赛事失败: ' + error.message)
+  }
+}
+
+// 更新赛事（管理台）
+exports.update = async (request, result) => {
+  try {
+    const matchId = request.params.id
+    const { name, type, playerCount, remark, finish } = request.body
+
+    if (!matchId) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '赛事ID不能为空')
+    }
+
+    // 检查赛事是否存在
+    const existingMatch = await sequelizeExecute(
+      db.collection('matches').findByPk(matchId, {
+        raw: true
+      })
+    )
+
+    if (!existingMatch) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '赛事不存在')
+    }
+
+    let updateData = {}
+    if (name !== undefined) updateData.name = name
+    if (type !== undefined) updateData.type = type
+    if (playerCount !== undefined) updateData.playerCount = playerCount
+    if (remark !== undefined) updateData.remark = remark
+    if (finish !== undefined) updateData.finish = finish
+
+    const updated = await sequelizeExecute(
+      db.collection('matches').update(updateData, {
+        where: {
+          _id: matchId
+        }
+      })
+    )
+
+    if (updated > 0) {
+      // 获取更新后的数据
+      const updatedMatch = await sequelizeExecute(
+        db.collection('matches').findByPk(matchId, {
+          raw: true
+        })
+      )
+      successResponse(result, {
+        data: updatedMatch
+      })
+    } else {
+      errorResponse(result, ErrorCode.DATABASE_ERROR, '更新赛事失败')
+    }
+  } catch (error) {
+    console.error('updateMatch error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '更新赛事失败: ' + error.message)
+  }
+}
+
+// 删除赛事（管理台）
+exports.delete = async (request, result) => {
+  try {
+    const matchId = request.params.id
+
+    if (!matchId) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '赛事ID不能为空')
+    }
+
+    const updated = await sequelizeExecute(
+      db.collection('matches').update({
+        delete: 1
+      }, {
+        where: {
+          _id: matchId
+        }
+      })
+    )
+
+    if (updated > 0) {
+      // 同时删除关联的 games
+      await sequelizeExecute(
+        db.collection('games').update({
+          delete: 1
+        }, {
+          where: {
+            matchid: matchId
+          }
+        })
+      )
+
+      successResponse(result, {
+        data: { deleted: true }
+      })
+    } else {
+      errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '赛事不存在或已被删除')
+    }
+  } catch (error) {
+    console.error('deleteMatch error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '删除赛事失败: ' + error.message)
+  }
+}

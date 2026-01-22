@@ -40,6 +40,7 @@ db.games = require("./Sequelize.model").games(database, Sequelize)
 db.system = require("./Sequelize.model").system(database, Sequelize)
 db.notices = require("./Sequelize.model").notices(database, Sequelize)
 db.userconfig = require("./Sequelize.model").userconfig(database, Sequelize)
+db.admins = require("./Sequelize.model").admins(database, Sequelize)
 
 // Define associations
 db.matches.hasMany(db.games, {

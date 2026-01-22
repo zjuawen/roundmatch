@@ -334,6 +334,56 @@ module.exports.system = (database, Sequelize) => {
     })
 }
 
+module.exports.admins = (database, Sequelize) => {
+    return database.define("admins", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        username: {
+            type: Sequelize.STRING,
+            unique: true,
+            allowNull: false
+        },
+        password: {
+            type: Sequelize.STRING,
+            allowNull: false
+        },
+        openid: {
+            type: Sequelize.STRING,
+            allowNull: true
+        },
+        clubid: {
+            type: Sequelize.UUID,
+            allowNull: true  // 超级管理员可以为空
+        },
+        role: {
+            type: Sequelize.STRING,
+            defaultValue: 'club_admin',  // super_admin 或 club_admin
+            allowNull: false
+        },
+        status: {
+            type: Sequelize.INTEGER,
+            defaultValue: 1  // 1=启用, 0=禁用
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: false,
+        updatedAt: 'updateTime',
+        indexes: [
+            { fields: ['username'] },
+            { fields: ['openid'] },
+            { fields: ['clubid'] },
+            { fields: ['role'] }
+        ]
+    })
+}
+
 module.exports.notices = (database, Sequelize) => {
     return database.define("notices", {
         _id: {

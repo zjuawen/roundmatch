@@ -8,6 +8,7 @@ const validateSession = require("../utils/util").validateSession
 const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/response").successResponse
 const errorResponse = require("../utils/response").errorResponse
+const ErrorCode = require("./errorcode")
 
 // RustFS 文件基础 URL（替代原来的 SERVER_URL_UPLOADS）
 const { getFileBaseUrl } = require("../config/storage.config")
@@ -954,5 +955,319 @@ incMatchCountAllow = async (clubid) => {
   //     errMsg: res.errMsg
   //   }
   // })
+}
+
+// ========== 管理台专用 API ==========
+
+// 将数据库返回的小写字段名转换为驼峰命名
+const normalizeClubFields = (club) => {
+  if (!club) return club
+  const normalized = { ...club }
+  // 转换字段名
+  if (club.wholename !== undefined) {
+    normalized.wholeName = club.wholename
+    delete normalized.wholename
+  }
+  if (club.shortname !== undefined) {
+    normalized.shortName = club.shortname
+    delete normalized.shortname
+  }
+  if (club.createdate !== undefined) {
+    normalized.createDate = club.createdate
+    delete normalized.createdate
+  }
+  if (club.updatetime !== undefined) {
+    normalized.updateTime = club.updatetime
+    delete normalized.updatetime
+  }
+  if (club.maxmatchallow !== undefined) {
+    normalized.maxMatchAllow = club.maxmatchallow
+    delete normalized.maxmatchallow
+  }
+  return normalized
+}
+
+// 获取所有俱乐部列表（管理台）
+exports.listAll = async (request, result) => {
+  try {
+    let pageNum = parseInt(request.query.pageNum) || 1
+    let pageSize = parseInt(request.query.pageSize) || 10
+    let keyword = request.query.keyword || ''
+
+    let whereCondition = {
+      delete: {
+        [Op.ne]: 1
+      }
+    }
+
+    // 搜索条件 - PostgreSQL 字段名是小写的
+    if (keyword) {
+      whereCondition = {
+        ...whereCondition,
+        ...queryLike(keyword, ['shortname', 'wholename'])
+      }
+    }
+
+    let { count, rows } = await sequelizeExecute(
+      db.collection('clubs').findAndCountAll({
+        where: whereCondition,
+        order: [['createdate', 'DESC']],
+        limit: pageSize,
+        offset: (pageNum - 1) * pageSize,
+        raw: true
+      })
+    )
+
+    // 收集所有创建者的 openid
+    const creatorOpenids = [...new Set(rows.map(club => club.creator).filter(Boolean))]
+    
+    // 批量查询用户信息
+    let usersMap = {}
+    if (creatorOpenids.length > 0) {
+      const users = await sequelizeExecute(
+        db.collection('users').findAll({
+          where: {
+            openid: {
+              [Op.in]: creatorOpenids
+            }
+          },
+          attributes: ['openid', 'name'],
+          raw: true
+        })
+      )
+      
+      // 构建 openid -> name 的映射（PostgreSQL 返回小写字段名）
+      users.forEach(user => {
+        const openid = user.openid
+        const name = user.name || ''
+        if (openid) {
+          usersMap[openid] = name
+        }
+      })
+    }
+
+    // 处理 logo URL 并规范化字段名，添加创建者昵称
+    rows = rows.map(club => {
+      let normalized = normalizeClubFields(club)
+      const logo = normalized.logo
+      if (logo != null && logo.length > 0 && !logo.startsWith('http') && !logo.startsWith('cloud://')) {
+        normalized.logo = SERVER_URL_UPLOADS + logo
+      }
+      // 添加创建者昵称
+      normalized.creatorName = usersMap[normalized.creator] || normalized.creator || '未知'
+      return trimClubField(normalized)
+    })
+
+    successResponse(result, {
+      data: {
+        list: rows,
+        total: count,
+        pageNum: pageNum,
+        pageSize: pageSize
+      }
+    })
+  } catch (error) {
+    console.error('listAll clubs error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '获取俱乐部列表失败')
+  }
+}
+
+// 根据ID获取俱乐部详情（管理台）
+exports.getById = async (request, result) => {
+  try {
+    const clubId = request.params.id
+    if (!clubId) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
+    }
+
+    let club = await sequelizeExecute(
+      db.collection('clubs').findByPk(clubId, {
+        raw: true
+      })
+    )
+
+    if (!club) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '俱乐部不存在')
+    }
+
+    // 规范化字段名
+    club = normalizeClubFields(club)
+
+    // 查询创建者昵称
+    if (club.creator) {
+      const user = await sequelizeExecute(
+        db.collection('users').findOne({
+          where: {
+            openid: club.creator
+          },
+          attributes: ['name'],
+          raw: true
+        })
+      )
+      // PostgreSQL 返回小写字段名
+      const userName = (user && user.name) ? user.name : null
+      club.creatorName = userName || club.creator || '未知'
+    } else {
+      club.creatorName = '未知'
+    }
+
+    // 处理 logo URL
+    const logo = club.logo
+    if (logo != null && logo.length > 0 && !logo.startsWith('http') && !logo.startsWith('cloud://')) {
+      club.logo = SERVER_URL_UPLOADS + logo
+    }
+
+    trimClubField(club)
+
+    successResponse(result, {
+      data: club
+    })
+  } catch (error) {
+    console.error('getClubById error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '获取俱乐部详情失败')
+  }
+}
+
+// 创建俱乐部（管理台）
+exports.create = async (request, result) => {
+  try {
+    const { shortName, wholeName, logo, password, public: isPublic, creator } = request.body
+
+    if (!shortName || !wholeName) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部简称和全称不能为空')
+    }
+
+    let logoPath = logo
+    if (logoPath != null && logoPath.startsWith(SERVER_URL_UPLOADS)) {
+      logoPath = logoPath.substring(SERVER_URL_UPLOADS.length)
+    }
+
+    const club = await sequelizeExecute(
+      db.collection('clubs').create({
+        creator: creator || 'admin',
+        password: password || null,
+        shortName: shortName,
+        wholeName: wholeName,
+        logo: logoPath,
+        vip: false,
+        public: isPublic !== undefined ? isPublic : true,
+        delete: false,
+        createDate: db.serverDate()
+      }, {
+        raw: true
+      })
+    )
+
+    if (club) {
+      // 规范化字段名
+      club = normalizeClubFields(club)
+      trimClubField(club)
+      successResponse(result, {
+        data: club
+      })
+    } else {
+      errorResponse(result, ErrorCode.DATABASE_ERROR, '创建俱乐部失败')
+    }
+  } catch (error) {
+    console.error('createClub error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '创建俱乐部失败: ' + error.message)
+  }
+}
+
+// 更新俱乐部（管理台）
+exports.update = async (request, result) => {
+  try {
+    const clubId = request.params.id
+    const { shortName, wholeName, logo, password, public: isPublic } = request.body
+
+    if (!clubId) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
+    }
+
+    // 检查俱乐部是否存在
+    const existingClub = await sequelizeExecute(
+      db.collection('clubs').findByPk(clubId, {
+        raw: true
+      })
+    )
+
+    if (!existingClub) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '俱乐部不存在')
+    }
+
+    let updateData = {}
+    if (shortName !== undefined) updateData.shortName = shortName
+    if (wholeName !== undefined) updateData.wholeName = wholeName
+    if (password !== undefined) updateData.password = password || null
+    if (isPublic !== undefined) updateData.public = isPublic
+
+    if (logo !== undefined) {
+      let logoPath = logo
+      if (logoPath != null && logoPath.startsWith(SERVER_URL_UPLOADS)) {
+        logoPath = logoPath.substring(SERVER_URL_UPLOADS.length)
+      }
+      updateData.logo = logoPath
+    }
+
+    const updated = await sequelizeExecute(
+      db.collection('clubs').update(updateData, {
+        where: {
+          _id: clubId
+        }
+      })
+    )
+
+    if (updated > 0) {
+      // 获取更新后的数据
+      const updatedClub = await sequelizeExecute(
+        db.collection('clubs').findByPk(clubId, {
+          raw: true
+        })
+      )
+      // 规范化字段名
+      const normalizedClub = normalizeClubFields(updatedClub)
+      trimClubField(normalizedClub)
+      successResponse(result, {
+        data: normalizedClub
+      })
+    } else {
+      errorResponse(result, ErrorCode.DATABASE_ERROR, '更新俱乐部失败')
+    }
+  } catch (error) {
+    console.error('updateClub error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '更新俱乐部失败: ' + error.message)
+  }
+}
+
+// 删除俱乐部（管理台）
+exports.delete = async (request, result) => {
+  try {
+    const clubId = request.params.id
+
+    if (!clubId) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
+    }
+
+    const updated = await sequelizeExecute(
+      db.collection('clubs').update({
+        delete: 1
+      }, {
+        where: {
+          _id: clubId
+        }
+      })
+    )
+
+    if (updated > 0) {
+      successResponse(result, {
+        data: { deleted: true }
+      })
+    } else {
+      errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '俱乐部不存在或已被删除')
+    }
+  } catch (error) {
+    console.error('deleteClub error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '删除俱乐部失败: ' + error.message)
+  }
 }
 

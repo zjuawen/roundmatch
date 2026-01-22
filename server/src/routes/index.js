@@ -16,6 +16,7 @@ const matches = require("../controllers/matchservice")
 const games = require("../controllers/gameservice")
 const system = require("../controllers/systemservice")
 const media = require("../controllers/mediaservice")
+const admins = require("../controllers/adminservice")
 
 // Debug route
 router.get("/api/test", dummy.test)
@@ -38,6 +39,41 @@ router.get("/api/gameService", games.main)
 // Media services
 const upload = multer({ dest: "../uploads/tmp/" })
 router.post("/api/mediaService", upload.single('file'), media.main)
+
+// ========== 管理台专用 RESTful API ==========
+
+// 俱乐部管理 API
+router.get("/api/admin/clubs", clubs.listAll)
+router.get("/api/admin/clubs/:id", clubs.getById)
+router.post("/api/admin/clubs", clubs.create)
+router.put("/api/admin/clubs/:id", clubs.update)
+router.delete("/api/admin/clubs/:id", clubs.delete)
+
+// 赛事管理 API
+router.get("/api/admin/matches", matches.listAll)
+router.get("/api/admin/matches/:id", matches.getById)
+router.post("/api/admin/matches", matches.create)
+router.put("/api/admin/matches/:id", matches.update)
+router.delete("/api/admin/matches/:id", matches.delete)
+
+// 用户管理 API
+router.get("/api/admin/users", users.listAll)
+router.get("/api/admin/users/:id", users.getById)
+
+// ========== 管理员认证和管理 API ==========
+
+// 管理员登录（不需要认证）
+router.post("/api/admin/auth/login", admins.login)
+router.post("/api/admin/auth/login/wechat", admins.loginByWechat)
+
+// 获取当前登录管理员信息（需要认证）
+router.get("/api/admin/auth/me", admins.verifyToken, admins.getCurrentAdmin)
+
+// 管理员管理 API（需要超级管理员权限）
+router.get("/api/admin/admins", admins.verifyToken, admins.verifySuperAdmin, admins.listAll)
+router.post("/api/admin/admins", admins.verifyToken, admins.verifySuperAdmin, admins.create)
+router.put("/api/admin/admins/:id", admins.verifyToken, admins.verifySuperAdmin, admins.update)
+router.delete("/api/admin/admins/:id", admins.verifyToken, admins.verifySuperAdmin, admins.delete)
 
 module.exports = router
 

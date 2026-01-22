@@ -52,6 +52,22 @@
             "env": {
                 "NODE_ENV": "production"
             }
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Admin: 开发模式 (npm run dev)",
+            "runtimeExecutable": "npm",
+            "runtimeArgs": [
+                "run",
+                "dev"
+            ],
+            "cwd": "${workspaceFolder}/admin",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "console": "integratedTerminal",
+            "outputCapture": "std"
         }
     ]
 }

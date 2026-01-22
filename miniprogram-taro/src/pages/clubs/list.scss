@@ -14,8 +14,8 @@
 }
 
 .avatar-user {
-  height: 40px;
-  width: 40px;
+  height: 60px;
+  width: 60px;
   border-radius: 50%;
   margin-right: 20px;
   flex-shrink: 0;
@@ -29,11 +29,11 @@
 
 .search-input {
   flex: 1;
-  height: 40px;
-  padding: 0 20px;
+  height: 60px;
+  padding: 0 24px;
   background-color: #f5f5f5;
-  border-radius: 20px;
-  font-size: 14px;
+  border-radius: 30px;
+  font-size: 16px;
 }
 
 /* 页面主体 */
@@ -46,8 +46,8 @@
 }
 
 .section-title {
-  padding: 20px 40px;
-  font-size: 16px;
+  padding: 24px 40px;
+  font-size: 18px;
   font-weight: bold;
   color: #333;
   border-bottom: 1px solid #f0f0f0;
@@ -65,32 +65,32 @@
 .club-content {
   display: flex;
   align-items: center;
-  padding: 20px 40px;
+  padding: 28px 40px;
   position: relative;
 }
 
 .club-avatar {
-  height: 40px;
-  width: 40px;
+  height: 60px;
+  width: 60px;
   border-radius: 50%;
-  margin-right: 20px;
+  margin-right: 24px;
   box-shadow: 1px 1px 3px #CCCCCC;
   flex-shrink: 0;
 }
 
 .vip-icon {
-  width: 40px;
-  height: 40px;
-  margin-left: -60px;
-  margin-right: 20px;
+  width: 80px;
+  height: 80px;
+  margin-left: -70px;
+  margin-right: 24px;
   position: relative;
   z-index: 1;
 }
 
 .club-name {
   flex: 7;
-  margin-right: 20px;
-  font-size: 16px;
+  margin-right: 24px;
+  font-size: 36px;
   color: #333;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -98,14 +98,14 @@
 }
 
 .club-shortname {
-  font-size: 14px;
+  font-size: 16px;
   color: #666;
-  margin-right: 20px;
+  margin-right: 24px;
 }
 
 .owner-icon {
-  width: 40px;
-  height: 40px;
+  width: 50px;
+  height: 50px;
   margin-left: -20px;
   flex-shrink: 0;
 }
@@ -124,7 +124,7 @@
 
 .create-button {
   width: 100%;
-  padding: 20px;
+  padding: 28px;
   background-color: #07c160;
   color: #fff;
   border-radius: 8px;
@@ -132,8 +132,9 @@
 }
 
 .create-button-text {
-  font-size: 16px;
+  font-size: 18px;
   color: #fff;
+  font-weight: 500;
 }
 
 .loading,
@@ -141,7 +142,7 @@
   text-align: center;
   padding: 40px;
   color: #999;
-  font-size: 14px;
-  line-height: 1.6;
+  font-size: 16px;
+  line-height: 1.8;
 }
 
