@@ -1000,6 +1000,11 @@ exports.listAll = async (request, result) => {
       }
     }
 
+    // 权限过滤：如果是俱乐部管理员，只能看到自己关联的俱乐部
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid) {
+      whereCondition._id = request.admin.clubid
+    }
+
     // 搜索条件 - PostgreSQL 字段名是小写的
     if (keyword) {
       whereCondition = {
@@ -1080,8 +1085,18 @@ exports.getById = async (request, result) => {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
     }
 
+    // 权限检查：如果是俱乐部管理员，只能查看自己关联的俱乐部
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== clubId) {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该俱乐部')
+    }
+
     let club = await sequelizeExecute(
       db.collection('clubs').findByPk(clubId, {
+        where: {
+          delete: {
+            [Op.ne]: 1
+          }
+        },
         raw: true
       })
     )
@@ -1131,6 +1146,11 @@ exports.getById = async (request, result) => {
 // 创建俱乐部（管理台）
 exports.create = async (request, result) => {
   try {
+    // 权限检查：只有超级管理员可以创建俱乐部
+    if (request.admin && request.admin.role !== 'super_admin') {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '只有超级管理员可以创建俱乐部')
+    }
+
     const { shortName, wholeName, logo, password, public: isPublic, creator } = request.body
 
     if (!shortName || !wholeName) {
@@ -1182,6 +1202,11 @@ exports.update = async (request, result) => {
 
     if (!clubId) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
+    }
+
+    // 权限检查：如果是俱乐部管理员，只能更新自己关联的俱乐部
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== clubId) {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权修改该俱乐部')
     }
 
     // 检查俱乐部是否存在
@@ -1246,6 +1271,11 @@ exports.delete = async (request, result) => {
 
     if (!clubId) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
+    }
+
+    // 权限检查：只有超级管理员可以删除俱乐部
+    if (request.admin && request.admin.role !== 'super_admin') {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '只有超级管理员可以删除俱乐部')
     }
 
     const updated = await sequelizeExecute(

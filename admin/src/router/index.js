@@ -28,7 +28,8 @@ const routes = [
       {
         path: 'clubs/new',
         name: 'ClubNew',
-        component: () => import('@/views/clubs/New.vue')
+        component: () => import('@/views/clubs/New.vue'),
+        meta: { requiresSuperAdmin: true }
       },
       {
         path: 'clubs/:id',
@@ -49,6 +50,11 @@ const routes = [
         path: 'matches',
         name: 'Matches',
         component: () => import('@/views/matches/Index.vue')
+      },
+      {
+        path: 'matches/:id',
+        name: 'MatchDetail',
+        component: () => import('@/views/matches/Detail.vue')
       },
       {
         path: 'statistics',

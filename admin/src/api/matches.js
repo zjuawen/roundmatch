@@ -11,6 +11,11 @@ export const matchesApi = {
     return api.get(`/admin/matches/${id}`)
   },
   
+  // 获取赛事对阵数据
+  getGames: (id) => {
+    return api.get(`/admin/matches/${id}/games`)
+  },
+  
   // 创建赛事
   create: (data) => {
     return api.post('/admin/matches', data)

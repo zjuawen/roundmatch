@@ -4,7 +4,13 @@
       <template #header>
         <div class="card-header">
           <span>俱乐部管理</span>
-          <el-button type="primary" @click="handleAdd">新增俱乐部</el-button>
+          <el-button 
+            v-if="isSuperAdmin" 
+            type="primary" 
+            @click="handleAdd"
+          >
+            新增俱乐部
+          </el-button>
         </div>
       </template>
       <div class="search-bar" style="margin-bottom: 20px;">
@@ -36,7 +42,14 @@
           <template #default="{ row }">
             <el-button size="small" @click="handleView(row)">查看</el-button>
             <el-button size="small" type="primary" @click="handleEdit(row)">编辑</el-button>
-            <el-button size="small" type="danger" @click="handleDelete(row)">删除</el-button>
+            <el-button 
+              v-if="isSuperAdmin" 
+              size="small" 
+              type="danger" 
+              @click="handleDelete(row)"
+            >
+              删除
+            </el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -56,12 +69,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { clubsApi } from '@/api/clubs'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const isSuperAdmin = computed(() => authStore.isSuperAdmin)
+
 const clubs = ref([])
 const loading = ref(false)
 const total = ref(0)

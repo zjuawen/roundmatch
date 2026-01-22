@@ -9,7 +9,7 @@
       <div class="search-bar" style="margin-bottom: 20px;">
         <el-input
           v-model="keyword"
-          placeholder="搜索用户姓名或OpenID"
+          placeholder="搜索用户姓名"
           style="width: 300px; margin-right: 10px;"
           clearable
           @keyup.enter="handleSearch"
@@ -18,8 +18,20 @@
       </div>
       <el-table :data="users" v-loading="loading" stripe>
         <el-table-column prop="name" label="姓名" />
-        <el-table-column prop="openid" label="OpenID" width="200" />
+        <el-table-column prop="gender" label="性别" width="80">
+          <template #default="{ row }">
+            <span v-if="row.gender === 1">男</span>
+            <span v-else-if="row.gender === 2">女</span>
+            <span v-else style="color: #999;">未知</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="city" label="城市" />
+        <el-table-column label="加入时间" width="180">
+          <template #default="{ row }">
+            <span v-if="row.earliestJoinDate">{{ formatDate(row.earliestJoinDate) }}</span>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </el-table-column>
         <el-table-column label="所属俱乐部" min-width="200">
           <template #default="{ row }">
             <div v-if="row.clubs && row.clubs.length > 0">
@@ -108,6 +120,18 @@ const handleSizeChange = (size) => {
   pageSize.value = size
   pageNum.value = 1
   loadUsers()
+}
+
+const formatDate = (date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 </script>
 

@@ -517,6 +517,29 @@ shuffleArray2 = (array) => {
 
 // ========== 管理台专用 API ==========
 
+// 规范化赛事字段名（处理 PostgreSQL 小写字段名）
+const normalizeMatchFields = (match) => {
+  if (!match) return match
+  const normalized = { ...match }
+  // 转换字段名
+  if (match.createdate !== undefined) {
+    normalized.createDate = match.createdate
+    delete normalized.createdate
+  }
+  if (match.updatetime !== undefined) {
+    normalized.updateTime = match.updatetime
+    delete normalized.updatetime
+  }
+  if (match.playercount !== undefined) {
+    normalized.playerCount = match.playercount
+    delete normalized.playercount
+  }
+  if (match.clubid !== undefined) {
+    normalized.clubid = match.clubid
+  }
+  return normalized
+}
+
 // 获取所有赛事列表（管理台）
 exports.listAll = async (request, result) => {
   try {
@@ -531,14 +554,17 @@ exports.listAll = async (request, result) => {
       }
     }
 
-    // 俱乐部筛选
-    if (clubid) {
+    // 权限过滤：如果是俱乐部管理员，只能看到自己关联俱乐部的赛事
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid) {
+      whereCondition.clubid = request.admin.clubid
+    } else if (clubid) {
+      // 超级管理员可以筛选特定俱乐部
       whereCondition.clubid = clubid
     }
 
-    // 搜索条件（按名称搜索）
+    // 搜索条件（按备注搜索）
     if (keyword) {
-      whereCondition.name = {
+      whereCondition.remark = {
         [Op.like]: `%${keyword}%`
       }
     }
@@ -546,12 +572,51 @@ exports.listAll = async (request, result) => {
     let { count, rows } = await sequelizeExecute(
       db.collection('matches').findAndCountAll({
         where: whereCondition,
-        order: [['createDate', 'DESC']],
+        order: [['createdate', 'DESC']],
         limit: pageSize,
         offset: (pageNum - 1) * pageSize,
         raw: true
       })
     )
+
+    // 收集所有俱乐部ID
+    const clubIds = [...new Set(rows.map(match => match.clubid).filter(Boolean))]
+    
+    // 批量查询俱乐部信息
+    let clubsMap = {}
+    if (clubIds.length > 0) {
+      const clubs = await sequelizeExecute(
+        db.collection('clubs').findAll({
+          where: {
+            _id: {
+              [Op.in]: clubIds
+            }
+          },
+          attributes: ['_id', 'shortname', 'wholename'],
+          raw: true
+        })
+      )
+
+      clubs.forEach(club => {
+        clubsMap[club._id] = {
+          _id: club._id,
+          shortName: club.shortname || '',
+          wholeName: club.wholename || ''
+        }
+      })
+    }
+
+    // 规范化字段名并添加俱乐部信息
+    rows = rows.map(match => {
+      const normalized = normalizeMatchFields(match)
+      
+      // 添加俱乐部信息
+      if (normalized.clubid && clubsMap[normalized.clubid]) {
+        normalized.club = clubsMap[normalized.clubid]
+      }
+      
+      return normalized
+    })
 
     successResponse(result, {
       data: {
@@ -585,12 +650,243 @@ exports.getById = async (request, result) => {
       return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '赛事不存在')
     }
 
+    // 规范化字段名
+    match = normalizeMatchFields(match)
+
+    // 权限检查：如果是俱乐部管理员，只能查看自己关联俱乐部的赛事
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== match.clubid) {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该赛事')
+    }
+
+    // 查询俱乐部信息
+    if (match.clubid) {
+      const club = await sequelizeExecute(
+        db.collection('clubs').findByPk(match.clubid, {
+          attributes: ['_id', 'shortname', 'wholename'],
+          raw: true
+        })
+      )
+
+      if (club) {
+        match.club = {
+          _id: club._id,
+          shortName: club.shortname || '',
+          wholeName: club.wholename || ''
+        }
+      }
+    }
+
     successResponse(result, {
       data: match
     })
   } catch (error) {
     console.error('getMatchById error:', error)
     errorResponse(result, ErrorCode.DATABASE_ERROR, '获取赛事详情失败')
+  }
+}
+
+// 获取赛事对阵数据（管理台）
+exports.getGames = async (request, result) => {
+  try {
+    const matchId = request.params.id
+    if (!matchId) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '赛事ID不能为空')
+    }
+
+    // 先获取赛事信息用于权限检查
+    let match = await sequelizeExecute(
+      db.collection('matches').findByPk(matchId, {
+        attributes: ['_id', 'clubid'],
+        raw: true
+      })
+    )
+
+    if (!match) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '赛事不存在')
+    }
+
+    // 权限检查：如果是俱乐部管理员，只能查看自己关联俱乐部的赛事
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== match.clubid) {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该赛事')
+    }
+
+    // 查询对阵数据，只使用 matchid，不限制 clubid
+    console.log('查询对阵数据 - matchId:', matchId)
+    
+    // 先查询不包含 delete 条件的数据，判断 delete 字段类型
+    let gamesWithoutDelete = await sequelizeExecute(
+      db.collection('games').findAll({
+        attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4', 'delete'],
+        where: {
+          matchid: matchId,
+        },
+        raw: true,
+      })
+    )
+    
+    console.log('查询到的对阵数据数量（不含delete条件）:', gamesWithoutDelete ? gamesWithoutDelete.length : 0)
+    
+    // 根据实际字段类型选择查询条件，处理 NULL 值
+    // 注意：数据库中的 delete 字段是 INTEGER 类型，即使值为 null，也应该使用 INTEGER 查询条件
+    let games
+    if (gamesWithoutDelete && gamesWithoutDelete.length > 0) {
+      const firstDeleteValue = gamesWithoutDelete[0].delete
+      console.log('第一条数据的delete字段值:', firstDeleteValue, '类型:', typeof firstDeleteValue, '是否为NULL:', firstDeleteValue === null)
+      
+      // 检查所有非 null 的值来判断字段类型
+      const nonNullValues = gamesWithoutDelete.filter(g => g.delete !== null).map(g => g.delete)
+      let isBooleanType = false
+      
+      if (nonNullValues.length > 0) {
+        // 如果有非 null 值，检查是否为 boolean
+        isBooleanType = typeof nonNullValues[0] === 'boolean'
+      }
+      
+      if (isBooleanType) {
+        // BOOLEAN 类型，查询条件：delete = false 或 delete IS NULL
+        games = await sequelizeExecute(
+          db.collection('games').findAll({
+            attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+            where: {
+              matchid: matchId,
+              [Op.or]: [
+                { delete: false },
+                { delete: null }
+              ]
+            },
+            order: [
+              ['order', 'ASC']
+            ],
+            raw: true,
+          })
+        )
+        console.log('使用BOOLEAN条件（包含NULL）查询的结果数量:', games ? games.length : 0)
+      } else {
+        // INTEGER 类型（包括所有值为 null 的情况），查询条件：delete != 1 或 delete IS NULL
+        games = await sequelizeExecute(
+          db.collection('games').findAll({
+            attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+            where: {
+              matchid: matchId,
+              [Op.or]: [
+                { delete: { [Op.ne]: 1 } },
+                { delete: null }
+              ]
+            },
+            order: [
+              ['order', 'ASC']
+            ],
+            raw: true,
+          })
+        )
+        console.log('使用INTEGER条件（包含NULL）查询的结果数量:', games ? games.length : 0)
+      }
+    } else {
+      // 如果没有数据，使用 INTEGER 类型的查询条件（因为数据库字段是 INTEGER）
+      games = await sequelizeExecute(
+        db.collection('games').findAll({
+          attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+          where: {
+            matchid: matchId,
+            [Op.or]: [
+              { delete: { [Op.ne]: 1 } },
+              { delete: null }
+            ]
+          },
+          order: [
+            ['order', 'ASC']
+          ],
+          raw: true,
+        })
+      )
+      console.log('使用INTEGER条件（包含NULL）查询的结果数量:', games ? games.length : 0)
+    }
+
+    if (!games || games.length === 0) {
+      console.log('没有找到对阵数据')
+      return successResponse(result, {
+        data: []
+      })
+    }
+
+    // 收集所有玩家ID
+    let playerIds = []
+    games.forEach(game => {
+      for (let i = 1; i < 5; i++) {
+        const playerId = game['player' + i]
+        if (playerId && !playerIds.includes(playerId)) {
+          playerIds.push(playerId)
+        }
+      }
+    })
+
+    console.log('收集到的玩家ID:', playerIds)
+
+    // 批量查询玩家信息
+    let players = []
+    if (playerIds.length > 0) {
+      players = await sequelizeExecute(
+        db.collection('players').findAll({
+          attributes: ['_id', 'name', 'avatarurl'],
+          where: {
+            _id: {
+              [Op.in]: playerIds
+            },
+          },
+          raw: true
+        })
+      )
+
+      console.log('查询到的玩家数量:', players ? players.length : 0)
+      console.log('原始玩家数据:', players)
+      
+      // 规范化字段名（PostgreSQL 返回小写字段名）
+      players = players.map(player => {
+        return {
+          _id: player._id,
+          name: player.name,
+          avatarUrl: player.avatarurl || player.avatarUrl || ''
+        }
+      })
+      
+      players = userAvatarFix(players)
+      console.log('处理后的玩家数据:', players)
+    }
+
+    // 创建玩家映射
+    const playersMap = {}
+    players.forEach(player => {
+      playersMap[player._id] = {
+        _id: player._id,
+        name: player.name || '未知',
+        avatarUrl: player.avatarUrl || ''
+      }
+    })
+
+    // 将玩家信息填充到对阵数据中
+    const normalizedGames = games.map(game => {
+      const normalized = {
+        _id: game._id,
+        matchId: game.matchid,
+        order: game.order,
+        score1: game.score1 !== null && game.score1 !== undefined ? game.score1 : -1,
+        score2: game.score2 !== null && game.score2 !== undefined ? game.score2 : -1,
+        player1: playersMap[game.player1] || null,
+        player2: playersMap[game.player2] || null,
+        player3: playersMap[game.player3] || null,
+        player4: playersMap[game.player4] || null
+      }
+      return normalized
+    })
+
+    console.log('规范化后的对阵数据:', normalizedGames)
+
+    successResponse(result, {
+      data: normalizedGames
+    })
+  } catch (error) {
+    console.error('getMatchGames error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '获取对阵数据失败')
   }
 }
 
@@ -601,6 +897,11 @@ exports.create = async (request, result) => {
 
     if (!clubid) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
+    }
+
+    // 权限检查：如果是俱乐部管理员，只能为自己关联的俱乐部创建赛事
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== clubid) {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权为该俱乐部创建赛事')
     }
 
     // 检查俱乐部是否存在
@@ -632,8 +933,9 @@ exports.create = async (request, result) => {
     )
 
     if (match) {
+      const normalizedMatch = normalizeMatchFields(match)
       successResponse(result, {
-        data: match
+        data: normalizedMatch
       })
     } else {
       errorResponse(result, ErrorCode.DATABASE_ERROR, '创建赛事失败')
@@ -665,6 +967,11 @@ exports.update = async (request, result) => {
       return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '赛事不存在')
     }
 
+    // 权限检查：如果是俱乐部管理员，只能更新自己关联俱乐部的赛事
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== existingMatch.clubid) {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权修改该赛事')
+    }
+
     let updateData = {}
     if (name !== undefined) updateData.name = name
     if (type !== undefined) updateData.type = type
@@ -687,8 +994,9 @@ exports.update = async (request, result) => {
           raw: true
         })
       )
+      const normalizedMatch = normalizeMatchFields(updatedMatch)
       successResponse(result, {
-        data: updatedMatch
+        data: normalizedMatch
       })
     } else {
       errorResponse(result, ErrorCode.DATABASE_ERROR, '更新赛事失败')
@@ -706,6 +1014,22 @@ exports.delete = async (request, result) => {
 
     if (!matchId) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '赛事ID不能为空')
+    }
+
+    // 检查赛事是否存在并获取俱乐部ID
+    const match = await sequelizeExecute(
+      db.collection('matches').findByPk(matchId, {
+        raw: true
+      })
+    )
+
+    if (!match) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '赛事不存在')
+    }
+
+    // 权限检查：如果是俱乐部管理员，只能删除自己关联俱乐部的赛事
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== match.clubid) {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权删除该赛事')
     }
 
     const updated = await sequelizeExecute(

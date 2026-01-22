@@ -10,12 +10,13 @@
       <div class="search-bar" style="margin-bottom: 20px;">
         <el-input
           v-model="keyword"
-          placeholder="搜索赛事名称"
+          placeholder="搜索备注"
           style="width: 300px; margin-right: 10px;"
           clearable
           @keyup.enter="handleSearch"
         />
         <el-input
+          v-if="isSuperAdmin"
           v-model="clubid"
           placeholder="俱乐部ID（可选）"
           style="width: 200px; margin-right: 10px;"
@@ -24,12 +25,22 @@
         <el-button type="primary" @click="handleSearch">搜索</el-button>
       </div>
       <el-table :data="matches" v-loading="loading" stripe>
-        <el-table-column prop="name" label="比赛名称" />
-        <el-table-column prop="clubid" label="俱乐部ID" />
+        <el-table-column label="创建时间" width="180">
+          <template #default="{ row }">
+            {{ formatDate(row.createDate) }}
+          </template>
+        </el-table-column>
+        <el-table-column label="俱乐部" min-width="150">
+          <template #default="{ row }">
+            <span v-if="row.club">{{ row.club.wholeName || row.club.shortName }}</span>
+            <span v-else style="color: #999;">-</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="playerCount" label="玩家数" />
         <el-table-column prop="total" label="总场次" />
         <el-table-column prop="finish" label="完成场次" />
         <el-table-column prop="type" label="类型" />
+        <el-table-column prop="remark" label="备注" />
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
             <el-button size="small" @click="handleView(row)">查看</el-button>
@@ -54,12 +65,16 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import { matchesApi } from '@/api/matches'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const router = useRouter()
+const authStore = useAuthStore()
+const isSuperAdmin = computed(() => authStore.isSuperAdmin)
+
 const matches = ref([])
 const loading = ref(false)
 const total = ref(0)
@@ -136,6 +151,18 @@ const handleSizeChange = (size) => {
   pageSize.value = size
   pageNum.value = 1
   loadMatches()
+}
+
+const formatDate = (date) => {
+  if (!date) return ''
+  const d = new Date(date)
+  return d.toLocaleString('zh-CN', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
 }
 </script>
 

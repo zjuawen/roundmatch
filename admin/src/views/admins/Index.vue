@@ -115,17 +115,28 @@
         <el-form-item label="关联俱乐部" prop="clubid" v-if="adminForm.role === 'club_admin'">
           <el-select
             v-model="adminForm.clubid"
-            placeholder="选择俱乐部"
+            placeholder="输入俱乐部名称搜索"
             filterable
+            remote
+            :remote-method="searchClubs"
+            :loading="clubSearchLoading"
             style="width: 100%;"
-            @focus="loadClubs"
+            clearable
+            @focus="handleClubSelectFocus"
           >
             <el-option
               v-for="club in clubs"
               :key="club._id"
-              :label="club.wholeName || club.shortName"
+              :label="`${club.wholeName || ''} ${club.shortName || ''}`.trim()"
               :value="club._id"
-            />
+            >
+              <div>
+                <div style="font-weight: bold;">{{ club.wholeName || club.shortName }}</div>
+                <div v-if="club.shortName && club.wholeName" style="font-size: 12px; color: #999;">
+                  简称：{{ club.shortName }}
+                </div>
+              </div>
+            </el-option>
           </el-select>
         </el-form-item>
         <el-form-item label="状态" prop="status">
@@ -153,6 +164,7 @@ const admins = ref([])
 const clubs = ref([])
 const loading = ref(false)
 const submitLoading = ref(false)
+const clubSearchLoading = ref(false)
 const total = ref(0)
 const pageNum = ref(1)
 const pageSize = ref(10)
@@ -213,14 +225,42 @@ const loadAdmins = async () => {
   }
 }
 
-const loadClubs = async () => {
-  if (clubs.value.length > 0) return
-  
+// 搜索俱乐部（实时搜索）
+const searchClubs = async (query) => {
+  if (query !== '') {
+    clubSearchLoading.value = true
+    try {
+      const response = await clubsApi.search(query, 50)
+      clubs.value = response.data.list || []
+    } catch (error) {
+      console.error('搜索俱乐部失败:', error)
+      ElMessage.error('搜索俱乐部失败：' + error.message)
+    } finally {
+      clubSearchLoading.value = false
+    }
+  } else {
+    // 如果查询为空，加载前50个俱乐部
+    await loadInitialClubs()
+  }
+}
+
+// 加载初始俱乐部列表（当打开下拉框时）
+const handleClubSelectFocus = async () => {
+  if (clubs.value.length === 0) {
+    await loadInitialClubs()
+  }
+}
+
+// 加载初始俱乐部列表
+const loadInitialClubs = async () => {
+  clubSearchLoading.value = true
   try {
-    const response = await clubsApi.list({ pageSize: 1000 })
+    const response = await clubsApi.search('', 50)
     clubs.value = response.data.list || []
   } catch (error) {
     console.error('加载俱乐部列表失败:', error)
+  } finally {
+    clubSearchLoading.value = false
   }
 }
 
@@ -237,7 +277,7 @@ const handleAdd = () => {
   dialogVisible.value = true
 }
 
-const handleEdit = (row) => {
+const handleEdit = async (row) => {
   isEdit.value = true
   currentAdminId.value = row._id
   adminForm.value = {
@@ -247,6 +287,22 @@ const handleEdit = (row) => {
     clubid: row.clubid,
     status: row.status
   }
+  
+  // 如果有关联的俱乐部，加载该俱乐部信息到列表中
+  if (row.clubid && row.club) {
+    clubs.value = [row.club]
+  } else if (row.clubid) {
+    // 如果没有俱乐部信息，尝试加载
+    try {
+      const response = await clubsApi.getById(row.clubid)
+      if (response.data) {
+        clubs.value = [response.data]
+      }
+    } catch (error) {
+      console.error('加载俱乐部信息失败:', error)
+    }
+  }
+  
   dialogVisible.value = true
 }
 

@@ -391,12 +391,56 @@ exports.listAll = async (request, result) => {
     let pageSize = parseInt(request.query.pageSize) || 10
     let keyword = request.query.keyword || ''
 
+    // 权限过滤：如果是俱乐部管理员，先获取该俱乐部的所有用户 openid
+    let allowedOpenids = null
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid) {
+      const clubPlayers = await sequelizeExecute(
+        db.collection('players').findAll({
+          where: {
+            clubid: request.admin.clubid,
+            enable: {
+              [Op.ne]: 0
+            }
+          },
+          attributes: ['openid'],
+          raw: true
+        })
+      )
+      allowedOpenids = clubPlayers.map(p => p.openid).filter(Boolean)
+      
+      // 如果没有用户，直接返回空列表
+      if (allowedOpenids.length === 0) {
+        return successResponse(result, {
+          data: {
+            list: [],
+            total: 0,
+            pageNum: pageNum,
+            pageSize: pageSize
+          }
+        })
+      }
+    }
+
     let whereCondition = {}
 
-    // 搜索条件 - PostgreSQL 字段名是小写的
+    // 权限过滤：如果是俱乐部管理员，只查询允许的用户
+    if (allowedOpenids) {
+      whereCondition.openid = {
+        [Op.in]: allowedOpenids
+      }
+    }
+
+    // 搜索条件 - PostgreSQL 字段名是小写的（只搜索姓名）
     if (keyword) {
-      whereCondition = {
-        ...queryLike(keyword, ['name', 'openid'])
+      if (allowedOpenids) {
+        whereCondition = {
+          ...whereCondition,
+          ...queryLike(keyword, ['name'])
+        }
+      } else {
+        whereCondition = {
+          ...queryLike(keyword, ['name'])
+        }
       }
     }
 
@@ -416,17 +460,24 @@ exports.listAll = async (request, result) => {
     // 批量查询用户所属的俱乐部
     let clubsMap = {}
     if (userOpenids.length > 0) {
+      let playersWhere = {
+        openid: {
+          [Op.in]: userOpenids
+        },
+        enable: {
+          [Op.ne]: 0  // PostgreSQL 中 enable 是 INTEGER，0=禁用，非0=启用
+        }
+      }
+      
+      // 如果有限制俱乐部，只查询该俱乐部的关联
+      if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid) {
+        playersWhere.clubid = request.admin.clubid
+      }
+      
       const players = await sequelizeExecute(
         db.collection('players').findAll({
-          where: {
-            openid: {
-              [Op.in]: userOpenids
-            },
-            enable: {
-              [Op.ne]: 0  // PostgreSQL 中 enable 是 INTEGER，0=禁用，非0=启用
-            }
-          },
-          attributes: ['openid', 'clubid'],
+          where: playersWhere,
+          attributes: ['openid', 'clubid', 'createdate'],
           raw: true
         })
       )
@@ -463,14 +514,18 @@ exports.listAll = async (request, result) => {
           }
         })
 
-        // 构建 openid -> clubs 的映射（添加空值检查）
+        // 构建 openid -> clubs 的映射（添加空值检查和加入时间）
         if (players && players.length > 0) {
           players.forEach(player => {
             if (!clubsMap[player.openid]) {
               clubsMap[player.openid] = []
             }
             if (clubsInfoMap[player.clubid]) {
-              clubsMap[player.openid].push(clubsInfoMap[player.clubid])
+              const clubInfo = {
+                ...clubsInfoMap[player.clubid],
+                joinDate: player.createdate || player.createDate || null  // 加入时间（处理字段名大小写）
+              }
+              clubsMap[player.openid].push(clubInfo)
             }
           })
         }
@@ -491,6 +546,19 @@ exports.listAll = async (request, result) => {
       
       // 添加所属俱乐部信息
       normalized.clubs = clubsMap[normalized.openid] || []
+      
+      // 计算最早加入时间（如果有多个俱乐部，取最早的加入时间）
+      if (normalized.clubs.length > 0) {
+        const joinDates = normalized.clubs
+          .map(club => club.joinDate)
+          .filter(date => date != null)
+          .map(date => new Date(date))
+          .sort((a, b) => a - b)
+        
+        if (joinDates.length > 0) {
+          normalized.earliestJoinDate = joinDates[0]
+        }
+      }
       
       return normalized
     })
@@ -541,16 +609,23 @@ exports.getById = async (request, result) => {
       user.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
     }
 
-    // 查询用户所属的俱乐部
+    // 权限过滤：如果是俱乐部管理员，只能查看关联俱乐部的用户
+    let playersWhere = {
+      openid: openid,
+      enable: {
+        [Op.ne]: 0  // PostgreSQL 中 enable 是 INTEGER，0=禁用，非0=启用
+      }
+    }
+    
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid) {
+      playersWhere.clubid = request.admin.clubid
+    }
+    
+    // 查询用户所属的俱乐部（包含加入时间）
     const players = await sequelizeExecute(
       db.collection('players').findAll({
-        where: {
-          openid: openid,
-          enable: {
-            [Op.ne]: 0  // PostgreSQL 中 enable 是 INTEGER，0=禁用，非0=启用
-          }
-        },
-        attributes: ['clubid'],
+        where: playersWhere,
+        attributes: ['clubid', 'createdate'],
         raw: true
       })
     )
@@ -558,6 +633,23 @@ exports.getById = async (request, result) => {
     const clubIds = players && players.length > 0 
       ? players.map(p => p.clubid).filter(Boolean)
       : []
+    
+    // 权限检查：如果是俱乐部管理员，确保用户属于该俱乐部
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid) {
+      if (clubIds.length === 0 || !clubIds.includes(request.admin.clubid)) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该用户信息')
+      }
+    }
+    
+    // 构建 clubid -> joinDate 的映射
+    const clubJoinDateMap = {}
+    if (players && players.length > 0) {
+      players.forEach(player => {
+        if (player.clubid) {
+          clubJoinDateMap[player.clubid] = player.createdate || player.createDate || null
+        }
+      })
+    }
     
     if (clubIds.length > 0) {
       const clubs = await sequelizeExecute(
@@ -578,8 +670,20 @@ exports.getById = async (request, result) => {
       user.clubs = clubs.map(club => ({
         _id: club._id,
         shortName: club.shortname || '',
-        wholeName: club.wholename || ''
+        wholeName: club.wholename || '',
+        joinDate: clubJoinDateMap[club._id] || null
       }))
+      
+      // 计算最早加入时间
+      const joinDates = user.clubs
+        .map(club => club.joinDate)
+        .filter(date => date != null)
+        .map(date => new Date(date))
+        .sort((a, b) => a - b)
+      
+      if (joinDates.length > 0) {
+        user.earliestJoinDate = joinDates[0]
+      }
     } else {
       user.clubs = []
     }

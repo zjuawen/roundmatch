@@ -10,31 +10,37 @@
       <div v-loading="loading">
         <el-descriptions :column="2" border v-if="user">
           <el-descriptions-item label="姓名">{{ user.name || '未知' }}</el-descriptions-item>
-          <el-descriptions-item label="OpenID">{{ user.openid }}</el-descriptions-item>
-          <el-descriptions-item label="头像">
-            <img v-if="user.avatarUrl" :src="user.avatarUrl" style="width: 50px; height: 50px; border-radius: 50%;" />
-            <span v-else>无</span>
-          </el-descriptions-item>
           <el-descriptions-item label="性别">
             <span v-if="user.gender === 1">男</span>
             <span v-else-if="user.gender === 2">女</span>
             <span v-else>未知</span>
           </el-descriptions-item>
+          <el-descriptions-item label="头像">
+            <img v-if="user.avatarUrl" :src="user.avatarUrl" style="width: 50px; height: 50px; border-radius: 50%;" />
+            <span v-else>无</span>
+          </el-descriptions-item>
           <el-descriptions-item label="国家">{{ user.country || '未知' }}</el-descriptions-item>
           <el-descriptions-item label="省份">{{ user.province || '未知' }}</el-descriptions-item>
           <el-descriptions-item label="城市">{{ user.city || '未知' }}</el-descriptions-item>
-          <el-descriptions-item label="创建时间">{{ formatDate(user.createDate) }}</el-descriptions-item>
+          <el-descriptions-item label="注册时间">{{ formatDate(user.createDate) }}</el-descriptions-item>
           <el-descriptions-item label="所属俱乐部" :span="2">
             <div v-if="user.clubs && user.clubs.length > 0">
-              <el-tag
+              <div
                 v-for="club in user.clubs"
                 :key="club._id"
-                style="margin-right: 5px; margin-bottom: 5px;"
-                @click="handleClubClick(club._id)"
-                class="club-tag"
+                style="margin-bottom: 10px;"
               >
-                {{ club.wholeName || club.shortName }}
-              </el-tag>
+                <el-tag
+                  @click="handleClubClick(club._id)"
+                  class="club-tag"
+                  style="margin-right: 5px;"
+                >
+                  {{ club.wholeName || club.shortName }}
+                </el-tag>
+                <span v-if="club.joinDate" style="font-size: 12px; color: #999;">
+                  加入时间：{{ formatDate(club.joinDate) }}
+                </span>
+              </div>
             </div>
             <span v-else style="color: #999;">无</span>
           </el-descriptions-item>

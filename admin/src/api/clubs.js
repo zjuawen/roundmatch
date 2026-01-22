@@ -6,6 +6,17 @@ export const clubsApi = {
     return api.get('/admin/clubs', { params })
   },
   
+  // 搜索俱乐部（用于下拉选择）
+  search: (keyword = '', limit = 50) => {
+    return api.get('/admin/clubs', { 
+      params: { 
+        keyword, 
+        pageSize: limit,
+        pageNum: 1
+      } 
+    })
+  },
+  
   // 获取俱乐部详情
   getById: (id) => {
     return api.get(`/admin/clubs/${id}`)

@@ -42,23 +42,24 @@ router.post("/api/mediaService", upload.single('file'), media.main)
 
 // ========== 管理台专用 RESTful API ==========
 
-// 俱乐部管理 API
-router.get("/api/admin/clubs", clubs.listAll)
-router.get("/api/admin/clubs/:id", clubs.getById)
-router.post("/api/admin/clubs", clubs.create)
-router.put("/api/admin/clubs/:id", clubs.update)
-router.delete("/api/admin/clubs/:id", clubs.delete)
+// 俱乐部管理 API（需要认证）
+router.get("/api/admin/clubs", admins.verifyToken, clubs.listAll)
+router.get("/api/admin/clubs/:id", admins.verifyToken, clubs.getById)
+router.post("/api/admin/clubs", admins.verifyToken, clubs.create)
+router.put("/api/admin/clubs/:id", admins.verifyToken, clubs.update)
+router.delete("/api/admin/clubs/:id", admins.verifyToken, clubs.delete)
 
-// 赛事管理 API
-router.get("/api/admin/matches", matches.listAll)
-router.get("/api/admin/matches/:id", matches.getById)
-router.post("/api/admin/matches", matches.create)
-router.put("/api/admin/matches/:id", matches.update)
-router.delete("/api/admin/matches/:id", matches.delete)
+// 赛事管理 API（需要认证）
+router.get("/api/admin/matches", admins.verifyToken, matches.listAll)
+router.get("/api/admin/matches/:id", admins.verifyToken, matches.getById)
+router.get("/api/admin/matches/:id/games", admins.verifyToken, matches.getGames)
+router.post("/api/admin/matches", admins.verifyToken, matches.create)
+router.put("/api/admin/matches/:id", admins.verifyToken, matches.update)
+router.delete("/api/admin/matches/:id", admins.verifyToken, matches.delete)
 
-// 用户管理 API
-router.get("/api/admin/users", users.listAll)
-router.get("/api/admin/users/:id", users.getById)
+// 用户管理 API（需要认证）
+router.get("/api/admin/users", admins.verifyToken, users.listAll)
+router.get("/api/admin/users/:id", admins.verifyToken, users.getById)
 
 // ========== 管理员认证和管理 API ==========
 
