@@ -16,8 +16,7 @@
             <span v-else>未知</span>
           </el-descriptions-item>
           <el-descriptions-item label="头像">
-            <img v-if="user.avatarUrl" :src="user.avatarUrl" style="width: 50px; height: 50px; border-radius: 50%;" />
-            <span v-else>无</span>
+            <Avatar :avatar-url="user.avatarUrl" :name="user.name || '未知'" :size="50" />
           </el-descriptions-item>
           <el-descriptions-item label="国家">{{ user.country || '未知' }}</el-descriptions-item>
           <el-descriptions-item label="省份">{{ user.province || '未知' }}</el-descriptions-item>
@@ -55,6 +54,7 @@ import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { usersApi } from '@/api/users'
 import { ElMessage } from 'element-plus'
+import Avatar from '@/components/Avatar.vue'
 
 const route = useRoute()
 const router = useRouter()

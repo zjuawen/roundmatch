@@ -64,23 +64,26 @@
             <el-table-column label="队伍1" min-width="200">
               <template #default="{ row }">
                 <div class="team-players">
-                  <div class="player-item" v-if="row.player1">
-                    <img 
-                      v-if="row.player1.avatarUrl" 
-                      :src="row.player1.avatarUrl" 
-                      class="player-avatar"
-                    />
-                    <span class="player-name">{{ row.player1.name || '未知' }}</span>
-                  </div>
-                  <div class="player-item" v-if="row.player2">
-                    <img 
-                      v-if="row.player2.avatarUrl" 
-                      :src="row.player2.avatarUrl" 
-                      class="player-avatar"
-                    />
-                    <span class="player-name">{{ row.player2.name || '未知' }}</span>
-                  </div>
-                  <div v-if="!row.player1 && !row.player2" style="color: #999;">-</div>
+                  <template v-if="row.player1 || row.player2">
+                    <div class="player-item" v-if="row.player1">
+                      <Avatar 
+                        :avatar-url="row.player1.avatarUrl" 
+                        :name="row.player1.name || '未知'"
+                        :size="32"
+                      />
+                      <span class="player-name">{{ row.player1.name || '未知' }}</span>
+                    </div>
+                    <span v-if="row.player1 && row.player2" class="player-separator">/</span>
+                    <div class="player-item" v-if="row.player2">
+                      <Avatar 
+                        :avatar-url="row.player2.avatarUrl" 
+                        :name="row.player2.name || '未知'"
+                        :size="32"
+                      />
+                      <span class="player-name">{{ row.player2.name || '未知' }}</span>
+                    </div>
+                  </template>
+                  <span v-else style="color: #999;">-</span>
                 </div>
               </template>
             </el-table-column>
@@ -122,23 +125,26 @@
             <el-table-column label="队伍2" min-width="200">
               <template #default="{ row }">
                 <div class="team-players">
-                  <div class="player-item" v-if="row.player3">
-                    <img 
-                      v-if="row.player3.avatarUrl" 
-                      :src="row.player3.avatarUrl" 
-                      class="player-avatar"
-                    />
-                    <span class="player-name">{{ row.player3.name || '未知' }}</span>
-                  </div>
-                  <div class="player-item" v-if="row.player4">
-                    <img 
-                      v-if="row.player4.avatarUrl" 
-                      :src="row.player4.avatarUrl" 
-                      class="player-avatar"
-                    />
-                    <span class="player-name">{{ row.player4.name || '未知' }}</span>
-                  </div>
-                  <div v-if="!row.player3 && !row.player4" style="color: #999;">-</div>
+                  <template v-if="row.player3 || row.player4">
+                    <div class="player-item" v-if="row.player3">
+                      <Avatar 
+                        :avatar-url="row.player3.avatarUrl" 
+                        :name="row.player3.name || '未知'"
+                        :size="32"
+                      />
+                      <span class="player-name">{{ row.player3.name || '未知' }}</span>
+                    </div>
+                    <span v-if="row.player3 && row.player4" class="player-separator">/</span>
+                    <div class="player-item" v-if="row.player4">
+                      <Avatar 
+                        :avatar-url="row.player4.avatarUrl" 
+                        :name="row.player4.name || '未知'"
+                        :size="32"
+                      />
+                      <span class="player-name">{{ row.player4.name || '未知' }}</span>
+                    </div>
+                  </template>
+                  <span v-else style="color: #999;">-</span>
                 </div>
               </template>
             </el-table-column>
@@ -155,6 +161,7 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { matchesApi } from '@/api/matches'
 import { ElMessage } from 'element-plus'
+import Avatar from '@/components/Avatar.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -262,8 +269,10 @@ const getTypeTagType = (type) => {
 
 .team-players {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
+  align-items: center;
   gap: 8px;
+  flex-wrap: wrap;
 }
 
 .player-item {
@@ -272,12 +281,12 @@ const getTypeTagType = (type) => {
   gap: 8px;
 }
 
-.player-avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  object-fit: cover;
+.player-separator {
+  color: #999;
+  font-size: 14px;
+  margin: 0 4px;
 }
+
 
 .player-name {
   font-size: 14px;

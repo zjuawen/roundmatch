@@ -17,6 +17,11 @@
         <el-button type="primary" @click="handleSearch">搜索</el-button>
       </div>
       <el-table :data="users" v-loading="loading" stripe>
+        <el-table-column label="头像" width="80" align="center">
+          <template #default="{ row }">
+            <Avatar :avatar-url="row.avatarUrl" :name="row.name || '未知'" :size="40" />
+          </template>
+        </el-table-column>
         <el-table-column prop="name" label="姓名" />
         <el-table-column prop="gender" label="性别" width="80">
           <template #default="{ row }">
@@ -72,6 +77,7 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { usersApi } from '@/api/users'
 import { ElMessage } from 'element-plus'
+import Avatar from '@/components/Avatar.vue'
 
 const router = useRouter()
 const users = ref([])
