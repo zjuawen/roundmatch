@@ -7,9 +7,30 @@ import Axios from 'axios'
 import WechatAPI from 'co-wechat-api'
 import download from 'download'
 import Sleep from 'sleep'
+import dotenv from 'dotenv'
+import path from 'path'
+import { fileURLToPath } from 'url'
 
-// const wxappApi = new WechatAPI('wxf3f6462195815590', '81323b14609ba2cdcc3c738628e122a3')
-const wxappApi = new WechatAPI('wxf3f6462195815590', 'dummy_secret_key')
+// 加载环境变量
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+// 加载 .env 文件
+dotenv.config({ path: path.resolve(__dirname, '../.env') })
+
+// 从环境变量读取微信小程序配置
+const WECHAT_APPID = process.env.WECHAT_APPID || 'dummy_appid'
+const WECHAT_SECRET = process.env.WECHAT_SECRET || 'dummy_secret_key'
+
+if (!process.env.WECHAT_APPID || process.env.WECHAT_APPID === 'dummy_appid') {
+  console.warn('警告: WECHAT_APPID 未设置或使用默认值，请在 .env 文件中配置 WECHAT_APPID')
+}
+
+if (!process.env.WECHAT_SECRET || process.env.WECHAT_SECRET === 'dummy_secret_key') {
+  console.warn('警告: WECHAT_SECRET 未设置或使用默认值，请在 .env 文件中配置 WECHAT_SECRET')
+}
+
+const wxappApi = new WechatAPI(WECHAT_APPID, WECHAT_SECRET)
 
 let env = 'roundmatch'
 
