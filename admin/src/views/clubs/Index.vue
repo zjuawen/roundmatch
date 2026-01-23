@@ -24,6 +24,16 @@
         <el-button type="primary" @click="handleSearch">搜索</el-button>
       </div>
       <el-table :data="clubs" v-loading="loading" stripe>
+        <el-table-column label="Logo" width="80" align="center">
+          <template #default="{ row }">
+            <Avatar 
+              :avatar-url="row.logo" 
+              :name="row.wholeName || row.shortName || '未知'" 
+              :size="50"
+              background-color="#ffffff"
+            />
+          </template>
+        </el-table-column>
         <el-table-column prop="shortName" label="简称" />
         <el-table-column prop="wholeName" label="全称" />
         <el-table-column label="创建者">
@@ -74,6 +84,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { clubsApi } from '@/api/clubs'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import Avatar from '@/components/Avatar.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()

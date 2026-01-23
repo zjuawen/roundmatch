@@ -5,7 +5,7 @@
       width: size + 'px',
       height: size + 'px',
       fontSize: fontSize + 'px',
-      backgroundColor: backgroundColor
+      backgroundColor: computedBackgroundColor
     }"
   >
     <img 
@@ -17,7 +17,7 @@
       @error="handleImageError"
       @load="handleImageLoad"
     />
-    <span v-else class="avatar-text">{{ displayText }}</span>
+    <span v-else class="avatar-text" :style="{ color: textColor }">{{ displayText }}</span>
   </div>
 </template>
 
@@ -37,6 +37,10 @@ const props = defineProps({
   size: {
     type: Number,
     default: 32
+  },
+  backgroundColor: {
+    type: String,
+    default: null // null 表示使用默认的颜色生成逻辑
   }
 })
 
@@ -145,7 +149,13 @@ const displayText = computed(() => {
 })
 
 // 根据名字生成背景色
-const backgroundColor = computed(() => {
+const computedBackgroundColor = computed(() => {
+  // 如果指定了背景色，直接使用
+  if (props.backgroundColor) {
+    return props.backgroundColor
+  }
+  
+  // 否则使用默认的颜色生成逻辑
   const colors = [
     '#409EFF', '#67C23A', '#E6A23C', '#F56C6C', 
     '#909399', '#9C27B0', '#00BCD4', '#FF9800',
@@ -156,6 +166,16 @@ const backgroundColor = computed(() => {
     return colors[index]
   }
   return '#909399'
+})
+
+// 根据背景色决定文字颜色
+const textColor = computed(() => {
+  // 如果背景色是白色或浅色，使用深色文字
+  if (props.backgroundColor === '#ffffff' || props.backgroundColor === '#fff' || props.backgroundColor === 'white') {
+    return '#333'
+  }
+  // 默认使用白色文字（深色背景）
+  return '#fff'
 })
 
 // 根据尺寸计算字体大小
@@ -182,7 +202,6 @@ const fontSize = computed(() => {
 }
 
 .avatar-text {
-  color: #fff;
   font-weight: bold;
   user-select: none;
 }
