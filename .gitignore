@@ -6,3 +6,4 @@ uploads/
 miniprogram-taro/dist
 miniprogram-taro/.swc
 uploads
+server/.env
