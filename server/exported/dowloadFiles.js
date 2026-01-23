@@ -6,7 +6,7 @@ import path from 'path'
 
 const { storage } = new CloudBase({
   secretId: "AKIDQiwAB48ze7MbNlU9e09QZUBnKh7kSDvZ",
-  secretKey: "GWcT7h8LhvxnUxISRFrK9lDjleMwGXpz",
+  secretKey: "dummy_secret_key",
   envId: "roundmatch" // 云开发环境ID，可在腾讯云云开发控制台获取
 });
 
