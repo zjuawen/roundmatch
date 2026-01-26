@@ -131,12 +131,12 @@ exports.checkAvatar = async (request, result) => {
           const statusCode = res.statusCode
           const contentType = res.headers['content-type'] || res.headers['Content-Type']
 
-          console.log('头像响应头检查结果:', {
-            url: avatarUrl,
-            statusCode,
-            errno,
-            contentType
-          })
+          // console.log('头像响应头检查结果:', {
+          //   url: avatarUrl,
+          //   statusCode,
+          //   errno,
+          //   contentType
+          // })
 
           // 检查 X-Errno（可能是单个值或多个值，如 '-6101, -6101'）
           let hasError = false

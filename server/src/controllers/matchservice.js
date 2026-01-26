@@ -271,8 +271,12 @@ createMatchData = async (type, playerArray) => {
 flatPlayerArray = (array) => {
   var newArray = []
   array.forEach(pair => {
-    newArray.push(pair.player1)
-    newArray.push(pair.player2)
+    if (pair.player1) {
+      newArray.push(pair.player1)
+    }
+    if (pair.player2) {
+      newArray.push(pair.player2)
+    }
   })
 
   return newArray
@@ -893,7 +897,7 @@ exports.getGames = async (request, result) => {
 // 创建赛事（管理台）
 exports.create = async (request, result) => {
   try {
-    const { clubid, name, type, playerCount, owner, remark } = request.body
+    const { clubid, name, type, playerCount, owner, remark, players } = request.body
 
     if (!clubid) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
@@ -915,16 +919,102 @@ exports.create = async (request, result) => {
       return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '俱乐部不存在')
     }
 
+    let finalPlayerCount = playerCount || 0
+    let totalGames = 0
+    let matchType = type || 'none'
+
+    // 如果传入了选手列表，生成对阵数据
+    if (players && Array.isArray(players) && players.length > 0) {
+      // 转换类型：管理台传入的是 'fix'，需要转换为 'fixpair' 用于生成对阵数据
+      let matchDataType = matchType
+      if (matchType === 'fix') {
+        matchDataType = 'fixpair'
+      }
+
+      // 根据类型处理选手数组
+      let playerArray = players
+      if (matchType === 'fix' || matchType === 'group') {
+        // 固定搭档和分组类型，需要配对格式
+        // 如果传入的是单个选手ID数组，需要转换为配对格式
+        if (players[0] && typeof players[0] === 'string') {
+          // 单个ID数组，需要配对
+          playerArray = []
+          for (let i = 0; i < players.length; i += 2) {
+            if (i + 1 < players.length) {
+              playerArray.push({
+                player1: { _id: players[i] },
+                player2: { _id: players[i + 1] }
+              })
+            } else {
+              playerArray.push({
+                player1: { _id: players[i] },
+                player2: null
+              })
+            }
+          }
+        }
+      } else {
+        // 无固定类型，转换为对象数组
+        if (players[0] && typeof players[0] === 'string') {
+          playerArray = players.map(id => ({ _id: id }))
+        }
+      }
+
+      // 生成对阵数据
+      const allgames = await createMatchData(matchDataType, playerArray)
+      
+      if (allgames && allgames.length > 0) {
+        // 使用第一个赛制的对阵数据
+        const games = allgames[0].data || []
+        totalGames = games.length
+
+        // 计算实际玩家数
+        if (matchType === 'fix' || matchType === 'group') {
+          const playerArrayFlat = flatPlayerArray(playerArray)
+          finalPlayerCount = playerArrayFlat.length
+        } else {
+          finalPlayerCount = playerArray.length
+        }
+
+        // 创建赛事并保存对阵数据
+        const saved = await saveMatchData(
+          owner || 'admin',
+          matchType,
+          clubid,
+          games,
+          finalPlayerCount,
+          remark || ''
+        )
+
+        if (saved && saved.matchid) {
+          const match = await sequelizeExecute(
+            db.collection('matches').findByPk(saved.matchid, {
+              raw: true
+            })
+          )
+
+          if (match) {
+            const normalizedMatch = normalizeMatchFields(match)
+            successResponse(result, {
+              data: normalizedMatch
+            })
+            return
+          }
+        }
+      }
+    }
+
+    // 如果没有传入选手列表，只创建赛事记录（不生成对阵数据）
     const match = await sequelizeExecute(
       db.collection('matches').create({
         clubid: clubid,
         name: name || '',
         createDate: db.serverDate(),
-        total: 0,
+        total: totalGames,
         finish: 0,
-        playerCount: playerCount || 0,
-        type: type || 'none',
-        delete: false,
+        playerCount: finalPlayerCount,
+        type: matchType,
+        delete: 0,
         owner: owner || 'admin',
         remark: remark || ''
       }, {

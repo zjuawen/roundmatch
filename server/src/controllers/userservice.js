@@ -696,3 +696,138 @@ exports.getById = async (request, result) => {
     errorResponse(result, ErrorCode.DATABASE_ERROR, '获取用户详情失败')
   }
 }
+
+// 获取俱乐部成员列表（管理台）
+exports.listPlayers = async (request, result) => {
+  try {
+    const clubid = request.query.clubid
+    const keyword = request.query.keyword || ''
+    const pageNum = parseInt(request.query.pageNum) || 1
+    const pageSize = parseInt(request.query.pageSize) || 100
+
+    if (!clubid) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
+    }
+
+    // 权限检查：如果是俱乐部管理员，只能查看自己关联俱乐部的成员
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== clubid) {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权查看该俱乐部的成员')
+    }
+
+    let whereCondition = {
+      clubid: clubid,
+      enable: {
+        [Op.ne]: 0  // PostgreSQL 中 enable 是 INTEGER，0=禁用，非0=启用
+      }
+    }
+
+    // 搜索条件
+    if (keyword) {
+      whereCondition.name = {
+        [Op.iLike]: `%${keyword}%`
+      }
+    }
+
+    const { count, rows } = await sequelizeExecute(
+      db.collection('players').findAndCountAll({
+        where: whereCondition,
+        order: [['order', 'DESC'], ['createdate', 'DESC']],
+        limit: pageSize,
+        offset: (pageNum - 1) * pageSize,
+        raw: true
+      })
+    )
+
+    // 处理头像URL
+    const players = userAvatarFix(rows || [])
+
+    successResponse(result, {
+      data: {
+        list: players,
+        total: count,
+        pageNum: pageNum,
+        pageSize: pageSize
+      }
+    })
+  } catch (error) {
+    console.error('listPlayers error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '获取成员列表失败: ' + error.message)
+  }
+}
+
+// 创建新成员（管理台）
+exports.createPlayer = async (request, result) => {
+  try {
+    const { clubid, name, avatarUrl, gender } = request.body
+
+    if (!clubid) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
+    }
+
+    if (!name) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '成员姓名不能为空')
+    }
+
+    // 权限检查：如果是俱乐部管理员，只能为自己关联的俱乐部创建成员
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== clubid) {
+      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权为该俱乐部创建成员')
+    }
+
+    // 检查俱乐部是否存在
+    const club = await sequelizeExecute(
+      db.collection('clubs').findByPk(clubid, {
+        raw: true
+      })
+    )
+
+    if (!club) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '俱乐部不存在')
+    }
+
+    // 获取该俱乐部的最大 order 值
+    const maxOrderPlayer = await sequelizeExecute(
+      db.collection('players').findOne({
+        where: { clubid: clubid },
+        order: [['order', 'DESC']],
+        attributes: ['order'],
+        raw: true
+      })
+    )
+
+    const newOrder = maxOrderPlayer && maxOrderPlayer.order ? maxOrderPlayer.order + 1 : 1
+
+    // 处理头像URL
+    let finalAvatarUrl = avatarUrl || ''
+    if (finalAvatarUrl && finalAvatarUrl.startsWith(SERVER_URL_UPLOADS)) {
+      finalAvatarUrl = finalAvatarUrl.substring(SERVER_URL_UPLOADS.length)
+    }
+
+    const player = await sequelizeExecute(
+      db.collection('players').create({
+        clubid: clubid,
+        name: name,
+        avatarUrl: finalAvatarUrl,
+        gender: gender || 0,
+        openid: null,  // 管理台创建的成员没有 openid
+        enable: true,
+        order: newOrder,
+        createDate: db.serverDate()
+      }, {
+        raw: true
+      })
+    )
+
+    if (player) {
+      // 处理头像URL用于返回
+      const playerData = userAvatarFix([player])[0]
+      successResponse(result, {
+        data: playerData
+      })
+    } else {
+      errorResponse(result, ErrorCode.DATABASE_ERROR, '创建成员失败')
+    }
+  } catch (error) {
+    console.error('createPlayer error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '创建成员失败: ' + error.message)
+  }
+}

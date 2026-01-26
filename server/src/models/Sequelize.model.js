@@ -204,8 +204,16 @@ module.exports.matches = (database, Sequelize) => {
             type: Sequelize.STRING
         },
         delete: {
-            type: Sequelize.BOOLEAN,
-            defaultValue: false
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            set(value) {
+                // 将布尔值转换为整数：true -> 1, false -> 0
+                if (typeof value === 'boolean') {
+                    this.setDataValue('delete', value ? 1 : 0)
+                } else {
+                    this.setDataValue('delete', value)
+                }
+            }
         },
         remark: {
             type: Sequelize.STRING
@@ -270,8 +278,16 @@ module.exports.games = (database, Sequelize) => {
             type: Sequelize.INTEGER
         },
         delete: {
-            type: Sequelize.BOOLEAN,
-            defaultValue: false
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            set(value) {
+                // 将布尔值转换为整数：true -> 1, false -> 0
+                if (typeof value === 'boolean') {
+                    this.setDataValue('delete', value ? 1 : 0)
+                } else {
+                    this.setDataValue('delete', value)
+                }
+            }
         },
         createDate: {
             type: Sequelize.DATE,

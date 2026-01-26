@@ -227,11 +227,9 @@ const formatDate = (date) => {
 
 const getTypeLabel = (type) => {
   const typeMap = {
-    'none': '无',
-    'nonefix': '无固定',
-    'fix': '固定',
-    'single': '单打',
-    'double': '双打'
+    'none': '无固定',
+    'fix': '固定搭档',
+    'group': '分组'
   }
   return typeMap[type] || type || '未知'
 }
@@ -239,10 +237,8 @@ const getTypeLabel = (type) => {
 const getTypeTagType = (type) => {
   const typeTagMap = {
     'none': 'info',
-    'nonefix': 'warning',
     'fix': 'success',
-    'single': 'primary',
-    'double': 'success'
+    'group': 'warning'
   }
   return typeTagMap[type] || 'info'
 }

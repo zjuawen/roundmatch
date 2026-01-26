@@ -64,6 +64,10 @@ router.delete("/api/admin/matches/:id", admins.verifyToken, matches.delete)
 router.get("/api/admin/users", admins.verifyToken, users.listAll)
 router.get("/api/admin/users/:id", admins.verifyToken, users.getById)
 
+// 成员管理 API（需要认证）
+router.get("/api/admin/players", admins.verifyToken, users.listPlayers)
+router.post("/api/admin/players", admins.verifyToken, users.createPlayer)
+
 // ========== 管理员认证和管理 API ==========
 
 // 管理员登录（不需要认证）

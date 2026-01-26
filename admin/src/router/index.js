@@ -52,6 +52,11 @@ const routes = [
         component: () => import('@/views/matches/Index.vue')
       },
       {
+        path: 'matches/new',
+        name: 'MatchNew',
+        component: () => import('@/views/matches/New.vue')
+      },
+      {
         path: 'matches/:id',
         name: 'MatchDetail',
         component: () => import('@/views/matches/Detail.vue')
