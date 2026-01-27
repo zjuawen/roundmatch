@@ -40,6 +40,8 @@ router.get("/api/gameService", games.main)
 const upload = multer({ dest: "../uploads/tmp/" })
 router.post("/api/mediaService", upload.single('file'), media.main)
 
+// 检查头像 URL（公开接口，小程序使用）
+router.get("/api/media/check-avatar", media.checkAvatar)
 // 检查头像 URL（管理台，需要认证）
 router.get("/api/admin/media/check-avatar", admins.verifyToken, media.checkAvatar)
 

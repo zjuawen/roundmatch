@@ -1,146 +1,249 @@
 .match-detail-page {
-  padding: 30rpx;
+  padding: 0;
   background-color: #F6F6F6;
   min-height: 100vh;
 }
 
-.match-header {
-  margin-bottom: 30rpx;
+/* 比赛信息头部 */
+.match-info-header {
+  background-color: #fff;
+  padding: 40rpx 30rpx;
+  margin-bottom: 20rpx;
 }
 
 .match-title {
-  font-size: 44rpx;
+  font-size: 48rpx;
   font-weight: bold;
   color: #333;
+  margin-bottom: 30rpx;
 }
 
-.games-list {
+.match-progress-container {
   display: flex;
-  flex-direction: column;
-  gap: 30rpx;
+  flex-direction: row;
+  align-items: center;
+  gap: 20rpx;
 }
 
-.game-item {
-  display: flex;
-  flex-direction: column;
-  border-radius: 20rpx;
-  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+.match-progress-label {
+  font-size: 28rpx;
+  color: #666;
+  white-space: nowrap;
+}
+
+.match-progress-bar-wrapper {
+  flex: 1;
+  height: 16rpx;
+  background-color: #E5E5E5;
+  border-radius: 8rpx;
   overflow: hidden;
 }
 
-.game-item-expanded {
-  min-height: 400rpx;
+.match-progress-bar {
+  height: 100%;
+  background-color: #0478F3;
+  border-radius: 8rpx;
+  transition: width 0.3s ease;
 }
 
-.game-item-collapsed {
-  min-height: 160rpx;
+.match-progress-text {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: bold;
+  white-space: nowrap;
 }
 
-.game-header {
+/* 比赛列表 */
+.games-list {
+  padding: 0 30rpx 30rpx;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 比赛卡片 */
+.game-card {
+  position: relative;
   display: flex;
   flex-direction: row;
-  align-items: center;
-  padding: 20rpx 30rpx;
-  border-bottom: 2rpx solid rgba(0, 0, 0, 0.1);
-  background-color: rgba(255, 255, 255, 0.8);
+  background-color: #fff;
+  border-radius: 16rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  margin-bottom: 20rpx;
 }
 
-.game-status-icon {
-  width: 60rpx;
-  height: 60rpx;
-  margin-right: 20rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+/* 右上角状态标签 */
+.game-status-badge-corner {
+  position: absolute;
+  top: 12rpx;
+  right: 12rpx;
+  padding: 6rpx 16rpx;
+  background-color: #FFF3E0;
+  border-radius: 12rpx;
+  z-index: 10;
 }
 
-.game-status-text {
-  font-size: 40rpx;
-  color: #333;
+.game-status-text-corner {
+  font-size: 22rpx;
+  color: #FF9800;
 }
 
-.game-number {
-  flex: 1;
-  font-size: 32rpx;
-  font-weight: bold;
-  color: #333;
-}
-
-.game-expand-icon {
-  width: 60rpx;
-  height: 60rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.game-expand-text {
-  font-size: 40rpx;
-  color: #666;
-  font-weight: bold;
-}
-
-.game-content {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  justify-content: space-around;
-  padding: 40rpx 20rpx;
-}
-
-.game-content-expanded {
-  min-height: 360rpx;
-}
-
-.game-content-collapsed {
-  min-height: 120rpx;
-}
-
-.game-player-column {
-  flex: 2;
+/* 左侧序号徽章 */
+.game-number-badge {
+  width: 72rpx;
+  background: linear-gradient(180deg, #0478F3 0%, #005A9B 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  padding: 24rpx 0;
+}
+
+.game-number-text {
+  font-size: 40rpx;
+  font-weight: bold;
+  color: #fff;
+  line-height: 1;
+}
+
+.game-status-check {
+  margin-top: 12rpx;
+  width: 32rpx;
+  height: 32rpx;
+  background-color: #67f547;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-status-check-text {
+  font-size: 24rpx;
+  color: #fff;
+  font-weight: bold;
+}
+
+/* 卡片内容区域 */
+.game-card-content {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 20rpx;
+  gap: 20rpx;
+}
+
+/* 队伍区域 */
+.game-team {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+/* 玩家行 */
+.game-player-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  padding: 10rpx 0;
+}
+
+.game-team-divider {
+  height: 1rpx;
+  background-color: #E5E5E5;
+  margin: 0;
 }
 
 .game-player-avatar {
-  width: 80rpx;
-  height: 80rpx;
+  width: 64rpx;
+  height: 64rpx;
   border-radius: 50%;
-  margin-bottom: 16rpx;
   background-color: #f0f0f0;
+  flex-shrink: 0;
+}
+
+.game-player-avatar-text {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.game-player-avatar-text-content {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #fff;
+  line-height: 1;
 }
 
 .game-player-name {
-  font-size: 24rpx;
+  font-size: 28rpx;
   color: #333;
-  text-align: center;
-  max-width: 120rpx;
+  flex: 1;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.game-score-column {
-  flex: 3;
+/* 比分区域 */
+.game-score-section {
+  flex: 0 0 auto;
   display: flex;
-  flex-direction: column;
   align-items: center;
   justify-content: center;
+  min-width: 100rpx;
 }
 
-.game-score {
-  font-size: 44rpx;
+.game-score-display {
+  display: flex;
+  flex-direction: row;
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.game-score-winner {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #FF3B30;
+  line-height: 1;
+}
+
+.game-score-separator {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #666;
+  line-height: 1;
+}
+
+.game-score-loser {
+  font-size: 48rpx;
   font-weight: bold;
   color: #0478F3;
+  line-height: 1;
 }
 
 .game-score-vs {
   font-size: 36rpx;
   font-weight: bold;
-  color: #0478F3;
+  color: #999;
 }
+
+.game-score-vs-clickable {
+  cursor: pointer;
+  padding: 10rpx 20rpx;
+  border-radius: 8rpx;
+  transition: background-color 0.2s;
+  
+  &:active {
+    background-color: rgba(0, 0, 0, 0.05);
+  }
+}
+
 
 .loading,
 .empty {
@@ -148,4 +251,122 @@
   padding: 80rpx 40rpx;
   color: #999;
   font-size: 28rpx;
+}
+
+/* 比分输入对话框 */
+.score-dialog-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.score-dialog {
+  width: 600rpx;
+  background-color: #fff;
+  border-radius: 20rpx;
+  overflow: hidden;
+}
+
+.score-dialog-header {
+  padding: 40rpx;
+  border-bottom: 1rpx solid #E5E5E5;
+  text-align: center;
+}
+
+.score-dialog-title {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.score-dialog-content {
+  padding: 40rpx;
+}
+
+.score-input-row {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+  margin-bottom: 40rpx;
+}
+
+.score-input {
+  flex: 1;
+  height: 80rpx;
+  background-color: #F5F5F5;
+  border-radius: 8rpx;
+  padding: 0 20rpx;
+  font-size: 48rpx;
+  text-align: center;
+  border: 2rpx solid #E5E5E5;
+}
+
+.score-separator {
+  font-size: 48rpx;
+  font-weight: bold;
+  color: #333;
+  padding: 0 10rpx;
+}
+
+.score-dialog-players {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  gap: 20rpx;
+}
+
+.score-dialog-team {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.score-dialog-player-name {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.score-dialog-vs {
+  font-size: 28rpx;
+  color: #999;
+  padding: 0 10rpx;
+}
+
+.score-dialog-footer {
+  display: flex;
+  flex-direction: row;
+  border-top: 1rpx solid #E5E5E5;
+}
+
+.score-dialog-btn {
+  flex: 1;
+  height: 100rpx;
+  line-height: 100rpx;
+  text-align: center;
+  font-size: 32rpx;
+  border: none;
+  border-radius: 0;
+  background-color: #fff;
+}
+
+.score-dialog-btn-cancel {
+  color: #666;
+  border-right: 1rpx solid #E5E5E5;
+}
+
+.score-dialog-btn-confirm {
+  color: #0478F3;
+  font-weight: bold;
 }

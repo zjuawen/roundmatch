@@ -95,5 +95,18 @@ export const matchService = {
   delete: (clubid, matchid) => api.get('api/matchservice', { action: 'delete', clubid, matchid })
 }
 
+export const gameService = {
+  save: (clubid, gamedata, openid) => api.get('api/gameService', {
+    action: 'save',
+    clubid,
+    gamedata: JSON.stringify(gamedata),
+    openid: openid || 'unknown'
+  })
+}
+
+export const mediaService = {
+  checkAvatar: (url) => api.get('api/media/check-avatar', { url })
+}
+
 const api = new ApiService()
 
