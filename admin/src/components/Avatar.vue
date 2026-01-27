@@ -67,10 +67,10 @@ const checkAvatarUrl = async (url) => {
     const response = await mediaApi.checkAvatar(url)
     const { isValid, errno } = response.data
     
-    console.log('头像检查结果:', { url, isValid, errno })
+    // console.log('头像检查结果:', { url, isValid, errno })
     
     if (!isValid) {
-      console.log('头像无效（X-Errno: -6101 或其他原因），使用文字头像')
+      // console.log('头像无效（X-Errno: -6101 或其他原因），使用文字头像')
       showImage.value = false
       imageSrc.value = ''
       isChecking.value = false

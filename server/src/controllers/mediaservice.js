@@ -105,7 +105,7 @@ exports.checkAvatar = async (request, result) => {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '头像URL不能为空')
     }
 
-    console.log('检查头像URL:', avatarUrl)
+    // console.log('检查头像URL:', avatarUrl)
 
     // 使用 Node.js 的 http/https 模块检查响应头
     const urlObj = new URL(avatarUrl)
@@ -162,7 +162,7 @@ exports.checkAvatar = async (request, result) => {
       })
 
       req.on('error', (error) => {
-        console.error('检查头像URL失败:', error)
+        // console.error('检查头像URL失败:', error)
         // 如果请求失败，返回无效
         sendResponse({
           isValid: false,

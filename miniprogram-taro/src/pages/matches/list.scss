@@ -1,37 +1,125 @@
 .match-list-page {
-  padding: 20px;
+  padding: 30rpx;
   background-color: #F6F6F6;
   min-height: 100vh;
 }
 
 .header {
-  margin-bottom: 20px;
+  margin-bottom: 30rpx;
 }
 
 .title {
-  font-size: 20px;
+  font-size: 44rpx;
   font-weight: bold;
+  color: #333;
 }
 
 .match-list {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 24rpx;
 }
 
 .match-item {
-  padding: 16px;
+  position: relative;
+  padding: 40rpx;
   background-color: #fff;
-  border-radius: 8px;
+  border-radius: 20rpx;
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
 }
 
-.match-info {
-  font-size: 16px;
+.match-item-finished {
+  background-color: #67f547;
+}
+
+.match-item-unfinished {
+  background-color: #62c0ff;
+}
+
+.match-header {
+  margin-bottom: 24rpx;
+}
+
+.match-name {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #333;
+  line-height: 1.4;
+}
+
+.match-progress-container {
+  width: 100%;
+  height: 16rpx;
+  background-color: rgba(255, 255, 255, 0.5);
+  border-radius: 8rpx;
+  margin-bottom: 24rpx;
+  overflow: hidden;
+}
+
+.match-progress-bar {
+  height: 100%;
+  background-color: #fca402;
+  border-radius: 8rpx;
+  transition: width 0.3s ease;
+}
+
+.match-info-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  border-top: 2rpx solid rgba(255, 255, 255, 0.8);
+  padding-top: 24rpx;
+}
+
+.match-info-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.match-info-label {
+  font-size: 24rpx;
+  color: rgba(0, 0, 0, 0.6);
+  margin-bottom: 12rpx;
+}
+
+.match-info-value {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.match-info-value-progress {
+  color: #0a68ff;
+}
+
+.match-info-divider {
+  width: 2rpx;
+  height: 60rpx;
+  background-color: rgba(0, 0, 0, 0.1);
+  margin: 0 20rpx;
+}
+
+.match-finished-badge {
+  position: absolute;
+  top: 20rpx;
+  right: 20rpx;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 8rpx 20rpx;
+  border-radius: 20rpx;
+}
+
+.match-finished-text {
+  font-size: 24rpx;
+  color: #67f547;
+  font-weight: bold;
 }
 
 .loading,
 .empty {
   text-align: center;
-  padding: 40px;
+  padding: 80rpx 40rpx;
   color: #999;
+  font-size: 28rpx;
 }

@@ -2,7 +2,7 @@ import { Component } from 'react'
 import { View, Text, Image, Input } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { clubService } from '../../services/api'
-import { getGlobalData } from '../../utils'
+import { getGlobalData, saveGlobalData } from '../../utils'
 import './list.scss'
 
 export default class ClubList extends Component {
@@ -107,8 +107,11 @@ export default class ClubList extends Component {
   }
 
   handleClubClick = (club) => {
-    Taro.navigateTo({
-      url: `/pages/matches/list?clubid=${club._id}`
+    // 保存 clubid 到全局存储，因为 switchTab 不支持 URL 参数
+    saveGlobalData('selectedClubId', club._id)
+    // 使用 switchTab 跳转到 tabbar 页面
+    Taro.switchTab({
+      url: '/pages/matches/list'
     })
   }
 

@@ -343,9 +343,14 @@ function saveUserConfig(openid, key, value, that, callback) {
 }
 
 function saveGameData(that, clubid, gamedata, callback) {
+    // 获取openid用于记录操作流水
+    const getGlobalData = require('./utils').getGlobalData
+    const openid = getGlobalData('openid')
+    
     commonCallFuction(that, callback, 'gameService', 'save', {
         clubid: clubid,
         gamedata: gamedata,
+        openid: openid || 'unknown' // 传递openid用于记录操作流水
     })
 }
 

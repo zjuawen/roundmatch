@@ -1,23 +1,151 @@
 .match-detail-page {
-  padding: 20px;
+  padding: 30rpx;
   background-color: #F6F6F6;
   min-height: 100vh;
 }
 
-.match-info {
-  background-color: #fff;
-  border-radius: 8px;
-  padding: 20px;
+.match-header {
+  margin-bottom: 30rpx;
 }
 
-.match-id {
-  font-size: 18px;
+.match-title {
+  font-size: 44rpx;
+  font-weight: bold;
   color: #333;
+}
+
+.games-list {
+  display: flex;
+  flex-direction: column;
+  gap: 30rpx;
+}
+
+.game-item {
+  display: flex;
+  flex-direction: column;
+  border-radius: 20rpx;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.game-item-expanded {
+  min-height: 400rpx;
+}
+
+.game-item-collapsed {
+  min-height: 160rpx;
+}
+
+.game-header {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  padding: 20rpx 30rpx;
+  border-bottom: 2rpx solid rgba(0, 0, 0, 0.1);
+  background-color: rgba(255, 255, 255, 0.8);
+}
+
+.game-status-icon {
+  width: 60rpx;
+  height: 60rpx;
+  margin-right: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-status-text {
+  font-size: 40rpx;
+  color: #333;
+}
+
+.game-number {
+  flex: 1;
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.game-expand-icon {
+  width: 60rpx;
+  height: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-expand-text {
+  font-size: 40rpx;
+  color: #666;
+  font-weight: bold;
+}
+
+.game-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-around;
+  padding: 40rpx 20rpx;
+}
+
+.game-content-expanded {
+  min-height: 360rpx;
+}
+
+.game-content-collapsed {
+  min-height: 120rpx;
+}
+
+.game-player-column {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-player-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-bottom: 16rpx;
+  background-color: #f0f0f0;
+}
+
+.game-player-name {
+  font-size: 24rpx;
+  color: #333;
+  text-align: center;
+  max-width: 120rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-score-column {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.game-score {
+  font-size: 44rpx;
+  font-weight: bold;
+  color: #0478F3;
+}
+
+.game-score-vs {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #0478F3;
 }
 
 .loading,
 .empty {
   text-align: center;
-  padding: 40px;
+  padding: 80rpx 40rpx;
   color: #999;
+  font-size: 28rpx;
 }

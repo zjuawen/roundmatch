@@ -444,6 +444,84 @@ module.exports.notices = (database, Sequelize) => {
     })
 }
 
+module.exports.scorelogs = (database, Sequelize) => {
+    return database.define("scorelogs", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        matchid: {
+            type: Sequelize.UUID,
+            allowNull: false
+        },
+        gameid: {
+            type: Sequelize.UUID,
+            allowNull: false
+        },
+        clubid: {
+            type: Sequelize.UUID,
+            allowNull: false
+        },
+        oldScore1: {
+            type: Sequelize.INTEGER,
+            allowNull: true
+        },
+        oldScore2: {
+            type: Sequelize.INTEGER,
+            allowNull: true
+        },
+        newScore1: {
+            type: Sequelize.INTEGER,
+            allowNull: false
+        },
+        newScore2: {
+            type: Sequelize.INTEGER,
+            allowNull: false
+        },
+        operator: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            comment: '操作者（管理员用户名或微信openid）'
+        },
+        operatorType: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            defaultValue: 'admin',
+            comment: '操作者类型：admin（管理台）或 wechat（微信小程序）'
+        },
+        remark: {
+            type: Sequelize.STRING,
+            allowNull: true,
+            comment: '备注'
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
+            set(value) {
+                if (typeof value === 'string') {
+                    this.setDataValue('createDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    this.setDataValue('createDate', value['$date'])
+                } else {
+                    this.setDataValue('createDate', value)
+                }
+            }
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: 'createDate',
+        updatedAt: false,
+        indexes: [
+            { fields: ['matchid'] },
+            { fields: ['gameid'] },
+            { fields: ['clubid'] },
+            { fields: ['operator'] },
+            { fields: ['createDate'] }
+        ]
+    })
+}
+
 module.exports.userconfig = (database, Sequelize) => {
     return database.define("userconfig", {
         _id: {

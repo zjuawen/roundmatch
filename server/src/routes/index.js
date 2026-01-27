@@ -60,6 +60,10 @@ router.post("/api/admin/matches", admins.verifyToken, matches.create)
 router.put("/api/admin/matches/:id", admins.verifyToken, matches.update)
 router.delete("/api/admin/matches/:id", admins.verifyToken, matches.delete)
 
+// 比分管理 API（需要认证）
+router.put("/api/admin/games/:id/score", admins.verifyToken, games.updateScore)
+router.get("/api/admin/games/score-logs", admins.verifyToken, games.getScoreLogs)
+
 // 用户管理 API（需要认证）
 router.get("/api/admin/users", admins.verifyToken, users.listAll)
 router.get("/api/admin/users/:id", admins.verifyToken, users.getById)
