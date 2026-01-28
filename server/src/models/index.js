@@ -41,6 +41,7 @@ db.system = require("./Sequelize.model").system(database, Sequelize)
 db.notices = require("./Sequelize.model").notices(database, Sequelize)
 db.userconfig = require("./Sequelize.model").userconfig(database, Sequelize)
 db.admins = require("./Sequelize.model").admins(database, Sequelize)
+db.adminClubs = require("./Sequelize.model").adminClubs(database, Sequelize)
 db.scorelogs = require("./Sequelize.model").scorelogs(database, Sequelize)
 
 // Define associations

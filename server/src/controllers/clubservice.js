@@ -1001,8 +1001,10 @@ exports.listAll = async (request, result) => {
     }
 
     // 权限过滤：如果是俱乐部管理员，只能看到自己关联的俱乐部
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid) {
-      whereCondition._id = request.admin.clubid
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubIds && request.admin.clubIds.length > 0) {
+      whereCondition._id = {
+        [Op.in]: request.admin.clubIds
+      }
     }
 
     // 搜索条件 - PostgreSQL 字段名是小写的
@@ -1086,8 +1088,11 @@ exports.getById = async (request, result) => {
     }
 
     // 权限检查：如果是俱乐部管理员，只能查看自己关联的俱乐部
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== clubId) {
-      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该俱乐部')
+    if (request.admin && request.admin.role === 'club_admin') {
+      const hasAccess = await request.hasClubAccess(clubId)
+      if (!hasAccess) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该俱乐部')
+      }
     }
 
     let club = await sequelizeExecute(
@@ -1205,8 +1210,11 @@ exports.update = async (request, result) => {
     }
 
     // 权限检查：如果是俱乐部管理员，只能更新自己关联的俱乐部
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== clubId) {
-      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权修改该俱乐部')
+    if (request.admin && request.admin.role === 'club_admin') {
+      const hasAccess = await request.hasClubAccess(clubId)
+      if (!hasAccess) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权修改该俱乐部')
+      }
     }
 
     // 检查俱乐部是否存在

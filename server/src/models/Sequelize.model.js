@@ -371,8 +371,9 @@ module.exports.admins = (database, Sequelize) => {
             allowNull: true
         },
         clubid: {
-            type: Sequelize.UUID,
-            allowNull: true  // 超级管理员可以为空
+            type: Sequelize.STRING,
+            allowNull: true  // 超级管理员可以为空，保留用于向后兼容
+            // 注意：改为STRING类型以兼容非UUID格式的俱乐部ID
         },
         role: {
             type: Sequelize.STRING,
@@ -396,6 +397,44 @@ module.exports.admins = (database, Sequelize) => {
             { fields: ['openid'] },
             { fields: ['clubid'] },
             { fields: ['role'] }
+        ]
+    })
+}
+
+// 管理员-俱乐部关联表（支持多对多关系）
+module.exports.adminClubs = (database, Sequelize) => {
+    return database.define("admin_clubs", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        adminid: {
+            type: Sequelize.UUID,
+            allowNull: false,
+            references: {
+                model: 'admins',
+                key: '_id'
+            }
+        },
+        clubid: {
+            type: Sequelize.STRING,
+            allowNull: false
+            // 注意：改为STRING类型以兼容非UUID格式的俱乐部ID
+            // 不设置外键约束，因为clubs表的_id可能是UUID类型，但实际数据可能是字符串
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: 'createDate',
+        updatedAt: false,
+        indexes: [
+            { fields: ['adminid'] },
+            { fields: ['clubid'] },
+            { unique: true, fields: ['adminid', 'clubid'] }  // 防止重复关联
         ]
     })
 }

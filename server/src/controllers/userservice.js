@@ -393,11 +393,13 @@ exports.listAll = async (request, result) => {
 
     // 权限过滤：如果是俱乐部管理员，先获取该俱乐部的所有用户 openid
     let allowedOpenids = null
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid) {
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubIds && request.admin.clubIds.length > 0) {
       const clubPlayers = await sequelizeExecute(
         db.collection('players').findAll({
           where: {
-            clubid: request.admin.clubid,
+            clubid: {
+              [Op.in]: request.admin.clubIds
+            },
             enable: {
               [Op.ne]: 0
             }
@@ -617,8 +619,10 @@ exports.getById = async (request, result) => {
       }
     }
     
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid) {
-      playersWhere.clubid = request.admin.clubid
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubIds && request.admin.clubIds.length > 0) {
+      playersWhere.clubid = {
+        [Op.in]: request.admin.clubIds
+      }
     }
     
     // 查询用户所属的俱乐部（包含加入时间）
@@ -710,8 +714,11 @@ exports.listPlayers = async (request, result) => {
     }
 
     // 权限检查：如果是俱乐部管理员，只能查看自己关联俱乐部的成员
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== clubid) {
-      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权查看该俱乐部的成员')
+    if (request.admin && request.admin.role === 'club_admin') {
+      const hasAccess = await request.hasClubAccess(clubid)
+      if (!hasAccess) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权查看该俱乐部的成员')
+      }
     }
 
     let whereCondition = {

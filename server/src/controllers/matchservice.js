@@ -636,8 +636,10 @@ exports.listAll = async (request, result) => {
     }
 
     // 权限过滤：如果是俱乐部管理员，只能看到自己关联俱乐部的赛事
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid) {
-      whereCondition.clubid = request.admin.clubid
+    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubIds && request.admin.clubIds.length > 0) {
+      whereCondition.clubid = {
+        [Op.in]: request.admin.clubIds
+      }
     } else if (clubid) {
       // 超级管理员可以筛选特定俱乐部
       whereCondition.clubid = clubid
@@ -735,8 +737,11 @@ exports.getById = async (request, result) => {
     match = normalizeMatchFields(match)
 
     // 权限检查：如果是俱乐部管理员，只能查看自己关联俱乐部的赛事
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== match.clubid) {
-      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该赛事')
+    if (request.admin && request.admin.role === 'club_admin') {
+      const hasAccess = await request.hasClubAccess(match.clubid)
+      if (!hasAccess) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该赛事')
+      }
     }
 
     // 查询俱乐部信息
@@ -787,8 +792,11 @@ exports.getGames = async (request, result) => {
     }
 
     // 权限检查：如果是俱乐部管理员，只能查看自己关联俱乐部的赛事
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== match.clubid) {
-      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该赛事')
+    if (request.admin && request.admin.role === 'club_admin') {
+      const hasAccess = await request.hasClubAccess(match.clubid)
+      if (!hasAccess) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该赛事')
+      }
     }
 
     // 查询对阵数据，只使用 matchid，不限制 clubid
@@ -981,8 +989,11 @@ exports.create = async (request, result) => {
     }
 
     // 权限检查：如果是俱乐部管理员，只能为自己关联的俱乐部创建赛事
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== clubid) {
-      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权为该俱乐部创建赛事')
+    if (request.admin && request.admin.role === 'club_admin') {
+      const hasAccess = await request.hasClubAccess(clubid)
+      if (!hasAccess) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权为该俱乐部创建赛事')
+      }
     }
 
     // 检查俱乐部是否存在
@@ -1135,8 +1146,11 @@ exports.update = async (request, result) => {
     }
 
     // 权限检查：如果是俱乐部管理员，只能更新自己关联俱乐部的赛事
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== existingMatch.clubid) {
-      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权修改该赛事')
+    if (request.admin && request.admin.role === 'club_admin') {
+      const hasAccess = await request.hasClubAccess(existingMatch.clubid)
+      if (!hasAccess) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权修改该赛事')
+      }
     }
 
     let updateData = {}
@@ -1195,8 +1209,11 @@ exports.delete = async (request, result) => {
     }
 
     // 权限检查：如果是俱乐部管理员，只能删除自己关联俱乐部的赛事
-    if (request.admin && request.admin.role === 'club_admin' && request.admin.clubid !== match.clubid) {
-      return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权删除该赛事')
+    if (request.admin && request.admin.role === 'club_admin') {
+      const hasAccess = await request.hasClubAccess(match.clubid)
+      if (!hasAccess) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权删除该赛事')
+      }
     }
 
     const updated = await sequelizeExecute(

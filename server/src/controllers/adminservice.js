@@ -50,6 +50,44 @@ const generateToken = (admin) => {
   )
 }
 
+// 获取管理员关联的俱乐部ID列表
+const getAdminClubIds = async (adminId) => {
+  const adminClubs = await sequelizeExecute(
+    db.collection('adminClubs').findAll({
+      where: {
+        adminid: adminId
+      },
+      attributes: ['clubid'],
+      raw: true
+    })
+  )
+  return adminClubs.map(ac => ac.clubid).filter(Boolean)
+}
+
+// 检查管理员是否有权限访问某个俱乐部
+const hasClubAccess = async (admin, clubId) => {
+  if (!admin || !clubId) return false
+  
+  // 超级管理员有所有权限
+  if (admin.role === 'super_admin') {
+    return true
+  }
+  
+  // 俱乐部管理员需要检查关联的俱乐部
+  if (admin.role === 'club_admin') {
+    // 先检查旧的 clubid 字段（向后兼容）
+    if (admin.clubid === clubId) {
+      return true
+    }
+    
+    // 检查关联表中的俱乐部
+    const clubIds = await getAdminClubIds(admin._id)
+    return clubIds.includes(clubId)
+  }
+  
+  return false
+}
+
 // 验证 JWT Token（中间件）
 exports.verifyToken = async (request, result, next) => {
   try {
@@ -80,7 +118,20 @@ exports.verifyToken = async (request, result, next) => {
       return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '管理员不存在或已被禁用')
     }
 
-    request.admin = normalizeAdminFields(admin)
+    const normalizedAdmin = normalizeAdminFields(admin)
+    
+    // 如果是俱乐部管理员，加载关联的俱乐部列表
+    if (normalizedAdmin.role === 'club_admin') {
+      normalizedAdmin.clubIds = await getAdminClubIds(admin._id)
+      // 向后兼容：如果旧的 clubid 存在且不在列表中，添加进去
+      if (normalizedAdmin.clubid && !normalizedAdmin.clubIds.includes(normalizedAdmin.clubid)) {
+        normalizedAdmin.clubIds.push(normalizedAdmin.clubid)
+      }
+    }
+    
+    request.admin = normalizedAdmin
+    // 将 hasClubAccess 函数附加到 request 上，方便其他中间件使用
+    request.hasClubAccess = (clubId) => hasClubAccess(normalizedAdmin, clubId)
     next()
   } catch (error) {
     if (error.name === 'JsonWebTokenError') {
@@ -314,7 +365,7 @@ exports.listAll = async (request, result) => {
 // 创建管理员（仅超级管理员）
 exports.create = async (request, result) => {
   try {
-    const { username, password, openid, clubid, role } = request.body
+    const { username, password, openid, clubid, clubIds, role } = request.body
 
     if (!username || !password) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '用户名和密码不能为空')
@@ -334,28 +385,115 @@ exports.create = async (request, result) => {
       return errorResponse(result, ErrorCode.ERROR_USER_ALREADY_EXIST, '用户名已存在')
     }
 
-    // 如果是俱乐部管理员，验证俱乐部是否存在
-    if (role === 'club_admin' && clubid) {
-      const club = await sequelizeExecute(
-        db.collection('clubs').findByPk(clubid, {
-          raw: true
+    // UUID格式验证正则表达式
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+    
+    // 处理俱乐部ID列表（支持 clubid 和 clubIds）
+    const finalClubIds = []
+    if (role === 'club_admin') {
+      // 支持新的 clubIds 数组
+      if (clubIds && Array.isArray(clubIds)) {
+        finalClubIds.push(...clubIds.filter(Boolean))
+      }
+      // 向后兼容：支持旧的 clubid 字段
+      if (clubid && !finalClubIds.includes(clubid)) {
+        finalClubIds.push(clubid)
+      }
+      
+      // 验证所有俱乐部是否存在
+      if (finalClubIds.length > 0) {
+        // 检查是否有非UUID格式的ID
+        const nonUuidIds = finalClubIds.filter(id => !uuidRegex.test(id))
+        
+        // 尝试查询俱乐部（先尝试UUID格式，如果失败再尝试字符串格式）
+        let clubs = []
+        const uuidIds = finalClubIds.filter(id => uuidRegex.test(id))
+        
+        if (uuidIds.length > 0) {
+          const uuidClubs = await sequelizeExecute(
+            db.collection('clubs').findAll({
+              where: {
+                _id: {
+                  [Op.in]: uuidIds
+                }
+              },
+              attributes: ['_id'],
+              raw: true
+            })
+          )
+          clubs.push(...uuidClubs)
+        }
+        
+        // 对于非UUID格式的ID，尝试使用CAST转换为字符串查询
+        if (nonUuidIds.length > 0) {
+          try {
+            // 使用原生SQL查询，将_id转换为字符串进行比较
+            const sequelize = db.databaseConf
+            const query = `
+              SELECT _id::text as _id 
+              FROM roundmatch.clubs 
+              WHERE _id::text IN (:ids)
+            `
+            const nonUuidClubs = await sequelize.query(query, {
+              replacements: { ids: nonUuidIds },
+              type: sequelize.QueryTypes.SELECT
+            })
+            // 将查询结果转换为UUID格式
+            nonUuidClubs.forEach(club => {
+              if (!clubs.find(c => c._id === club._id)) {
+                clubs.push({ _id: club._id })
+              }
+            })
+          } catch (error) {
+            console.warn('查询非UUID格式的俱乐部ID失败:', error)
+            // 如果查询失败，返回错误
+            return errorResponse(result, ErrorCode.VALIDATION_ERROR, 
+              `俱乐部ID格式不正确或不存在。无效的ID: ${nonUuidIds.join(', ')}`)
+          }
+        }
+        
+        const existingClubIds = clubs.map(c => String(c._id))
+        const invalidClubIds = finalClubIds.filter(id => {
+          const idStr = String(id)
+          return !existingClubIds.includes(idStr) && 
+                 !existingClubIds.some(existing => existing.toLowerCase() === idStr.toLowerCase())
         })
-      )
-
-      if (!club) {
-        return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '俱乐部不存在')
+        
+        if (invalidClubIds.length > 0) {
+          return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, `俱乐部不存在: ${invalidClubIds.join(', ')}`)
+        }
+        
+        // 使用查询到的UUID格式ID替换原始ID（确保使用数据库中的实际UUID）
+        const clubIdMapping = {}
+        clubs.forEach(club => {
+          finalClubIds.forEach(originalId => {
+            const idStr = String(originalId)
+            const clubIdStr = String(club._id)
+            if (idStr === clubIdStr || idStr.toLowerCase() === clubIdStr.toLowerCase()) {
+              clubIdMapping[originalId] = club._id
+            }
+          })
+        })
+        
+        // 更新finalClubIds为数据库中的实际UUID格式
+        const updatedClubIds = finalClubIds.map(id => {
+          return clubIdMapping[id] || id
+        })
+        finalClubIds.length = 0
+        finalClubIds.push(...updatedClubIds)
       }
     }
 
     // 加密密码
     const hashedPassword = await bcrypt.hash(password, 10)
 
+    // 创建管理员（保留旧的 clubid 字段用于向后兼容，使用第一个俱乐部ID）
     const admin = await sequelizeExecute(
       db.collection('admins').create({
         username: username,
         password: hashedPassword,
         openid: openid || null,
-        clubid: role === 'super_admin' ? null : clubid,
+        clubid: role === 'super_admin' ? null : (finalClubIds[0] || null),
         role: role || 'club_admin',
         status: 1,
         createDate: db.serverDate()
@@ -365,7 +503,26 @@ exports.create = async (request, result) => {
     )
 
     if (admin) {
+      // 创建管理员-俱乐部关联
+      if (finalClubIds.length > 0) {
+        const adminClubRecords = finalClubIds.map(clubId => ({
+          adminid: admin._id,
+          clubid: clubId,
+          createDate: db.serverDate()
+        }))
+        await sequelizeExecute(
+          db.collection('adminClubs').bulkCreate(adminClubRecords)
+        )
+      }
+      
       const normalizedAdmin = normalizeAdminFields(admin)
+      // 加载关联的俱乐部列表
+      if (normalizedAdmin.role === 'club_admin') {
+        normalizedAdmin.clubIds = await getAdminClubIds(admin._id)
+        if (normalizedAdmin.clubid && !normalizedAdmin.clubIds.includes(normalizedAdmin.clubid)) {
+          normalizedAdmin.clubIds.push(normalizedAdmin.clubid)
+        }
+      }
       delete normalizedAdmin.password
       successResponse(result, {
         data: normalizedAdmin
@@ -383,7 +540,7 @@ exports.create = async (request, result) => {
 exports.update = async (request, result) => {
   try {
     const adminId = request.params.id
-    const { password, openid, clubid, role, status } = request.body
+    const { password, openid, clubid, clubIds, role, status } = request.body
 
     if (!adminId) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '管理员ID不能为空')
@@ -404,8 +561,110 @@ exports.update = async (request, result) => {
       updateData.password = await bcrypt.hash(password, 10)
     }
     if (openid !== undefined) updateData.openid = openid
-    if (clubid !== undefined) updateData.clubid = clubid
     if (role !== undefined) updateData.role = role
+    if (status !== undefined) updateData.status = status
+    
+    // 处理俱乐部ID列表
+    let finalClubIds = null
+    if (clubIds !== undefined || clubid !== undefined) {
+      finalClubIds = []
+      // 支持新的 clubIds 数组
+      if (clubIds !== undefined && Array.isArray(clubIds)) {
+        finalClubIds.push(...clubIds.filter(Boolean))
+      }
+      // 向后兼容：支持旧的 clubid 字段
+      if (clubid !== undefined && clubid && !finalClubIds.includes(clubid)) {
+        finalClubIds.push(clubid)
+      }
+      
+      // 如果是俱乐部管理员，验证俱乐部是否存在（不验证UUID格式，直接查询数据库）
+      if (finalClubIds.length > 0) {
+        const clubs = await sequelizeExecute(
+          db.collection('clubs').findAll({
+            where: {
+              _id: {
+                [Op.in]: finalClubIds
+              }
+            },
+            attributes: ['_id'],
+            raw: true
+          })
+        )
+        const existingClubIds = clubs.map(c => c._id)
+        const invalidClubIds = finalClubIds.filter(id => !existingClubIds.includes(id))
+        if (invalidClubIds.length > 0) {
+          return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, `俱乐部不存在: ${invalidClubIds.join(', ')}`)
+        }
+      }
+      
+      // 更新旧的 clubid 字段（向后兼容，使用第一个俱乐部ID）
+      // 注意：如果数据库中的clubid字段是UUID类型，但传入的不是UUID格式，可能会出错
+      // 这里先尝试设置，如果数据库报错，会在catch中处理
+      if (finalClubIds.length > 0) {
+        updateData.clubid = finalClubIds[0]
+      } else {
+        updateData.clubid = null
+      }
+    }
+
+    // 更新管理员信息
+    if (Object.keys(updateData).length > 0) {
+      await sequelizeExecute(
+        db.collection('admins').update(updateData, {
+          where: {
+            _id: adminId
+          }
+        })
+      )
+    }
+    
+    // 更新管理员-俱乐部关联
+    if (finalClubIds !== null) {
+      // 删除旧的关联
+      await sequelizeExecute(
+        db.collection('adminClubs').destroy({
+          where: {
+            adminid: adminId
+          }
+        })
+      )
+      
+      // 创建新的关联
+      if (finalClubIds.length > 0) {
+        const adminClubRecords = finalClubIds.map(clubId => ({
+          adminid: adminId,
+          clubid: clubId,
+          createDate: db.serverDate()
+        }))
+        await sequelizeExecute(
+          db.collection('adminClubs').bulkCreate(adminClubRecords)
+        )
+      }
+    }
+    
+    // 获取更新后的管理员信息
+    const updatedAdmin = await sequelizeExecute(
+      db.collection('admins').findByPk(adminId, {
+        raw: true
+      })
+    )
+    
+    if (updatedAdmin) {
+      const normalizedAdmin = normalizeAdminFields(updatedAdmin)
+      // 加载关联的俱乐部列表
+      if (normalizedAdmin.role === 'club_admin') {
+        normalizedAdmin.clubIds = await getAdminClubIds(adminId)
+        if (normalizedAdmin.clubid && !normalizedAdmin.clubIds.includes(normalizedAdmin.clubid)) {
+          normalizedAdmin.clubIds.push(normalizedAdmin.clubid)
+        }
+      }
+      delete normalizedAdmin.password
+      successResponse(result, {
+        data: normalizedAdmin
+      })
+    } else {
+      errorResponse(result, ErrorCode.DATABASE_ERROR, '更新管理员失败')
+    }
     if (status !== undefined) updateData.status = status
 
     const updated = await sequelizeExecute(
