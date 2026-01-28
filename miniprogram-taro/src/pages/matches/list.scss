@@ -29,11 +29,11 @@
 }
 
 .match-item-finished {
-  background-color: #67f547;
+  background-color: #C1FCB4;
 }
 
 .match-item-unfinished {
-  background-color: #62c0ff;
+  background-color: #B3E5FC;
 }
 
 .match-header {
@@ -50,7 +50,7 @@
 .match-progress-container {
   width: 100%;
   height: 16rpx;
-  background-color: rgba(255, 255, 255, 0.5);
+  background-color: rgba(255, 255, 255, 0.6);
   border-radius: 8rpx;
   margin-bottom: 24rpx;
   overflow: hidden;
@@ -58,7 +58,7 @@
 
 .match-progress-bar {
   height: 100%;
-  background-color: #fca402;
+  background-color: #0478F3;
   border-radius: 8rpx;
   transition: width 0.3s ease;
 }
@@ -112,7 +112,7 @@
 
 .match-finished-text {
   font-size: 24rpx;
-  color: #67f547;
+  color: #4CAF50;
   font-weight: bold;
 }
 

@@ -10,6 +10,7 @@ const successResponse = require("../utils/response").successResponse
 const errorResponse = require("../utils/response").errorResponse
 const userAvatarFix = require("../utils/util").userAvatarFix
 const ErrorCode = require("./errorcode")
+const wechat = require("./wechat")
 
 // 云函数入口函数
 exports.main = async (request, result) => {
@@ -36,6 +37,9 @@ exports.main = async (request, result) => {
     data = await deleteMatch(event.clubid, event.matchid)
   } else if (action == 'update') {
     data = await updateMatch(event.matchid, event.value)
+  } else if (action == 'ranking') {
+    // 小程序获取排名统计
+    data = await getRankingForMiniProgram(event.matchid)
   }
 
   console.log('matchService return:')
@@ -311,19 +315,141 @@ readMatch = async (clubid, matchid) => {
   console.log('readMatch')
   console.log('查询参数 - clubid:', clubid, 'matchid:', matchid)
   
+  // 如果没有 clubid 或者 matchid 可能被截断，先通过 matchid 查询 match 表
+  let targetClubid = clubid
+  let fullMatchid = matchid
+  
+  if (matchid) {
+    try {
+      // 先尝试精确匹配
+      let match = await sequelizeExecute(
+        db.collection('matches').findByPk(matchid, {
+          attributes: ['_id', 'clubid'],
+          raw: true
+        })
+      )
+      
+      // 如果精确匹配失败，且 matchid 长度小于 36（UUID 标准长度），尝试模糊匹配
+      if (!match && matchid.length < 36) {
+        console.log('matchid 可能被截断，尝试模糊匹配:', matchid)
+        const matches = await sequelizeExecute(
+          db.collection('matches').findAll({
+            where: {
+              _id: {
+                [Op.like]: `${matchid}%`
+              }
+            },
+            attributes: ['_id', 'clubid'],
+            raw: true,
+            limit: 1
+          })
+        )
+        if (matches && matches.length > 0) {
+          match = matches[0]
+          fullMatchid = match._id
+          console.log('通过模糊匹配找到完整 matchid:', fullMatchid)
+        }
+      }
+      
+      if (match) {
+        console.log('查询到的 match 信息:', { _id: match._id, clubid: match.clubid })
+        if (!targetClubid && match.clubid) {
+          targetClubid = match.clubid
+          console.log('通过 matchid 查询到 clubid:', targetClubid)
+        } else if (targetClubid && match.clubid && targetClubid !== match.clubid) {
+          console.warn('clubid 不匹配！查询参数中的 clubid:', targetClubid, 'match 表中的 clubid:', match.clubid)
+          // 使用 match 表中的 clubid（更准确）
+          targetClubid = match.clubid
+          console.log('使用 match 表中的 clubid:', targetClubid)
+        }
+        if (match._id && match._id !== matchid) {
+          fullMatchid = match._id
+          console.log('使用完整的 matchid:', fullMatchid)
+        }
+      }
+    } catch (error) {
+      console.error('查询 match 信息失败:', error)
+    }
+  }
+  
+  if (!targetClubid) {
+    console.error('无法获取 clubid')
+    return []
+  }
+  
+  // 使用完整的 matchid（如果找到了）
+  const finalMatchid = fullMatchid || matchid
+  console.log('最终使用的 matchid:', finalMatchid)
+  
   // 先查询不包含 delete 条件的数据，判断 delete 字段类型
+  // 先尝试只使用 matchid 查询（不限制 clubid），因为 matchid 是唯一的
   let gamesWithoutDelete = await sequelizeExecute(
     db.collection('games').findAll({
       attributes: ['_id', 'matchid', 'clubid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4', 'delete'],
       where: {
-        clubid: clubid,
-        matchid: matchid,
+        matchid: finalMatchid,
       },
       raw: true,
     })
   )
   
-  console.log('查询到的对阵数据数量（不含delete条件）:', gamesWithoutDelete ? gamesWithoutDelete.length : 0)
+  console.log('查询到的对阵数据数量（不含delete条件，仅使用matchid）:', gamesWithoutDelete ? gamesWithoutDelete.length : 0)
+  
+  // 如果使用 matchid 查询没有结果，尝试同时使用 clubid 和 matchid
+  if (!gamesWithoutDelete || gamesWithoutDelete.length === 0) {
+    console.log('尝试使用 clubid 和 matchid 联合查询')
+    gamesWithoutDelete = await sequelizeExecute(
+      db.collection('games').findAll({
+        attributes: ['_id', 'matchid', 'clubid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4', 'delete'],
+        where: {
+          clubid: targetClubid,
+          matchid: finalMatchid,
+        },
+        raw: true,
+      })
+    )
+    console.log('查询到的对阵数据数量（使用clubid和matchid）:', gamesWithoutDelete ? gamesWithoutDelete.length : 0)
+  }
+  
+  // 如果还是没有结果，检查是否有其他 matchid 格式的数据
+  if (!gamesWithoutDelete || gamesWithoutDelete.length === 0) {
+    console.log('检查是否有其他格式的 matchid 数据')
+    
+    // 先检查 matches 表中的 clubid
+    const matchInfo = await sequelizeExecute(
+      db.collection('matches').findByPk(finalMatchid, {
+        attributes: ['_id', 'clubid'],
+        raw: true
+      })
+    )
+    console.log('matches 表中的信息:', matchInfo)
+    
+    // 检查 games 表中是否有这个 matchid 的数据（不限制 clubid）
+    const gamesByMatchid = await sequelizeExecute(
+      db.collection('games').findAll({
+        attributes: ['_id', 'matchid', 'clubid'],
+        where: {
+          matchid: finalMatchid,
+        },
+        raw: true,
+        limit: 5
+      })
+    )
+    console.log('games 表中该 matchid 的数据（前5条）:', gamesByMatchid)
+    
+    // 检查该 clubid 下的 games
+    const gamesByClubid = await sequelizeExecute(
+      db.collection('games').findAll({
+        attributes: ['_id', 'matchid', 'clubid'],
+        where: {
+          clubid: targetClubid,
+        },
+        raw: true,
+        limit: 10
+      })
+    )
+    console.log('该 clubid 下的 games 示例（前10条）:', gamesByClubid)
+  }
   
   // 根据实际字段类型选择查询条件，处理 NULL 值
   let games
@@ -342,12 +468,12 @@ readMatch = async (clubid, matchid) => {
     
     if (isBooleanType) {
       // BOOLEAN 类型，查询条件：delete = false 或 delete IS NULL
+      // 优先使用 matchid 查询（不限制 clubid）
       games = await sequelizeExecute(
         db.collection('games').findAll({
           attributes: ['_id', 'matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
           where: {
-            clubid: clubid,
-            matchid: matchid,
+            matchid: finalMatchid,
             [Op.or]: [
               { delete: false },
               { delete: null }
@@ -362,12 +488,12 @@ readMatch = async (clubid, matchid) => {
       console.log('使用BOOLEAN条件（包含NULL）查询的结果数量:', games ? games.length : 0)
     } else {
       // INTEGER 类型（包括所有值为 null 的情况），查询条件：delete != 1 或 delete IS NULL
+      // 优先使用 matchid 查询（不限制 clubid）
       games = await sequelizeExecute(
         db.collection('games').findAll({
           attributes: ['_id', 'matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
           where: {
-            clubid: clubid,
-            matchid: matchid,
+            matchid: finalMatchid,
             [Op.or]: [
               { delete: { [Op.ne]: 1 } },
               { delete: null }
@@ -383,12 +509,12 @@ readMatch = async (clubid, matchid) => {
     }
   } else {
     // 如果没有数据，使用 INTEGER 类型的查询条件（因为数据库字段是 INTEGER）
+    // 优先使用 matchid 查询（不限制 clubid）
     games = await sequelizeExecute(
       db.collection('games').findAll({
         attributes: ['_id', 'matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
         where: {
-          clubid: clubid,
-          matchid: matchid,
+          matchid: finalMatchid,
           [Op.or]: [
             { delete: { [Op.ne]: 1 } },
             { delete: null }
@@ -618,6 +744,10 @@ const normalizeMatchFields = (match) => {
   if (match.clubid !== undefined) {
     normalized.clubid = match.clubid
   }
+  if (match.qrcodeurl !== undefined) {
+    normalized.qrcodeUrl = match.qrcodeurl
+    delete normalized.qrcodeurl
+  }
   return normalized
 }
 
@@ -652,18 +782,40 @@ exports.listAll = async (request, result) => {
       }
     }
 
-    let { count, rows } = await sequelizeExecute(
-      db.collection('matches').findAndCountAll({
-        where: whereCondition,
-        order: [['createdate', 'DESC']],
-        limit: pageSize,
-        offset: (pageNum - 1) * pageSize,
-        raw: true
-      })
-    )
+    // 先尝试查询，如果失败（可能是qrcodeUrl字段不存在），则明确指定attributes
+    let queryResult
+    try {
+      queryResult = await sequelizeExecute(
+        db.collection('matches').findAndCountAll({
+          where: whereCondition,
+          order: [['createdate', 'DESC']],
+          limit: pageSize,
+          offset: (pageNum - 1) * pageSize,
+          raw: true
+        })
+      )
+    } catch (error) {
+      // 如果查询失败（可能是qrcodeUrl字段不存在），明确指定attributes排除qrcodeUrl
+      if (error.message && error.message.includes('qrcodeurl')) {
+        queryResult = await sequelizeExecute(
+          db.collection('matches').findAndCountAll({
+            where: whereCondition,
+            attributes: ['_id', 'name', 'playerCount', 'clubid', 'owner', 'finish', 'total', 'type', 'delete', 'remark', 'createdate', 'updatetime'],
+            order: [['createdate', 'DESC']],
+            limit: pageSize,
+            offset: (pageNum - 1) * pageSize,
+            raw: true
+          })
+        )
+      } else {
+        throw error
+      }
+    }
+    
+    const { count, rows: rawRows } = queryResult || { count: 0, rows: [] }
 
     // 收集所有俱乐部ID
-    const clubIds = [...new Set(rows.map(match => match.clubid).filter(Boolean))]
+    const clubIds = [...new Set(rawRows.map(match => match.clubid).filter(Boolean))]
     
     // 批量查询俱乐部信息
     let clubsMap = {}
@@ -690,7 +842,7 @@ exports.listAll = async (request, result) => {
     }
 
     // 规范化字段名并添加俱乐部信息
-    rows = rows.map(match => {
+    const rows = rawRows.map(match => {
       const normalized = normalizeMatchFields(match)
       
       // 添加俱乐部信息
@@ -1083,6 +1235,36 @@ exports.create = async (request, result) => {
 
           if (match) {
             const normalizedMatch = normalizeMatchFields(match)
+            
+            // 生成小程序码
+            try {
+              // scene参数最大32个字符，只传递 matchid，因为可以通过 matchid 查询到 clubid
+              // 如果 matchid 超过32字符，截断（但通常不会）
+              const scene = saved.matchid.substring(0, 32)
+              const page = 'pages/matches/detail'
+              const qrcodeUrl = await wechat.getUnlimitedQRCode(scene, page, {
+                width: 280,
+                autoColor: true,
+                isHyaline: false
+              })
+              
+              // 保存小程序码URL到数据库
+              await sequelizeExecute(
+                db.collection('matches').update({
+                  qrcodeUrl: qrcodeUrl
+                }, {
+                  where: {
+                    _id: saved.matchid
+                  }
+                })
+              )
+              
+              normalizedMatch.qrcodeUrl = qrcodeUrl
+            } catch (error) {
+              console.error('生成小程序码失败:', error)
+              // 不阻止创建赛事，只是记录错误
+            }
+            
             successResponse(result, {
               data: normalizedMatch
             })
@@ -1112,6 +1294,35 @@ exports.create = async (request, result) => {
 
     if (match) {
       const normalizedMatch = normalizeMatchFields(match)
+      
+      // 生成小程序码
+      try {
+        // scene参数最大32个字符，只传递 matchid，因为可以通过 matchid 查询到 clubid
+        const scene = match._id.substring(0, 32)
+        const page = 'pages/matches/detail'
+        const qrcodeUrl = await wechat.getUnlimitedQRCode(scene, page, {
+          width: 280,
+          autoColor: true,
+          isHyaline: false
+        })
+        
+        // 保存小程序码URL到数据库
+        await sequelizeExecute(
+          db.collection('matches').update({
+            qrcodeUrl: qrcodeUrl
+          }, {
+            where: {
+              _id: match._id
+            }
+          })
+        )
+        
+        normalizedMatch.qrcodeUrl = qrcodeUrl
+      } catch (error) {
+        console.error('生成小程序码失败:', error)
+        // 不阻止创建赛事，只是记录错误
+      }
+      
       successResponse(result, {
         data: normalizedMatch
       })
@@ -1247,5 +1458,631 @@ exports.delete = async (request, result) => {
   } catch (error) {
     console.error('deleteMatch error:', error)
     errorResponse(result, ErrorCode.DATABASE_ERROR, '删除赛事失败: ' + error.message)
+  }
+}
+
+// 生成或获取赛事小程序码（管理台）
+exports.getQRCode = async (request, result) => {
+  try {
+    const matchId = request.params.id
+    
+    if (!matchId) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '赛事ID不能为空')
+    }
+
+    // 检查赛事是否存在
+    const match = await sequelizeExecute(
+      db.collection('matches').findByPk(matchId, {
+        attributes: ['_id', 'clubid', 'qrcodeUrl'],
+        raw: true
+      })
+    )
+
+    if (!match) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '赛事不存在')
+    }
+
+    // 权限检查：如果是俱乐部管理员，只能查看自己关联俱乐部的赛事
+    if (request.admin && request.admin.role === 'club_admin') {
+      const hasAccess = await request.hasClubAccess(match.clubid)
+      if (!hasAccess) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该赛事')
+      }
+    }
+
+    // 如果已有小程序码，直接返回
+    if (match.qrcodeUrl) {
+      return successResponse(result, {
+        data: {
+          qrcodeUrl: match.qrcodeUrl
+        }
+      })
+    }
+
+    // 生成新的小程序码
+    try {
+      // scene参数最大32个字符，只传递 matchid，因为可以通过 matchid 查询到 clubid
+      const scene = matchId.substring(0, 32)
+      const page = 'pages/matches/detail'
+      const qrcodeUrl = await wechat.getUnlimitedQRCode(scene, page, {
+        width: 280,
+        autoColor: true,
+        isHyaline: false
+      })
+      
+      // 保存小程序码URL到数据库
+      await sequelizeExecute(
+        db.collection('matches').update({
+          qrcodeUrl: qrcodeUrl
+        }, {
+          where: {
+            _id: matchId
+          }
+        })
+      )
+      
+      successResponse(result, {
+        data: {
+          qrcodeUrl: qrcodeUrl
+        }
+      })
+    } catch (error) {
+      console.error('生成小程序码失败:', error)
+      errorResponse(result, ErrorCode.INTERNAL_ERROR, '生成小程序码失败: ' + error.message)
+    }
+  } catch (error) {
+    console.error('getQRCode error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '获取小程序码失败: ' + error.message)
+  }
+}
+
+// 获取赛事排名统计（管理台）
+exports.getRanking = async (request, result) => {
+  try {
+    const matchId = request.params.id
+    if (!matchId) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '赛事ID不能为空')
+    }
+
+    // 先获取赛事信息用于权限检查
+    let match = await sequelizeExecute(
+      db.collection('matches').findByPk(matchId, {
+        attributes: ['_id', 'clubid'],
+        raw: true
+      })
+    )
+
+    if (!match) {
+      return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '赛事不存在')
+    }
+
+    // 权限检查：如果是俱乐部管理员，只能查看自己关联俱乐部的赛事
+    if (request.admin && request.admin.role === 'club_admin') {
+      const hasAccess = await request.hasClubAccess(match.clubid)
+      if (!hasAccess) {
+        return errorResponse(result, ErrorCode.ERROR_NEED_LOGIN, '无权访问该赛事')
+      }
+    }
+
+    // 先查询所有比赛（不限制已完成），用于收集所有参赛选手
+    let gamesWithoutDelete = await sequelizeExecute(
+      db.collection('games').findAll({
+        attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4', 'delete'],
+        where: {
+          matchid: matchId,
+        },
+        raw: true,
+      })
+    )
+
+    // 根据实际字段类型选择查询条件，查询所有比赛（用于收集所有参赛选手）
+    let allGames
+    if (gamesWithoutDelete && gamesWithoutDelete.length > 0) {
+      const nonNullValues = gamesWithoutDelete.filter(g => g.delete !== null).map(g => g.delete)
+      let isBooleanType = false
+      
+      if (nonNullValues.length > 0) {
+        isBooleanType = typeof nonNullValues[0] === 'boolean'
+      }
+      
+      if (isBooleanType) {
+        allGames = await sequelizeExecute(
+          db.collection('games').findAll({
+            attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+            where: {
+              matchid: matchId,
+              [Op.or]: [
+                { delete: false },
+                { delete: null }
+              ]
+            },
+            order: [['order', 'ASC']],
+            raw: true,
+          })
+        )
+      } else {
+        allGames = await sequelizeExecute(
+          db.collection('games').findAll({
+            attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+            where: {
+              matchid: matchId,
+              [Op.or]: [
+                { delete: { [Op.ne]: 1 } },
+                { delete: null }
+              ]
+            },
+            order: [['order', 'ASC']],
+            raw: true,
+          })
+        )
+      }
+    } else {
+      allGames = await sequelizeExecute(
+        db.collection('games').findAll({
+          attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+          where: {
+            matchid: matchId,
+            [Op.or]: [
+              { delete: { [Op.ne]: 1 } },
+              { delete: null }
+            ]
+          },
+          order: [['order', 'ASC']],
+          raw: true,
+        })
+      )
+    }
+
+    if (!allGames || allGames.length === 0) {
+      return successResponse(result, {
+        data: []
+      })
+    }
+
+    // 先收集所有参赛选手（从所有比赛中）
+    const allPlayerIds = new Set()
+    allGames.forEach(game => {
+      if (game.player1) allPlayerIds.add(game.player1)
+      if (game.player2) allPlayerIds.add(game.player2)
+      if (game.player3) allPlayerIds.add(game.player3)
+      if (game.player4) allPlayerIds.add(game.player4)
+    })
+
+    // 初始化所有选手的统计（包括未完成比赛的选手）
+    const playerStats = {}
+    allPlayerIds.forEach(playerId => {
+      playerStats[playerId] = {
+        playerId: playerId,
+        wins: 0,
+        losses: 0,
+        total: 0
+      }
+    })
+
+    // 只统计已完成的比赛（score1 > 0 && score2 > 0）的胜负关系
+    const completedGames = allGames.filter(game => 
+      game.score1 > 0 && game.score2 > 0
+    )
+    
+    completedGames.forEach(game => {
+      const player1 = game.player1
+      const player2 = game.player2
+      const player3 = game.player3
+      const player4 = game.player4
+      const score1 = game.score1
+      const score2 = game.score2
+
+      // 判断胜负
+      if (score1 > score2) {
+        // 队伍1获胜
+        if (player1 && playerStats[player1]) {
+          playerStats[player1].wins++
+          playerStats[player1].total++
+        }
+        if (player2 && playerStats[player2]) {
+          playerStats[player2].wins++
+          playerStats[player2].total++
+        }
+        if (player3 && playerStats[player3]) {
+          playerStats[player3].losses++
+          playerStats[player3].total++
+        }
+        if (player4 && playerStats[player4]) {
+          playerStats[player4].losses++
+          playerStats[player4].total++
+        }
+      } else if (score2 > score1) {
+        // 队伍2获胜
+        if (player1 && playerStats[player1]) {
+          playerStats[player1].losses++
+          playerStats[player1].total++
+        }
+        if (player2 && playerStats[player2]) {
+          playerStats[player2].losses++
+          playerStats[player2].total++
+        }
+        if (player3 && playerStats[player3]) {
+          playerStats[player3].wins++
+          playerStats[player3].total++
+        }
+        if (player4 && playerStats[player4]) {
+          playerStats[player4].wins++
+          playerStats[player4].total++
+        }
+      }
+    })
+
+    // 收集所有玩家ID
+    const playerIds = Array.from(allPlayerIds)
+
+    // 批量查询玩家信息
+    let players = []
+    if (playerIds.length > 0) {
+      players = await sequelizeExecute(
+        db.collection('players').findAll({
+          attributes: ['_id', 'name', 'avatarurl'],
+          where: {
+            _id: {
+              [Op.in]: playerIds
+            },
+          },
+          raw: true
+        })
+      )
+
+      // 规范化字段名
+      players = players.map(player => {
+        return {
+          _id: player._id,
+          name: player.name,
+          avatarUrl: player.avatarurl || player.avatarUrl || ''
+        }
+      })
+      
+      players = userAvatarFix(players)
+    }
+
+    // 创建玩家映射
+    const playersMap = {}
+    players.forEach(player => {
+      playersMap[player._id] = {
+        _id: player._id,
+        name: player.name || '未知',
+        avatarUrl: player.avatarUrl || ''
+      }
+    })
+
+    // 构建排名数据 - 确保所有队员都显示，即使没有完成任何比赛
+    const ranking = Object.values(playerStats)
+      .map(stat => {
+        const player = playersMap[stat.playerId]
+        // 如果找不到玩家信息，仍然显示（使用默认值）
+        if (!player) {
+          console.warn('找不到玩家信息，playerId:', stat.playerId)
+        }
+        return {
+          playerId: stat.playerId,
+          player: player || { _id: stat.playerId, name: '未知', avatarUrl: '' },
+          wins: stat.wins,
+          losses: stat.losses,
+          total: stat.total,
+          winRate: stat.total > 0 ? ((stat.wins / stat.total) * 100).toFixed(1) : '0.0'
+        }
+      })
+      // 不过滤任何记录，确保所有队员都显示
+      .sort((a, b) => {
+        // 排序规则：1. 胜场数降序 2. 负场数升序 3. 总场次降序 4. 如果都一样，按 playerId 排序（保持稳定）
+        if (b.wins !== a.wins) {
+          return b.wins - a.wins
+        }
+        if (a.losses !== b.losses) {
+          return a.losses - b.losses
+        }
+        if (b.total !== a.total) {
+          return b.total - a.total
+        }
+        // 如果所有统计都一样，按 playerId 排序（保持稳定）
+        return a.playerId.localeCompare(b.playerId)
+      })
+      .map((item, index) => ({
+        ...item,
+        rank: index + 1
+      }))
+
+    successResponse(result, {
+      data: ranking
+    })
+  } catch (error) {
+    console.error('getRanking error:', error)
+    errorResponse(result, ErrorCode.DATABASE_ERROR, '获取排名统计失败: ' + error.message)
+  }
+}
+
+// 获取赛事排名统计（小程序使用，不需要权限检查）
+getRankingForMiniProgram = async (matchId) => {
+  try {
+    if (!matchId) {
+      console.log('getRankingForMiniProgram: matchId 为空')
+      return []
+    }
+
+    console.log('getRankingForMiniProgram: 开始查询排名，matchId:', matchId)
+    
+    // 如果 matchid 可能被截断，先尝试通过 matchid 查询 matches 表获取完整的 matchid
+    let fullMatchid = matchId
+    if (matchId.length < 36) {
+      console.log('matchid 可能被截断，尝试模糊匹配:', matchId)
+      try {
+        const matches = await sequelizeExecute(
+          db.collection('matches').findAll({
+            where: {
+              _id: {
+                [Op.like]: `${matchId}%`
+              }
+            },
+            attributes: ['_id'],
+            raw: true,
+            limit: 1
+          })
+        )
+        if (matches && matches.length > 0) {
+          fullMatchid = matches[0]._id
+          console.log('通过模糊匹配找到完整 matchid:', fullMatchid)
+        }
+      } catch (error) {
+        console.error('模糊匹配 matchid 失败:', error)
+      }
+    }
+
+    // 先查询所有比赛（不限制已完成），用于收集所有参赛选手
+    let gamesWithoutDelete = await sequelizeExecute(
+      db.collection('games').findAll({
+        attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4', 'delete'],
+        where: {
+          matchid: fullMatchid,
+        },
+        raw: true,
+      })
+    )
+    
+    console.log('查询到的 gamesWithoutDelete 数量:', gamesWithoutDelete ? gamesWithoutDelete.length : 0)
+
+    // 根据实际字段类型选择查询条件，查询所有比赛（用于收集所有参赛选手）
+    let allGames
+    if (gamesWithoutDelete && gamesWithoutDelete.length > 0) {
+      const nonNullValues = gamesWithoutDelete.filter(g => g.delete !== null).map(g => g.delete)
+      let isBooleanType = false
+      
+      if (nonNullValues.length > 0) {
+        isBooleanType = typeof nonNullValues[0] === 'boolean'
+      }
+      
+      if (isBooleanType) {
+        allGames = await sequelizeExecute(
+          db.collection('games').findAll({
+            attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+            where: {
+              matchid: fullMatchid,
+              [Op.or]: [
+                { delete: false },
+                { delete: null }
+              ]
+            },
+            order: [['order', 'ASC']],
+            raw: true,
+          })
+        )
+      } else {
+        allGames = await sequelizeExecute(
+          db.collection('games').findAll({
+            attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+            where: {
+              matchid: fullMatchid,
+              [Op.or]: [
+                { delete: { [Op.ne]: 1 } },
+                { delete: null }
+              ]
+            },
+            order: [['order', 'ASC']],
+            raw: true,
+          })
+        )
+      }
+    } else {
+      allGames = await sequelizeExecute(
+        db.collection('games').findAll({
+          attributes: ['_id', 'matchid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+          where: {
+            matchid: fullMatchid,
+            [Op.or]: [
+              { delete: { [Op.ne]: 1 } },
+              { delete: null }
+            ]
+          },
+          order: [['order', 'ASC']],
+          raw: true,
+        })
+      )
+    }
+    
+    console.log('查询到的 allGames 数量:', allGames ? allGames.length : 0)
+
+    // 先收集所有参赛选手（从所有比赛中）
+    const allPlayerIds = new Set()
+    if (allGames && allGames.length > 0) {
+      allGames.forEach(game => {
+        if (game.player1) allPlayerIds.add(game.player1)
+        if (game.player2) allPlayerIds.add(game.player2)
+        if (game.player3) allPlayerIds.add(game.player3)
+        if (game.player4) allPlayerIds.add(game.player4)
+      })
+      console.log('收集到的参赛选手数量:', allPlayerIds.size)
+      console.log('参赛选手ID列表:', Array.from(allPlayerIds))
+    } else {
+      console.log('没有找到比赛数据，allGames:', allGames)
+    }
+    
+    // 如果没有比赛数据，返回空数组
+    if (allPlayerIds.size === 0) {
+      console.log('没有参赛选手，返回空排名')
+      return []
+    }
+
+    // 初始化所有选手的统计（包括未完成比赛的选手）
+    const playerStats = {}
+    allPlayerIds.forEach(playerId => {
+      playerStats[playerId] = {
+        playerId: playerId,
+        wins: 0,
+        losses: 0,
+        total: 0
+      }
+    })
+
+    // 只统计已完成的比赛（score1 >= 0 && score2 >= 0）的胜负关系
+    const completedGames = allGames.filter(game => 
+      game.score1 >= 0 && game.score2 >= 0
+    )
+    
+    completedGames.forEach(game => {
+      const player1 = game.player1
+      const player2 = game.player2
+      const player3 = game.player3
+      const player4 = game.player4
+      const score1 = game.score1
+      const score2 = game.score2
+
+      // 判断胜负
+      if (score1 > score2) {
+        // 队伍1获胜
+        if (player1 && playerStats[player1]) {
+          playerStats[player1].wins++
+          playerStats[player1].total++
+        }
+        if (player2 && playerStats[player2]) {
+          playerStats[player2].wins++
+          playerStats[player2].total++
+        }
+        if (player3 && playerStats[player3]) {
+          playerStats[player3].losses++
+          playerStats[player3].total++
+        }
+        if (player4 && playerStats[player4]) {
+          playerStats[player4].losses++
+          playerStats[player4].total++
+        }
+      } else if (score2 > score1) {
+        // 队伍2获胜
+        if (player1 && playerStats[player1]) {
+          playerStats[player1].losses++
+          playerStats[player1].total++
+        }
+        if (player2 && playerStats[player2]) {
+          playerStats[player2].losses++
+          playerStats[player2].total++
+        }
+        if (player3 && playerStats[player3]) {
+          playerStats[player3].wins++
+          playerStats[player3].total++
+        }
+        if (player4 && playerStats[player4]) {
+          playerStats[player4].wins++
+          playerStats[player4].total++
+        }
+      }
+    })
+
+    // 收集所有玩家ID
+    const playerIds = Array.from(allPlayerIds)
+
+    // 批量查询玩家信息
+    let players = []
+    if (playerIds.length > 0) {
+      players = await sequelizeExecute(
+        db.collection('players').findAll({
+          attributes: ['_id', 'name', 'avatarurl'],
+          where: {
+            _id: {
+              [Op.in]: playerIds
+            },
+          },
+          raw: true
+        })
+      )
+
+      // 规范化字段名
+      players = players.map(player => {
+        return {
+          _id: player._id,
+          name: player.name,
+          avatarUrl: player.avatarurl || player.avatarUrl || ''
+        }
+      })
+      
+      players = userAvatarFix(players)
+    }
+
+    // 创建玩家映射
+    const playersMap = {}
+    players.forEach(player => {
+      playersMap[player._id] = {
+        _id: player._id,
+        name: player.name || '未知',
+        avatarUrl: player.avatarUrl || ''
+      }
+    })
+
+    // 构建排名数据 - 确保所有队员都显示，即使没有完成任何比赛
+    console.log('开始构建排名数据，playerStats数量:', Object.keys(playerStats).length)
+    const ranking = Object.values(playerStats)
+      .map(stat => {
+        const player = playersMap[stat.playerId]
+        // 如果找不到玩家信息，仍然显示（使用默认值）
+        if (!player) {
+          console.warn('找不到玩家信息，playerId:', stat.playerId)
+        }
+        return {
+          playerId: stat.playerId,
+          player: player || { _id: stat.playerId, name: '未知', avatarUrl: '' },
+          wins: stat.wins,
+          losses: stat.losses,
+          total: stat.total,
+          winRate: stat.total > 0 ? ((stat.wins / stat.total) * 100).toFixed(1) : '0.0'
+        }
+      })
+      // 不过滤任何记录，确保所有队员都显示
+      .sort((a, b) => {
+        // 排序规则：1. 胜场数降序 2. 负场数升序 3. 总场次降序 4. 如果都一样，按 playerId 排序（保持稳定）
+        if (b.wins !== a.wins) {
+          return b.wins - a.wins
+        }
+        if (a.losses !== b.losses) {
+          return a.losses - b.losses
+        }
+        if (b.total !== a.total) {
+          return b.total - a.total
+        }
+        // 如果所有统计都一样，按 playerId 排序（保持稳定）
+        return a.playerId.localeCompare(b.playerId)
+      })
+      .map((item, index) => ({
+        ...item,
+        rank: index + 1
+      }))
+
+    console.log('构建完成的排名数据数量:', ranking.length)
+    console.log('排名数据示例（前3条）:', ranking.slice(0, 3))
+    
+    // 确保返回的是数组
+    if (!Array.isArray(ranking)) {
+      console.error('排名数据不是数组:', typeof ranking, ranking)
+      return []
+    }
+    
+    return ranking
+  } catch (error) {
+    console.error('getRankingForMiniProgram error:', error)
+    console.error('错误堆栈:', error.stack)
+    return []
   }
 }

@@ -370,3 +370,189 @@
   color: #0478F3;
   font-weight: bold;
 }
+
+/* Tab 页签 */
+.tab-container {
+  display: flex;
+  flex-direction: row;
+  background-color: #fff;
+  border-bottom: 1rpx solid #E5E5E5;
+  margin-bottom: 20rpx;
+}
+
+.tab-item {
+  flex: 1;
+  padding: 30rpx 0;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s;
+  
+  &.active {
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 4rpx;
+      background-color: #0478F3;
+    }
+  }
+  
+  &:active {
+    background-color: rgba(0, 0, 0, 0.02);
+  }
+}
+
+.tab-text {
+  font-size: 32rpx;
+  color: #666;
+  font-weight: 500;
+  transition: all 0.3s;
+  
+  &.active {
+    color: #0478F3;
+    font-weight: bold;
+  }
+}
+
+/* 排名显示区域 */
+.ranking-section {
+  padding: 0 30rpx 30rpx;
+  min-height: 400rpx;
+}
+
+.ranking-loading,
+.ranking-empty {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 60rpx 40rpx;
+  text-align: center;
+  color: #999;
+  font-size: 28rpx;
+  margin-bottom: 20rpx;
+}
+
+.ranking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.ranking-item {
+  background-color: #fff;
+  border-radius: 16rpx;
+  padding: 24rpx;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.ranking-rank {
+  width: 60rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 20rpx;
+}
+
+.ranking-rank-text {
+  font-size: 36rpx;
+  font-weight: bold;
+  color: #666;
+  
+  &.rank-gold {
+    color: #FFD700;
+  }
+  
+  &.rank-silver {
+    color: #C0C0C0;
+  }
+  
+  &.rank-bronze {
+    color: #CD7F32;
+  }
+}
+
+.ranking-player {
+  flex: 1;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 16rpx;
+  margin-right: 20rpx;
+}
+
+.ranking-player-avatar {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  background-color: #f0f0f0;
+  flex-shrink: 0;
+}
+
+.ranking-player-avatar-text {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.ranking-player-avatar-text-content {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+  line-height: 1;
+}
+
+.ranking-player-name {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ranking-stats {
+  display: flex;
+  flex-direction: row;
+  gap: 16rpx;
+  flex-shrink: 0;
+}
+
+.ranking-stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4rpx;
+  min-width: 60rpx;
+}
+
+.ranking-stat-label {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.ranking-stat-value {
+  font-size: 28rpx;
+  font-weight: bold;
+  color: #333;
+  
+  &.wins {
+    color: #FF3B30;
+  }
+  
+  &.losses {
+    color: #0478F3;
+  }
+  
+  &.win-rate {
+    color: #4CAF50;
+  }
+}

@@ -92,7 +92,8 @@ export const matchService = {
   }),
   create: (players, type) => api.get('api/matchservice', { action: 'create', players, type }),
   read: (clubid, matchid) => api.get('api/matchservice', { action: 'read', clubid, matchid }),
-  delete: (clubid, matchid) => api.get('api/matchservice', { action: 'delete', clubid, matchid })
+  delete: (clubid, matchid) => api.get('api/matchservice', { action: 'delete', clubid, matchid }),
+  ranking: (matchid) => api.get('api/matchservice', { action: 'ranking', matchid })
 }
 
 export const gameService = {

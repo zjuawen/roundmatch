@@ -2,7 +2,7 @@ import { Component } from 'react'
 import { View, Text, Image, Input, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { matchService, gameService } from '../../services/api'
-import { getGlobalData } from '../../utils'
+import { getGlobalData, safeNavigateBack } from '../../utils'
 import { checkAvatarUrlAsync, generateAvatarColor, getAvatarText } from '../../utils/imageUtils'
 import './detail.scss'
 
@@ -13,6 +13,11 @@ export default class MatchDetail extends Component {
     loading: true,
     clubid: null,
     matchId: null,
+    // Tab 切换
+    activeTab: 'games', // 'games' 或 'ranking'
+    // 排名数据
+    ranking: [],
+    rankingLoading: false,
     // 比分输入对话框
     scoreDialogShow: false,
     scoreDialogIndex: -1,
@@ -36,37 +41,106 @@ export default class MatchDetail extends Component {
   loadMatch = async () => {
     try {
       const router = Taro.getCurrentInstance().router
-      const { clubid, id, matchid } = router?.params || {}
+      let { clubid, id, matchid, scene } = router?.params || {}
+      
+      // 如果路由参数中没有 scene，尝试从全局存储获取（app.js 中保存的）
+      if (!scene) {
+        scene = getGlobalData('launchScene')
+      }
+      
+      // 如果是从小程序码扫码进入，scene参数可能是：
+      // 1. 新格式：直接是 matchid（推荐）
+      // 2. 旧格式：c=clubid&m=matchid（向后兼容）
+      // 3. 被截断的旧格式：c=xxx（可能是被截断的旧格式，也可能是新格式的 matchid 被误判）
+      if (scene && !matchid) {
+        try {
+          // 先尝试解码
+          let decodedScene = scene
+          try {
+            decodedScene = decodeURIComponent(scene)
+          } catch (e) {
+            decodedScene = scene
+          }
+          
+          // 检查是否是完整的旧格式（包含 c= 和 &m=）
+          if (decodedScene.includes('c=') && decodedScene.includes('&m=')) {
+            // 完整的旧格式：c=clubid&m=matchid
+            const sceneParams = new URLSearchParams(decodedScene)
+            clubid = clubid || sceneParams.get('c')
+            matchid = matchid || sceneParams.get('m')
+            console.log('解析scene参数（完整旧格式）:', { scene, decodedScene, clubid, matchid })
+          } else if (decodedScene.startsWith('c=')) {
+            // 被截断的旧格式：c=xxx（只有 c= 前缀，没有 &m=）
+            // 可能是：
+            // 1. 旧格式被截断：c=clubid（无法获取 matchid，这种情况应该报错）
+            // 2. 新格式被误判：c=matchid（实际上 matchid 就是 c= 后面的值）
+            // 我们尝试提取 c= 后面的值作为 matchid（兼容新格式被误判的情况）
+            const matchIdFromC = decodedScene.substring(2) // 去掉 "c=" 前缀
+            if (matchIdFromC && matchIdFromC.length > 0) {
+              matchid = matchIdFromC
+              console.log('解析scene参数（被截断格式，提取matchid）:', { scene, decodedScene, matchid })
+            } else {
+              console.error('scene参数格式错误:', { scene, decodedScene })
+              Taro.showToast({
+                title: '二维码格式错误',
+                icon: 'none'
+              })
+              setTimeout(() => {
+                safeNavigateBack('/pages/matches/list')
+              }, 1500)
+              return
+            }
+          } else {
+            // 新格式：直接是 matchid
+            matchid = decodedScene
+            console.log('解析scene参数（新格式）:', { scene, decodedScene, matchid })
+          }
+        } catch (e) {
+          console.warn('解析scene参数失败:', e)
+          // 如果解析失败，尝试直接使用 scene 作为 matchid（新格式）
+          if (!matchid && scene) {
+            matchid = scene
+            console.log('使用原始scene作为matchid:', matchid)
+          }
+        }
+      }
+      
       // 支持 id 和 matchid 两种参数名
       const matchId = id || matchid
       if (!matchId) {
+        console.error('缺少比赛ID参数:', { id, matchid, scene, router: router?.params })
         Taro.showToast({
           title: '参数错误',
           icon: 'none'
         })
         setTimeout(() => {
-          Taro.navigateBack()
+          safeNavigateBack('/pages/matches/list')
         }, 1500)
         return
       }
 
       // 如果没有 clubid，尝试从全局存储获取
-      const targetClubid = clubid || getGlobalData('selectedClubId')
-      if (!targetClubid) {
-        Taro.showToast({
-          title: '缺少俱乐部ID',
-          icon: 'none'
-        })
-        setTimeout(() => {
-          Taro.navigateBack()
-        }, 1500)
-        return
+      // 如果还是没有，readMatch API 会通过 matchid 自动查询 clubid
+      let targetClubid = clubid || getGlobalData('selectedClubId')
+      
+      // 保存 matchId 到 state
+      this.setState({ matchId: matchId })
+
+      // 调用 API，即使 clubid 为 null 也可以（API 会通过 matchid 查询）
+      const data = await matchService.read(targetClubid || null, matchId)
+      
+      // 如果之前没有 clubid，从返回的数据中获取（如果有 games，可以从第一个 game 获取 clubid）
+      if (!targetClubid && data.data && data.data.length > 0) {
+        // 注意：readMatch 返回的是 games 数组，不包含 match 信息
+        // 我们需要通过其他方式获取 clubid，或者让 API 返回
+        // 暂时先不处理，因为 API 已经支持 clubid 为 null
       }
-
-      // 保存 clubid 和 matchId 到 state
-      this.setState({ clubid: targetClubid, matchId: matchId })
-
-      const data = await matchService.read(targetClubid, matchId)
+      
+      // 如果还是没有 clubid，尝试从第一个 game 中获取（如果有）
+      if (!targetClubid && data.data && data.data.length > 0 && data.data[0].clubid) {
+        targetClubid = data.data[0].clubid
+        this.setState({ clubid: targetClubid })
+      }
       // matchService.read 返回的是对阵数据数组
       const games = Array.isArray(data.data) ? data.data : []
       
@@ -129,6 +203,11 @@ export default class MatchDetail extends Component {
         games: games,
         loading: false
       })
+      
+      // 如果当前在排名 tab，则加载排名数据
+      if (this.state.activeTab === 'ranking') {
+        this.loadRanking(matchId)
+      }
     } catch (error) {
       console.error('Load match error:', error)
       Taro.showToast({
@@ -136,6 +215,44 @@ export default class MatchDetail extends Component {
         icon: 'none'
       })
       this.setState({ loading: false })
+    }
+  }
+
+  // 加载排名数据
+  loadRanking = async (matchId) => {
+    if (!matchId) {
+      console.error('loadRanking: matchId 为空')
+      return
+    }
+    
+    console.log('开始加载排名数据，matchId:', matchId)
+    this.setState({ rankingLoading: true })
+    try {
+      const data = await matchService.ranking(matchId)
+      console.log('排名 API 返回数据:', data)
+      const ranking = Array.isArray(data.data) ? data.data : []
+      console.log('解析后的排名数据:', ranking)
+      console.log('排名数据数量:', ranking.length)
+      this.setState({
+        ranking: ranking,
+        rankingLoading: false
+      })
+    } catch (error) {
+      console.error('Load ranking error:', error)
+      this.setState({
+        ranking: [],
+        rankingLoading: false
+      })
+    }
+  }
+
+  // 切换 Tab
+  handleTabChange = (tab) => {
+    this.setState({ activeTab: tab })
+    
+    // 如果切换到排名 tab 且排名数据未加载，则加载排名
+    if (tab === 'ranking' && this.state.ranking.length === 0 && !this.state.rankingLoading) {
+      this.loadRanking(this.state.matchId)
     }
   }
 
@@ -310,6 +427,11 @@ export default class MatchDetail extends Component {
         })
         
         this.setState({ games: updatedGames })
+        
+        // 如果当前在排名 tab，重新加载排名
+        if (this.state.activeTab === 'ranking') {
+          this.loadRanking(matchId)
+        }
       }
     } catch (error) {
       console.error('保存比分失败:', error)
@@ -348,7 +470,7 @@ export default class MatchDetail extends Component {
       <View className='match-detail-page'>
         {/* 比赛标题和进度 */}
         <View className='match-info-header'>
-          <Text className='match-title'>比赛对阵</Text>
+          <Text className='match-title'>比赛详情</Text>
           <View className='match-progress-container'>
             <Text className='match-progress-label'>比赛进度</Text>
             <View className='match-progress-bar-wrapper'>
@@ -361,7 +483,29 @@ export default class MatchDetail extends Component {
           </View>
         </View>
         
-        <View className='games-list'>
+        {/* Tab 页签 */}
+        <View className='tab-container'>
+          <View 
+            className={`tab-item ${this.state.activeTab === 'games' ? 'active' : ''}`}
+            onClick={() => this.handleTabChange('games')}
+          >
+            <Text className={`tab-text ${this.state.activeTab === 'games' ? 'active' : ''}`}>
+              对阵
+            </Text>
+          </View>
+          <View 
+            className={`tab-item ${this.state.activeTab === 'ranking' ? 'active' : ''}`}
+            onClick={() => this.handleTabChange('ranking')}
+          >
+            <Text className={`tab-text ${this.state.activeTab === 'ranking' ? 'active' : ''}`}>
+              排名
+            </Text>
+          </View>
+        </View>
+        
+        {/* 对阵内容 */}
+        {this.state.activeTab === 'games' && (
+          <View className='games-list'>
           {games.map((game, index) => {
             const isFinished = game.score1 >= 0 && game.score2 >= 0
             
@@ -521,7 +665,68 @@ export default class MatchDetail extends Component {
               </View>
             )
           })}
-        </View>
+          </View>
+        )}
+        
+        {/* 排名内容 */}
+        {this.state.activeTab === 'ranking' && (
+          <View className='ranking-section'>
+            {this.state.rankingLoading ? (
+              <View className='ranking-loading'>加载排名中...</View>
+            ) : this.state.ranking && this.state.ranking.length > 0 ? (
+              <View className='ranking-list'>
+                {this.state.ranking.map((item, index) => (
+                  <View key={item.playerId} className='ranking-item'>
+                    <View className='ranking-rank'>
+                      <Text className={`ranking-rank-text ${item.rank === 1 ? 'rank-gold' : item.rank === 2 ? 'rank-silver' : item.rank === 3 ? 'rank-bronze' : ''}`}>
+                        {item.rank}
+                      </Text>
+                    </View>
+                    <View className='ranking-player'>
+                      {item.player?.avatarUrl ? (
+                        <Image 
+                          className='ranking-player-avatar'
+                          src={item.player.avatarUrl}
+                          mode='aspectFill'
+                        />
+                      ) : (
+                        <View 
+                          className='ranking-player-avatar-text'
+                          style={{ backgroundColor: generateAvatarColor(item.player?.name || '') }}
+                        >
+                          <Text className='ranking-player-avatar-text-content'>
+                            {getAvatarText(item.player?.name || '')}
+                          </Text>
+                        </View>
+                      )}
+                      <Text className='ranking-player-name'>{item.player?.name || '未知'}</Text>
+                    </View>
+                    <View className='ranking-stats'>
+                      <View className='ranking-stat-item'>
+                        <Text className='ranking-stat-label'>胜</Text>
+                        <Text className='ranking-stat-value wins'>{item.wins}</Text>
+                      </View>
+                      <View className='ranking-stat-item'>
+                        <Text className='ranking-stat-label'>负</Text>
+                        <Text className='ranking-stat-value losses'>{item.losses}</Text>
+                      </View>
+                      <View className='ranking-stat-item'>
+                        <Text className='ranking-stat-label'>总</Text>
+                        <Text className='ranking-stat-value'>{item.total}</Text>
+                      </View>
+                      <View className='ranking-stat-item'>
+                        <Text className='ranking-stat-label'>胜率</Text>
+                        <Text className='ranking-stat-value win-rate'>{item.winRate}%</Text>
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View className='ranking-empty'>暂无排名数据</View>
+            )}
+          </View>
+        )}
 
         {/* 比分输入对话框 */}
         {this.state.scoreDialogShow && (

@@ -218,6 +218,10 @@ module.exports.matches = (database, Sequelize) => {
         remark: {
             type: Sequelize.STRING
         },
+        qrcodeUrl: {
+            type: Sequelize.STRING,
+            allowNull: true  // 小程序码URL
+        },
         createDate: {
             type: Sequelize.DATE,
             set(value) {

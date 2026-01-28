@@ -16,6 +16,16 @@ export const matchesApi = {
     return api.get(`/admin/matches/${id}/games`)
   },
   
+  // 获取赛事排名统计
+  getRanking: (id) => {
+    return api.get(`/admin/matches/${id}/ranking`)
+  },
+  
+  // 获取或生成小程序码
+  getQRCode: (id) => {
+    return api.get(`/admin/matches/${id}/qrcode`)
+  },
+  
   // 创建赛事
   create: (data) => {
     return api.post('/admin/matches', data)

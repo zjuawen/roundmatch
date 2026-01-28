@@ -39,6 +39,20 @@
             <span v-if="match.remark">{{ match.remark }}</span>
             <span v-else style="color: #999;">无</span>
           </el-descriptions-item>
+          <el-descriptions-item label="小程序码" :span="2">
+            <div v-if="match.qrcodeUrl" class="qrcode-container">
+              <img :src="match.qrcodeUrl" alt="小程序码" class="qrcode-image" />
+              <div class="qrcode-actions">
+                <el-button size="small" @click="downloadQRCode">下载</el-button>
+                <el-button size="small" @click="refreshQRCode">刷新</el-button>
+              </div>
+            </div>
+            <div v-else class="qrcode-loading">
+              <el-button size="small" type="primary" @click="generateQRCode" :loading="qrcodeGenerating">
+                生成小程序码
+              </el-button>
+            </div>
+          </el-descriptions-item>
           <el-descriptions-item label="状态">
             <el-tag :type="match.delete ? 'danger' : 'success'">
               {{ match.delete ? '已删除' : '正常' }}
@@ -53,6 +67,7 @@
       <template #header>
         <el-tabs v-model="activeTab" @tab-change="handleTabChange">
           <el-tab-pane label="对阵情况" name="games"></el-tab-pane>
+          <el-tab-pane label="排名统计" name="ranking"></el-tab-pane>
           <el-tab-pane label="操作流水" name="logs"></el-tab-pane>
         </el-tabs>
       </template>
@@ -192,6 +207,54 @@
       </div>
       </div>
       
+      <!-- 排名统计标签页 -->
+      <div v-show="activeTab === 'ranking'" v-loading="rankingLoading">
+        <div v-if="ranking && ranking.length > 0">
+          <el-table :data="ranking" stripe border>
+            <el-table-column label="排名" width="80" align="center">
+              <template #default="{ row }">
+                <span class="rank-number" :class="getRankClass(row.rank)">
+                  {{ row.rank }}
+                </span>
+              </template>
+            </el-table-column>
+            <el-table-column label="选手" min-width="200">
+              <template #default="{ row }">
+                <div class="player-item">
+                  <Avatar 
+                    :avatar-url="row.player.avatarUrl" 
+                    :name="row.player.name || '未知'"
+                    :size="40"
+                  />
+                  <span class="player-name">{{ row.player.name || '未知' }}</span>
+                </div>
+              </template>
+            </el-table-column>
+            <el-table-column label="胜场" width="100" align="center">
+              <template #default="{ row }">
+                <span class="stat-value wins">{{ row.wins }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="负场" width="100" align="center">
+              <template #default="{ row }">
+                <span class="stat-value losses">{{ row.losses }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="总场次" width="100" align="center">
+              <template #default="{ row }">
+                <span class="stat-value">{{ row.total }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column label="胜率" width="120" align="center">
+              <template #default="{ row }">
+                <span class="stat-value win-rate">{{ row.winRate }}%</span>
+              </template>
+            </el-table-column>
+          </el-table>
+        </div>
+        <el-empty v-else description="暂无参赛选手" />
+      </div>
+      
       <!-- 操作流水标签页 -->
       <div v-show="activeTab === 'logs'" v-loading="logsLoading">
         <div style="margin-bottom: 15px;">
@@ -297,6 +360,7 @@ const match = ref(null)
 const games = ref([])
 const editingScoreIndex = ref(-1)
 const editingScore = ref({ score1: 0, score2: 0 })
+const qrcodeGenerating = ref(false)
 const savingScore = ref(false)
 const activeTab = ref('games')
 const scoreLogs = ref([])
@@ -305,6 +369,8 @@ const logsPageNum = ref(1)
 const logsPageSize = ref(20)
 const logsTotal = ref(0)
 const selectedGameId = ref('')
+const ranking = ref([])
+const rankingLoading = ref(false)
 
 onMounted(() => {
   loadMatchDetail()
@@ -425,6 +491,11 @@ const saveScore = async (row, index) => {
       await loadScoreLogs()
     }
     
+    // 如果当前在排名统计标签页，重新加载排名
+    if (activeTab.value === 'ranking') {
+      await loadRanking()
+    }
+    
     cancelEditScore()
   } catch (error) {
     ElMessage.error('更新比分失败：' + (error.response?.data?.msg || error.message))
@@ -436,6 +507,8 @@ const saveScore = async (row, index) => {
 const handleTabChange = (tabName) => {
   if (tabName === 'logs' && scoreLogs.value.length === 0) {
     loadScoreLogs()
+  } else if (tabName === 'ranking' && ranking.value.length === 0) {
+    loadRanking()
   }
 }
 
@@ -490,9 +563,110 @@ const formatScore = (score) => {
   }
   return score
 }
+
+// 加载排名统计
+const loadRanking = async () => {
+  if (!matchId) return
+  
+  rankingLoading.value = true
+  try {
+    const response = await matchesApi.getRanking(matchId)
+    ranking.value = response.data || []
+  } catch (error) {
+    ElMessage.error('加载排名统计失败：' + (error.response?.data?.msg || error.message))
+    ranking.value = []
+  } finally {
+    rankingLoading.value = false
+  }
+}
+
+// 获取排名样式类
+const getRankClass = (rank) => {
+  if (rank === 1) return 'rank-gold'
+  if (rank === 2) return 'rank-silver'
+  if (rank === 3) return 'rank-bronze'
+  return ''
+}
+
+// 生成小程序码
+const generateQRCode = async () => {
+  if (!matchId) return
+  
+  qrcodeGenerating.value = true
+  try {
+    const response = await matchesApi.getQRCode(matchId)
+    if (response.data && response.data.qrcodeUrl) {
+      match.value.qrcodeUrl = response.data.qrcodeUrl
+      ElMessage.success('小程序码生成成功')
+    }
+  } catch (error) {
+    ElMessage.error('生成小程序码失败：' + (error.response?.data?.msg || error.message))
+  } finally {
+    qrcodeGenerating.value = false
+  }
+}
+
+// 刷新小程序码
+const refreshQRCode = async () => {
+  try {
+    await ElMessageBox.confirm('确定要重新生成小程序码吗？', '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    // 先清除旧的小程序码URL，强制重新生成
+    match.value.qrcodeUrl = null
+    await generateQRCode()
+  } catch (error) {
+    // 用户取消
+  }
+}
+
+// 下载小程序码
+const downloadQRCode = () => {
+  if (!match.value.qrcodeUrl) {
+    ElMessage.warning('小程序码不存在')
+    return
+  }
+  
+  // 创建一个临时的a标签来下载图片
+  const link = document.createElement('a')
+  link.href = match.value.qrcodeUrl
+  link.download = `match_${matchId}_qrcode.png`
+  link.target = '_blank'
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
 </script>
 
 <style scoped>
+.qrcode-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.qrcode-image {
+  width: 200px;
+  height: 200px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  padding: 8px;
+  background: #fff;
+}
+
+.qrcode-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.qrcode-loading {
+  display: flex;
+  align-items: center;
+}
 .match-detail {
   padding: 20px;
 }
@@ -580,6 +754,71 @@ const formatScore = (score) => {
 }
 
 .new-score {
+  color: #409eff;
+  font-weight: bold;
+}
+
+.qrcode-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.qrcode-image {
+  width: 200px;
+  height: 200px;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+  padding: 8px;
+  background: #fff;
+}
+
+.qrcode-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.qrcode-loading {
+  display: flex;
+  align-items: center;
+}
+
+.rank-number {
+  font-size: 18px;
+  font-weight: bold;
+  color: #666;
+}
+
+.rank-gold {
+  color: #ffd700;
+  font-size: 20px;
+}
+
+.rank-silver {
+  color: #c0c0c0;
+  font-size: 20px;
+}
+
+.rank-bronze {
+  color: #cd7f32;
+  font-size: 20px;
+}
+
+.stat-value {
+  font-size: 16px;
+  font-weight: 500;
+}
+
+.stat-value.wins {
+  color: #67c23a;
+}
+
+.stat-value.losses {
+  color: #f56c6c;
+}
+
+.stat-value.win-rate {
   color: #409eff;
   font-weight: bold;
 }

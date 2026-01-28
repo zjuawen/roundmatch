@@ -54,3 +54,41 @@ export const formatDate = (date) => {
   return `${year}-${month}-${day}`
 }
 
+/**
+ * 安全地返回上一页，如果没有历史记录则跳转到默认页面
+ * @param {string} defaultUrl - 默认跳转的页面路径
+ */
+export const safeNavigateBack = (defaultUrl = '/pages/clubs/list') => {
+  try {
+    const pages = Taro.getCurrentPages()
+    if (pages && pages.length > 1) {
+      // 有历史记录，可以返回
+      Taro.navigateBack()
+    } else {
+      // 没有历史记录（比如扫码进入），跳转到默认页面
+      // 先尝试 switchTab（如果是 tabbar 页面）
+      if (defaultUrl === '/pages/clubs/list' || defaultUrl === '/pages/matches/list') {
+        Taro.switchTab({
+          url: defaultUrl
+        }).catch(() => {
+          // 如果 switchTab 失败，使用 redirectTo
+          Taro.redirectTo({
+            url: defaultUrl
+          })
+        })
+      } else {
+        // 非 tabbar 页面，使用 redirectTo
+        Taro.redirectTo({
+          url: defaultUrl
+        })
+      }
+    }
+  } catch (error) {
+    console.error('safeNavigateBack error:', error)
+    // 出错时也尝试跳转到默认页面
+    Taro.redirectTo({
+      url: defaultUrl
+    })
+  }
+}
+
