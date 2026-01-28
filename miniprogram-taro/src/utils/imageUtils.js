@@ -31,6 +31,42 @@ export function processImageUrl(url) {
 
 /**
  * 检查头像 URL 是否有效（通过检查响应头 X-Errno 或 X-Info）
+ * 异步执行，不阻塞页面加载
+ * @param {string} url - 头像 URL
+ * @param {function} callback - 回调函数，参数为 (isValid, newAvatarUrl)
+ * @returns {void}
+ */
+export function checkAvatarUrlAsync(url, callback) {
+  if (!url || typeof url !== 'string') {
+    if (callback) callback(false, null)
+    return
+  }
+
+  // 如果不是 HTTP/HTTPS URL，直接返回 false
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    if (callback) callback(false, null)
+    return
+  }
+
+  // 使用 setTimeout 确保异步执行，不阻塞主线程
+  setTimeout(() => {
+    mediaService.checkAvatar(url)
+      .then(response => {
+        const isValid = response.data?.isValid === true
+        const newAvatarUrl = response.data?.newAvatarUrl || null
+        if (callback) callback(isValid, newAvatarUrl)
+      })
+      .catch(error => {
+        console.warn('检查头像URL失败:', error)
+        // 如果检查失败，默认返回 true，让图片尝试加载
+        if (callback) callback(true, null)
+      })
+  }, 0)
+}
+
+/**
+ * 检查头像 URL 是否有效（通过检查响应头 X-Errno 或 X-Info）
+ * @deprecated 使用 checkAvatarUrlAsync 代替，避免阻塞页面加载
  * @param {string} url - 头像 URL
  * @returns {Promise<boolean>} 是否有效
  */

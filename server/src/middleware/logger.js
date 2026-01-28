@@ -22,7 +22,41 @@ const logger = winston.createLogger({
 // Add console transport in development
 if (process.env.NODE_ENV !== 'production') {
     logger.add(new winston.transports.Console({
-        format: winston.format.simple()
+        format: winston.format.combine(
+            winston.format.colorize(),
+            winston.format.printf((info) => {
+                const { level, message, timestamp, service, ...meta } = info
+                
+                // 处理 message，如果是对象则转换为 JSON
+                let messageStr = ''
+                if (message) {
+                    if (typeof message === 'object') {
+                        messageStr = JSON.stringify(message, null, 2)
+                    } else {
+                        messageStr = String(message)
+                    }
+                }
+                
+                // 处理 meta 对象
+                const metaStr = Object.keys(meta).length > 0 
+                    ? JSON.stringify(meta, null, 2) 
+                    : ''
+                
+                const serviceStr = service ? `[${service}]` : ''
+                const timestampStr = timestamp ? `[${timestamp}]` : ''
+                
+                // 组合输出
+                const parts = [
+                    level,
+                    serviceStr,
+                    timestampStr,
+                    messageStr,
+                    metaStr
+                ].filter(Boolean)
+                
+                return parts.join(' ')
+            })
+        )
     }))
 }
 

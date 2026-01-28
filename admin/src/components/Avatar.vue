@@ -49,11 +49,28 @@ const imgRef = ref(null)
 const imageSrc = ref('')
 const isChecking = ref(false) // 是否正在检查
 
+// 缓存已检查过的头像URL结果
+const avatarCheckCache = new Map()
+
 // 使用后端 API 检查头像 URL 的响应头 X-Errno
 const checkAvatarUrl = async (url) => {
   if (!url) {
     showImage.value = false
     imageSrc.value = ''
+    isChecking.value = false
+    return
+  }
+
+  // 检查缓存
+  if (avatarCheckCache.has(url)) {
+    const cached = avatarCheckCache.get(url)
+    if (cached.isValid) {
+      imageSrc.value = url
+      showImage.value = true
+    } else {
+      showImage.value = false
+      imageSrc.value = ''
+    }
     isChecking.value = false
     return
   }
@@ -65,9 +82,25 @@ const checkAvatarUrl = async (url) => {
   try {
     // 调用后端 API 检查响应头
     const response = await mediaApi.checkAvatar(url)
-    const { isValid, errno } = response.data
+    const { isValid, errno, replaced, newAvatarUrl, checked } = response.data
     
-    // console.log('头像检查结果:', { url, isValid, errno })
+    // console.log('头像检查结果:', { url, isValid, errno, replaced, checked })
+    
+    // 如果已检查过或已替换，缓存结果
+    if (checked || replaced) {
+      avatarCheckCache.set(url, { isValid: replaced ? false : isValid, timestamp: Date.now() })
+      // 如果替换了，使用新头像URL
+      if (replaced && newAvatarUrl) {
+        avatarCheckCache.set(newAvatarUrl, { isValid: true, timestamp: Date.now() })
+        imageSrc.value = newAvatarUrl
+        showImage.value = true
+        isChecking.value = false
+        return
+      }
+    }
+    
+    // 缓存检查结果（缓存24小时）
+    avatarCheckCache.set(url, { isValid, timestamp: Date.now() })
     
     if (!isValid) {
       // console.log('头像无效（X-Errno: -6101 或其他原因），使用文字头像')
@@ -91,6 +124,17 @@ const checkAvatarUrl = async (url) => {
     isChecking.value = false
   }
 }
+
+// 定期清理过期的缓存（24小时）
+setInterval(() => {
+  const now = Date.now()
+  const expireTime = 24 * 60 * 60 * 1000 // 24小时
+  for (const [url, cache] of avatarCheckCache.entries()) {
+    if (now - cache.timestamp > expireTime) {
+      avatarCheckCache.delete(url)
+    }
+  }
+}, 60 * 60 * 1000) // 每小时清理一次
 
 // 图片加载错误处理（备用方案）
 const handleImageError = () => {

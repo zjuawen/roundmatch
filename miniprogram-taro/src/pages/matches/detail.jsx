@@ -3,7 +3,7 @@ import { View, Text, Image, Input, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { matchService, gameService } from '../../services/api'
 import { getGlobalData } from '../../utils'
-import { checkAvatarUrl, generateAvatarColor, getAvatarText } from '../../utils/imageUtils'
+import { checkAvatarUrlAsync, generateAvatarColor, getAvatarText } from '../../utils/imageUtils'
 import './detail.scss'
 
 export default class MatchDetail extends Component {
@@ -77,7 +77,7 @@ export default class MatchDetail extends Component {
         return orderA - orderB
       })
       
-      // 处理玩家头像 URL 并检查有效性
+      // 处理玩家头像 URL（先设置默认值，不阻塞页面加载）
       for (const game of games) {
         for (let i = 1; i <= 4; i++) {
           const player = game[`player${i}`]
@@ -86,16 +86,34 @@ export default class MatchDetail extends Component {
             const avatarUrl = player.avatarUrl || player.avatarurl || ''
             
             if (avatarUrl && (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://'))) {
-              // 检查头像是否有效
-              try {
-                const isValid = await checkAvatarUrl(avatarUrl)
-                player.avatarUrl = isValid ? avatarUrl : ''
-                player.avatarValid = isValid
-              } catch (error) {
-                console.warn(`检查玩家${i}头像失败:`, error)
-                player.avatarUrl = avatarUrl
-                player.avatarValid = true // 检查失败时默认尝试加载
-              }
+              // 先设置头像URL，允许图片尝试加载
+              player.avatarUrl = avatarUrl
+              player.avatarValid = true // 默认认为有效，让图片先加载
+              
+              // 异步检查头像有效性，不阻塞页面加载
+              checkAvatarUrlAsync(avatarUrl, (isValid, newAvatarUrl) => {
+                // 找到对应的game和player并更新
+                const currentGames = this.state.games
+                const updatedGames = currentGames.map(game => {
+                  const updatedGame = { ...game }
+                  for (let j = 1; j <= 4; j++) {
+                    const p = game[`player${j}`]
+                    if (p && (p.avatarUrl === avatarUrl || p.avatarurl === avatarUrl)) {
+                      updatedGame[`player${j}`] = {
+                        ...p,
+                        avatarUrl: (!isValid && newAvatarUrl) ? newAvatarUrl : p.avatarUrl,
+                        avatarValid: isValid || !!newAvatarUrl
+                      }
+                    }
+                  }
+                  return updatedGame
+                })
+                
+                // 只有在有变化时才更新state
+                if (JSON.stringify(updatedGames) !== JSON.stringify(currentGames)) {
+                  this.setState({ games: updatedGames })
+                }
+              })
             } else {
               player.avatarUrl = ''
               player.avatarValid = false
@@ -106,6 +124,7 @@ export default class MatchDetail extends Component {
       
       console.log('处理后的 games 数据:', games)
       
+      // 立即设置state，不等待头像检查完成
       this.setState({
         games: games,
         loading: false

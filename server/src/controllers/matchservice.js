@@ -309,24 +309,101 @@ loadOrders = async (playerNum, typeValue) => {
 //读取比赛对阵数据
 readMatch = async (clubid, matchid) => {
   console.log('readMatch')
-  let games = await sequelizeExecute(
+  console.log('查询参数 - clubid:', clubid, 'matchid:', matchid)
+  
+  // 先查询不包含 delete 条件的数据，判断 delete 字段类型
+  let gamesWithoutDelete = await sequelizeExecute(
     db.collection('games').findAll({
-      attributes: ['_id', 'matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+      attributes: ['_id', 'matchid', 'clubid', 'order', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4', 'delete'],
       where: {
         clubid: clubid,
         matchid: matchid,
-        delete: {
-          [Op.ne]: 1  // PostgreSQL 中 delete 字段是 INTEGER 类型，0=未删除，1=已删除
-        },
       },
-      order: [
-        ['order', 'DESC']
-      ],
       raw: true,
     })
   )
+  
+  console.log('查询到的对阵数据数量（不含delete条件）:', gamesWithoutDelete ? gamesWithoutDelete.length : 0)
+  
+  // 根据实际字段类型选择查询条件，处理 NULL 值
+  let games
+  if (gamesWithoutDelete && gamesWithoutDelete.length > 0) {
+    const firstDeleteValue = gamesWithoutDelete[0].delete
+    console.log('第一条数据的delete字段值:', firstDeleteValue, '类型:', typeof firstDeleteValue, '是否为NULL:', firstDeleteValue === null)
+    
+    // 检查所有非 null 的值来判断字段类型
+    const nonNullValues = gamesWithoutDelete.filter(g => g.delete !== null).map(g => g.delete)
+    let isBooleanType = false
+    
+    if (nonNullValues.length > 0) {
+      // 如果有非 null 值，检查是否为 boolean
+      isBooleanType = typeof nonNullValues[0] === 'boolean'
+    }
+    
+    if (isBooleanType) {
+      // BOOLEAN 类型，查询条件：delete = false 或 delete IS NULL
+      games = await sequelizeExecute(
+        db.collection('games').findAll({
+          attributes: ['_id', 'matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+          where: {
+            clubid: clubid,
+            matchid: matchid,
+            [Op.or]: [
+              { delete: false },
+              { delete: null }
+            ]
+          },
+          order: [
+            ['order', 'DESC']
+          ],
+          raw: true,
+        })
+      )
+      console.log('使用BOOLEAN条件（包含NULL）查询的结果数量:', games ? games.length : 0)
+    } else {
+      // INTEGER 类型（包括所有值为 null 的情况），查询条件：delete != 1 或 delete IS NULL
+      games = await sequelizeExecute(
+        db.collection('games').findAll({
+          attributes: ['_id', 'matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+          where: {
+            clubid: clubid,
+            matchid: matchid,
+            [Op.or]: [
+              { delete: { [Op.ne]: 1 } },
+              { delete: null }
+            ]
+          },
+          order: [
+            ['order', 'DESC']
+          ],
+          raw: true,
+        })
+      )
+      console.log('使用INTEGER条件（包含NULL）查询的结果数量:', games ? games.length : 0)
+    }
+  } else {
+    // 如果没有数据，使用 INTEGER 类型的查询条件（因为数据库字段是 INTEGER）
+    games = await sequelizeExecute(
+      db.collection('games').findAll({
+        attributes: ['_id', 'matchid', 'score1', 'score2', 'player1', 'player2', 'player3', 'player4'],
+        where: {
+          clubid: clubid,
+          matchid: matchid,
+          [Op.or]: [
+            { delete: { [Op.ne]: 1 } },
+            { delete: null }
+          ]
+        },
+        order: [
+          ['order', 'DESC']
+        ],
+        raw: true,
+      })
+    )
+    console.log('使用INTEGER条件（包含NULL）查询的结果数量:', games ? games.length : 0)
+  }
 
-  console.log(games)
+  console.log('最终查询结果:', games)
 
   let players = []
   await games.forEach(game => {
