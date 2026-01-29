@@ -35,5 +35,15 @@ export const clubsApi = {
   // 删除俱乐部
   delete: (id) => {
     return api.delete(`/admin/clubs/${id}`)
+  },
+  
+  // 获取俱乐部配置
+  getConfig: (clubId) => {
+    return api.get(`/admin/clubs/${clubId}/config`)
+  },
+  
+  // 更新俱乐部配置
+  updateConfig: (clubId, data) => {
+    return api.put(`/admin/clubs/${clubId}/config`, data)
   }
 }

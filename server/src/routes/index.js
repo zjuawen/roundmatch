@@ -17,6 +17,7 @@ const games = require("../controllers/gameservice")
 const system = require("../controllers/systemservice")
 const media = require("../controllers/mediaservice")
 const admins = require("../controllers/adminservice")
+const clubConfig = require("../controllers/clubconfigservice")
 
 // Debug route
 router.get("/api/test", dummy.test)
@@ -53,6 +54,10 @@ router.get("/api/admin/clubs/:id", admins.verifyToken, clubs.getById)
 router.post("/api/admin/clubs", admins.verifyToken, clubs.create)
 router.put("/api/admin/clubs/:id", admins.verifyToken, clubs.update)
 router.delete("/api/admin/clubs/:id", admins.verifyToken, clubs.delete)
+
+// 俱乐部配置 API（需要认证）
+router.get("/api/admin/clubs/:clubId/config", admins.verifyToken, clubConfig.getByClubId)
+router.put("/api/admin/clubs/:clubId/config", admins.verifyToken, clubConfig.createOrUpdate)
 
 // 赛事管理 API（需要认证）
 router.get("/api/admin/matches", admins.verifyToken, matches.listAll)

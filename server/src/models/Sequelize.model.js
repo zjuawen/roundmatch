@@ -25,19 +25,43 @@ module.exports.clubs = (database, Sequelize) => {
             type: Sequelize.STRING
         },
         vip: {
-            type: Sequelize.BOOLEAN,
-            defaultValue: false
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            get() {
+                const value = this.getDataValue('vip')
+                return value === 1 || value === true
+            },
+            set(value) {
+                const intValue = value === true || value === 1 || value === '1' || value === 'true' ? 1 : 0
+                this.setDataValue('vip', intValue)
+            }
         },
         creator: {
             type: Sequelize.STRING
         },
         delete: {
-            type: Sequelize.BOOLEAN,
-            defaultValue: false
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            get() {
+                const value = this.getDataValue('delete')
+                return value === 1 || value === true
+            },
+            set(value) {
+                const intValue = value === true || value === 1 || value === '1' || value === 'true' ? 1 : 0
+                this.setDataValue('delete', intValue)
+            }
         },
         public: {
-            type: Sequelize.BOOLEAN,
-            defaultValue: false
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            get() {
+                const value = this.getDataValue('public')
+                return value === 1 || value === true
+            },
+            set(value) {
+                const intValue = value === true || value === 1 || value === '1' || value === 'true' ? 1 : 0
+                this.setDataValue('public', intValue)
+            }
         },
         maxMatchAllow: {
             type: Sequelize.INTEGER,
@@ -561,6 +585,71 @@ module.exports.scorelogs = (database, Sequelize) => {
             { fields: ['clubid'] },
             { fields: ['operator'] },
             { fields: ['createDate'] }
+        ]
+    })
+}
+
+// 俱乐部配置表（积分规则等配置项）
+module.exports.clubConfig = (database, Sequelize) => {
+    return database.define("club_config", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true,
+            field: '_id'
+        },
+        clubid: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            unique: true,
+            field: 'clubid'
+        },
+        useScoreRanking: {
+            type: Sequelize.BOOLEAN,
+            defaultValue: false,
+            comment: '是否使用积分排名',
+            field: 'usescoreranking'
+        },
+        scoreWinPoints: {
+            type: Sequelize.INTEGER,
+            defaultValue: null,
+            comment: '局胜分（每局胜利获得的积分）',
+            field: 'scorewinpoints'
+        },
+        scoreRewardThreshold: {
+            type: Sequelize.INTEGER,
+            defaultValue: null,
+            comment: '奖励分差值：净胜分每超过此值，就加奖励分',
+            field: 'scorerewardthreshold'
+        },
+        scoreRewardPoints: {
+            type: Sequelize.INTEGER,
+            defaultValue: null,
+            comment: '奖励分：每超过差值获得的积分',
+            field: 'scorerewardpoints'
+        },
+        scoreRewardMaxPerGame: {
+            type: Sequelize.INTEGER,
+            defaultValue: null,
+            comment: '每局封顶奖励分：每局最多能获得的奖励积分',
+            field: 'scorerewardmaxpergame'
+        },
+        createDate: {
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
+            field: 'createdate'
+        },
+        updateTime: {
+            type: Sequelize.DATE,
+            defaultValue: Sequelize.NOW,
+            field: 'updatetime'
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: 'createDate',
+        updatedAt: 'updateTime',
+        indexes: [
+            { fields: ['clubid'], unique: true }
         ]
     })
 }

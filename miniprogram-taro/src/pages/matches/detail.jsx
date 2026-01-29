@@ -718,6 +718,12 @@ export default class MatchDetail extends Component {
                         <Text className='ranking-stat-label'>胜率</Text>
                         <Text className='ranking-stat-value win-rate'>{item.winRate}%</Text>
                       </View>
+                      {item.score !== undefined && (
+                        <View className='ranking-stat-item'>
+                          <Text className='ranking-stat-label'>积分</Text>
+                          <Text className='ranking-stat-value score'>{item.score || 0}</Text>
+                        </View>
+                      )}
                     </View>
                   </View>
                 ))}

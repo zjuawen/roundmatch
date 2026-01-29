@@ -245,9 +245,25 @@
                 <span class="stat-value">{{ row.total }}</span>
               </template>
             </el-table-column>
-            <el-table-column label="胜率" width="120" align="center">
+            <!-- 如果启用积分排名，显示积分相关列；否则显示胜率 -->
+            <el-table-column v-if="!useScoreRanking" label="胜率" width="120" align="center">
               <template #default="{ row }">
                 <span class="stat-value win-rate">{{ row.winRate }}%</span>
+              </template>
+            </el-table-column>
+            <el-table-column v-if="useScoreRanking" label="总积分" width="100" align="center">
+              <template #default="{ row }">
+                <span class="stat-value score">{{ row.score || 0 }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column v-if="useScoreRanking" label="局胜分" width="100" align="center">
+              <template #default="{ row }">
+                <span class="stat-value base-score">{{ row.baseScore || 0 }}</span>
+              </template>
+            </el-table-column>
+            <el-table-column v-if="useScoreRanking" label="奖励分" width="100" align="center">
+              <template #default="{ row }">
+                <span class="stat-value reward-score">{{ row.rewardScore || 0 }}</span>
               </template>
             </el-table-column>
           </el-table>
@@ -371,6 +387,7 @@ const logsTotal = ref(0)
 const selectedGameId = ref('')
 const ranking = ref([])
 const rankingLoading = ref(false)
+const useScoreRanking = ref(false) // 是否启用积分排名
 
 onMounted(() => {
   loadMatchDetail()
@@ -572,9 +589,13 @@ const loadRanking = async () => {
   try {
     const response = await matchesApi.getRanking(matchId)
     ranking.value = response.data || []
+    // 检查是否启用积分排名（如果排名数据中有score字段，则认为启用了积分排名）
+    useScoreRanking.value = ranking.value.length > 0 && 
+      ranking.value.some(item => item.score !== undefined)
   } catch (error) {
     ElMessage.error('加载排名统计失败：' + (error.response?.data?.msg || error.message))
     ranking.value = []
+    useScoreRanking.value = false
   } finally {
     rankingLoading.value = false
   }
@@ -821,5 +842,19 @@ const downloadQRCode = () => {
 .stat-value.win-rate {
   color: #409eff;
   font-weight: bold;
+}
+
+.stat-value.score {
+  color: #e6a23c;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.stat-value.base-score {
+  color: #67c23a;
+}
+
+.stat-value.reward-score {
+  color: #f56c6c;
 }
 </style>

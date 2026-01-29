@@ -984,6 +984,7 @@ const normalizeClubFields = (club) => {
     normalized.maxMatchAllow = club.maxmatchallow
     delete normalized.maxmatchallow
   }
+  // 积分规则配置已移至 club_config 表，不再在这里处理
   return normalized
 }
 
@@ -1133,8 +1134,20 @@ exports.getById = async (request, result) => {
 
     // 处理 logo URL
     const logo = club.logo
-    if (logo != null && logo.length > 0 && !logo.startsWith('http') && !logo.startsWith('cloud://')) {
-      club.logo = SERVER_URL_UPLOADS + logo
+    if (logo != null && logo.length > 0) {
+      // 如果已经是完整 URL，直接使用
+      if (logo.startsWith('http://') || logo.startsWith('https://') || logo.startsWith('cloud://')) {
+        club.logo = logo
+      } else if (logo.startsWith('/')) {
+        // 如果是以 / 开头的相对路径，可能是绝对路径，需要检查
+        // 如果看起来像是文件路径（包含 /），拼接基础 URL
+        club.logo = SERVER_URL_UPLOADS + logo.substring(1) // 去掉开头的 /
+      } else {
+        // 相对路径，拼接基础 URL
+        club.logo = SERVER_URL_UPLOADS + logo
+      }
+    } else {
+      club.logo = null
     }
 
     trimClubField(club)
@@ -1175,7 +1188,7 @@ exports.create = async (request, result) => {
         wholeName: wholeName,
         logo: logoPath,
         vip: false,
-        public: isPublic !== undefined ? isPublic : true,
+        public: isPublic !== undefined ? (isPublic === true || isPublic === 'true' || isPublic === 1 || isPublic === '1' ? 1 : 0) : 1,
         delete: false,
         createDate: db.serverDate()
       }, {
@@ -1232,7 +1245,10 @@ exports.update = async (request, result) => {
     if (shortName !== undefined) updateData.shortName = shortName
     if (wholeName !== undefined) updateData.wholeName = wholeName
     if (password !== undefined) updateData.password = password || null
-    if (isPublic !== undefined) updateData.public = isPublic
+    if (isPublic !== undefined) {
+      // PostgreSQL 中布尔值需要转换为整数（0/1）
+      updateData.public = isPublic === true || isPublic === 'true' || isPublic === 1 || isPublic === '1' ? 1 : 0
+    }
 
     if (logo !== undefined) {
       let logoPath = logo
@@ -1241,6 +1257,8 @@ exports.update = async (request, result) => {
       }
       updateData.logo = logoPath
     }
+    
+    // 积分规则配置已移至 club_config 表，不再在这里处理
 
     const updated = await sequelizeExecute(
       db.collection('clubs').update(updateData, {
