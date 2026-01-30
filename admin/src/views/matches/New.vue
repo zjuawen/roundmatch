@@ -159,7 +159,6 @@
                   </el-button>
                 </div>
                 <el-button
-                  v-if="selectedPlayerPairs.length < 8"
                   type="primary"
                   plain
                   @click="addNewPair"
@@ -234,7 +233,6 @@
                   </div>
                 </div>
                 <el-button
-                  v-if="selectedPlayerPairs.length < 8"
                   type="primary"
                   plain
                   @click="addNewPair"
@@ -805,9 +803,9 @@ const removePair = (pairIndex) => {
 }
 
 const addNewPair = () => {
-  if (selectedPlayerPairs.value.length < 8) {
-    selectedPlayerPairs.value.push({ player1: null, player2: null })
-  }
+  // 移除硬编码限制，由服务端验证最终限制
+  // 前端允许添加更多组，但保存时会由服务端验证
+  selectedPlayerPairs.value.push({ player1: null, player2: null })
 }
 
 const removePlayer = (index) => {
@@ -914,14 +912,7 @@ const handleSubmit = async () => {
           ElMessage.warning('请至少选择一个选手')
           return
         }
-        if (selectedPlayers.value.length < 4) {
-          ElMessage.warning('至少需要4个选手')
-          return
-        }
-        if (selectedPlayers.value.length > 8) {
-          ElMessage.warning('最多支持8个选手')
-          return
-        }
+        // 移除硬编码限制，由服务端验证
         playerIds = selectedPlayers.value.map(p => p._id)
       } else {
         // 固定搭档和分组类型
@@ -932,17 +923,14 @@ const handleSubmit = async () => {
           return
         }
         
-        // 检查配对数量
+        // 检查配对数量（基本验证，详细限制由服务端决定）
         const completePairs = selectedPlayerPairs.value.filter(pair => pair.player1 && pair.player2)
-        if (completePairs.length < 2) {
-          ElMessage.warning('至少需要2组配对（4名选手）')
-          return
-        }
-        if (completePairs.length > 4) {
-          ElMessage.warning('最多支持4组配对（8名选手）')
+        if (completePairs.length < 1) {
+          ElMessage.warning('至少需要1组配对（2名选手）')
           return
         }
         
+        // 移除硬编码的最大限制，由服务端验证
         // 提取选手ID（按配对顺序）
         playerIds = []
         completePairs.forEach(pair => {

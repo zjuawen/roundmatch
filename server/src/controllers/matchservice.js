@@ -1131,6 +1131,67 @@ exports.getGames = async (request, result) => {
   }
 }
 
+// 获取比赛配置限制
+getMatchConfig = async () => {
+  try {
+    // 获取最大配对数量配置
+    const maxPairConfig = await sequelizeExecute(
+      db.collection('system').findOne({
+        where: {
+          key: 'MATCH_MAX_PAIRS'
+        },
+        raw: true
+      })
+    )
+
+    // 获取最大选手数量配置
+    const maxPlayerConfig = await sequelizeExecute(
+      db.collection('system').findOne({
+        where: {
+          key: 'MATCH_MAX_PLAYERS'
+        },
+        raw: true
+      })
+    )
+
+    // 获取最小配对数量配置
+    const minPairConfig = await sequelizeExecute(
+      db.collection('system').findOne({
+        where: {
+          key: 'MATCH_MIN_PAIRS'
+        },
+        raw: true
+      })
+    )
+
+    // 获取最小选手数量配置
+    const minPlayerConfig = await sequelizeExecute(
+      db.collection('system').findOne({
+        where: {
+          key: 'MATCH_MIN_PLAYERS'
+        },
+        raw: true
+      })
+    )
+
+    return {
+      maxPairs: maxPairConfig && maxPairConfig.value ? parseInt(maxPairConfig.value) : 8, // 默认8组配对（16名选手）
+      maxPlayers: maxPlayerConfig && maxPlayerConfig.value ? parseInt(maxPlayerConfig.value) : 16, // 默认16名选手
+      minPairs: minPairConfig && minPairConfig.value ? parseInt(minPairConfig.value) : 2, // 默认2组配对（4名选手）
+      minPlayers: minPlayerConfig && minPlayerConfig.value ? parseInt(minPlayerConfig.value) : 4 // 默认4名选手
+    }
+  } catch (error) {
+    console.error('获取比赛配置失败:', error)
+    // 返回默认值
+    return {
+      maxPairs: 8,
+      maxPlayers: 16,
+      minPairs: 2,
+      minPlayers: 4
+    }
+  }
+}
+
 // 创建赛事（管理台）
 exports.create = async (request, result) => {
   try {
@@ -1165,6 +1226,9 @@ exports.create = async (request, result) => {
 
     // 如果传入了选手列表，生成对阵数据
     if (players && Array.isArray(players) && players.length > 0) {
+      // 获取比赛配置限制
+      const matchConfig = await getMatchConfig()
+
       // 转换类型：管理台传入的是 'fix'，需要转换为 'fixpair' 用于生成对阵数据
       let matchDataType = matchType
       if (matchType === 'fix') {
@@ -1193,10 +1257,41 @@ exports.create = async (request, result) => {
             }
           }
         }
+
+        // 验证配对数量
+        const completePairs = playerArray.filter(pair => pair.player1 && pair.player2)
+        const pairCount = completePairs.length
+        const actualPlayerCount = pairCount * 2
+
+        // 检查是否有未完成的配对
+        const incompletePairs = playerArray.filter(pair => !pair.player1 || !pair.player2)
+        if (incompletePairs.length > 0) {
+          return errorResponse(result, ErrorCode.VALIDATION_ERROR, '请完成所有配对，每个配对需要2名选手')
+        }
+
+        // 验证配对数量限制
+        if (pairCount < matchConfig.minPairs) {
+          return errorResponse(result, ErrorCode.VALIDATION_ERROR, `至少需要${matchConfig.minPairs}组配对（${matchConfig.minPairs * 2}名选手）`)
+        }
+        if (pairCount > matchConfig.maxPairs) {
+          return errorResponse(result, ErrorCode.VALIDATION_ERROR, `最多支持${matchConfig.maxPairs}组配对（${matchConfig.maxPairs * 2}名选手）`)
+        }
+        if (actualPlayerCount > matchConfig.maxPlayers) {
+          return errorResponse(result, ErrorCode.VALIDATION_ERROR, `最多支持${matchConfig.maxPlayers}名选手`)
+        }
       } else {
         // 无固定类型，转换为对象数组
         if (players[0] && typeof players[0] === 'string') {
           playerArray = players.map(id => ({ _id: id }))
+        }
+
+        // 验证选手数量限制
+        const playerCount = playerArray.length
+        if (playerCount < matchConfig.minPlayers) {
+          return errorResponse(result, ErrorCode.VALIDATION_ERROR, `至少需要${matchConfig.minPlayers}个选手`)
+        }
+        if (playerCount > matchConfig.maxPlayers) {
+          return errorResponse(result, ErrorCode.VALIDATION_ERROR, `最多支持${matchConfig.maxPlayers}个选手`)
         }
       }
 
