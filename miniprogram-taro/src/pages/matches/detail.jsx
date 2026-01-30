@@ -18,6 +18,7 @@ export default class MatchDetail extends Component {
     // 排名数据
     ranking: [],
     rankingLoading: false,
+    useScoreRanking: false, // 是否启用积分排名
     // 比分输入对话框
     scoreDialogShow: false,
     scoreDialogIndex: -1,
@@ -233,14 +234,19 @@ export default class MatchDetail extends Component {
       const ranking = Array.isArray(data.data) ? data.data : []
       console.log('解析后的排名数据:', ranking)
       console.log('排名数据数量:', ranking.length)
+      // 检查是否启用积分排名（如果排名数据中有score字段，则认为启用了积分排名）
+      const useScoreRanking = ranking.length > 0 && 
+        ranking.some(item => item.score !== undefined)
       this.setState({
         ranking: ranking,
+        useScoreRanking: useScoreRanking,
         rankingLoading: false
       })
     } catch (error) {
       console.error('Load ranking error:', error)
       this.setState({
         ranking: [],
+        useScoreRanking: false,
         rankingLoading: false
       })
     }
@@ -703,25 +709,29 @@ export default class MatchDetail extends Component {
                     </View>
                     <View className='ranking-stats'>
                       <View className='ranking-stat-item'>
-                        <Text className='ranking-stat-label'>胜</Text>
-                        <Text className='ranking-stat-value wins'>{item.wins}</Text>
+                        <Text className='ranking-stat-label'>胜负</Text>
+                        <Text className='ranking-stat-value wins-losses'>{item.wins}-{item.losses}</Text>
                       </View>
-                      <View className='ranking-stat-item'>
-                        <Text className='ranking-stat-label'>负</Text>
-                        <Text className='ranking-stat-value losses'>{item.losses}</Text>
-                      </View>
-                      <View className='ranking-stat-item'>
-                        <Text className='ranking-stat-label'>总</Text>
-                        <Text className='ranking-stat-value'>{item.total}</Text>
-                      </View>
-                      <View className='ranking-stat-item'>
-                        <Text className='ranking-stat-label'>胜率</Text>
-                        <Text className='ranking-stat-value win-rate'>{item.winRate}%</Text>
-                      </View>
-                      {item.score !== undefined && (
+                      {/* 如果启用积分排名，显示积分相关字段；否则显示胜率 */}
+                      {this.state.useScoreRanking ? (
+                        <>
+                          <View className='ranking-stat-item'>
+                            <Text className='ranking-stat-label'>总积分</Text>
+                            <Text className='ranking-stat-value score'>{item.score || 0}</Text>
+                          </View>
+                          <View className='ranking-stat-item'>
+                            <Text className='ranking-stat-label'>局胜分</Text>
+                            <Text className='ranking-stat-value base-score'>{item.baseScore || 0}</Text>
+                          </View>
+                          <View className='ranking-stat-item'>
+                            <Text className='ranking-stat-label'>奖励分</Text>
+                            <Text className='ranking-stat-value reward-score'>{item.rewardScore || 0}</Text>
+                          </View>
+                        </>
+                      ) : (
                         <View className='ranking-stat-item'>
-                          <Text className='ranking-stat-label'>积分</Text>
-                          <Text className='ranking-stat-value score'>{item.score || 0}</Text>
+                          <Text className='ranking-stat-label'>胜率</Text>
+                          <Text className='ranking-stat-value win-rate'>{item.winRate}%</Text>
                         </View>
                       )}
                     </View>

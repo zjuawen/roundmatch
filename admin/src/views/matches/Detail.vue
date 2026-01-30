@@ -230,19 +230,9 @@
                 </div>
               </template>
             </el-table-column>
-            <el-table-column label="胜场" width="100" align="center">
+            <el-table-column label="胜负" width="100" align="center">
               <template #default="{ row }">
-                <span class="stat-value wins">{{ row.wins }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="负场" width="100" align="center">
-              <template #default="{ row }">
-                <span class="stat-value losses">{{ row.losses }}</span>
-              </template>
-            </el-table-column>
-            <el-table-column label="总场次" width="100" align="center">
-              <template #default="{ row }">
-                <span class="stat-value">{{ row.total }}</span>
+                <span class="stat-value wins-losses">{{ row.wins }}-{{ row.losses }}</span>
               </template>
             </el-table-column>
             <!-- 如果启用积分排名，显示积分相关列；否则显示胜率 -->
@@ -831,12 +821,9 @@ const downloadQRCode = () => {
   font-weight: 500;
 }
 
-.stat-value.wins {
-  color: #67c23a;
-}
-
-.stat-value.losses {
-  color: #f56c6c;
+.stat-value.wins-losses {
+  color: #333;
+  font-weight: 500;
 }
 
 .stat-value.win-rate {

@@ -2052,13 +2052,15 @@ getRankingForMiniProgram = async (matchId) => {
         wins: 0,
         losses: 0,
         total: 0,
-        score: 0 // 总积分
+        score: 0, // 总积分
+        baseScore: 0, // 局胜分总和
+        rewardScore: 0 // 奖励分总和
       }
     })
 
-    // 只统计已完成的比赛（score1 >= 0 && score2 >= 0）的胜负关系
+    // 只统计已完成的比赛（score1 > 0 && score2 > 0）的胜负关系
     const completedGames = allGames.filter(game => 
-      game.score1 >= 0 && game.score2 >= 0
+      game.score1 > 0 && game.score2 > 0
     )
     
     completedGames.forEach(game => {
@@ -2094,6 +2096,8 @@ getRankingForMiniProgram = async (matchId) => {
           playerStats[player1].total++
           // 如果启用积分排名，累加积分
           if (scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null) {
+            playerStats[player1].baseScore += scoreConfig.scoreWinPoints
+            playerStats[player1].rewardScore += rewardPoints
             playerStats[player1].score += scoreConfig.scoreWinPoints + rewardPoints
           }
         }
@@ -2101,6 +2105,8 @@ getRankingForMiniProgram = async (matchId) => {
           playerStats[player2].wins++
           playerStats[player2].total++
           if (scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null) {
+            playerStats[player2].baseScore += scoreConfig.scoreWinPoints
+            playerStats[player2].rewardScore += rewardPoints
             playerStats[player2].score += scoreConfig.scoreWinPoints + rewardPoints
           }
         }
@@ -2126,6 +2132,8 @@ getRankingForMiniProgram = async (matchId) => {
           playerStats[player3].wins++
           playerStats[player3].total++
           if (scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null) {
+            playerStats[player3].baseScore += scoreConfig.scoreWinPoints
+            playerStats[player3].rewardScore += rewardPoints
             playerStats[player3].score += scoreConfig.scoreWinPoints + rewardPoints
           }
         }
@@ -2133,6 +2141,8 @@ getRankingForMiniProgram = async (matchId) => {
           playerStats[player4].wins++
           playerStats[player4].total++
           if (scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null) {
+            playerStats[player4].baseScore += scoreConfig.scoreWinPoints
+            playerStats[player4].rewardScore += rewardPoints
             playerStats[player4].score += scoreConfig.scoreWinPoints + rewardPoints
           }
         }
@@ -2188,15 +2198,24 @@ getRankingForMiniProgram = async (matchId) => {
         if (!player) {
           console.warn('找不到玩家信息，playerId:', stat.playerId)
         }
-        return {
+        const result = {
           playerId: stat.playerId,
           player: player || { _id: stat.playerId, name: '未知', avatarUrl: '' },
           wins: stat.wins,
           losses: stat.losses,
-          total: stat.total,
-          winRate: stat.total > 0 ? ((stat.wins / stat.total) * 100).toFixed(1) : '0.0',
-          score: stat.score || 0 // 总积分
+          total: stat.total
         }
+        
+        // 如果启用积分排名，返回积分相关字段；否则返回胜率
+        if (scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null) {
+          result.score = stat.score || 0 // 总积分
+          result.baseScore = stat.baseScore || 0 // 局胜分总和
+          result.rewardScore = stat.rewardScore || 0 // 奖励分总和
+        } else {
+          result.winRate = stat.total > 0 ? ((stat.wins / stat.total) * 100).toFixed(1) : '0.0'
+        }
+        
+        return result
       })
       // 不过滤任何记录，确保所有队员都显示
       .sort((a, b) => {

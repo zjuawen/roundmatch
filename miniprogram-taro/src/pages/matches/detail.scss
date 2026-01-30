@@ -544,15 +544,24 @@
   font-weight: bold;
   color: #333;
   
-  &.wins {
-    color: #FF3B30;
-  }
-  
-  &.losses {
-    color: #0478F3;
+  &.wins-losses {
+    color: #333;
   }
   
   &.win-rate {
     color: #4CAF50;
+  }
+  
+  &.score {
+    color: #FF9500;
+    font-size: 30rpx;
+  }
+  
+  &.base-score {
+    color: #4CAF50;
+  }
+  
+  &.reward-score {
+    color: #FF3B30;
   }
 }
