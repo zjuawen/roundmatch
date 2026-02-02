@@ -9,6 +9,7 @@ const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/response").successResponse
 const errorResponse = require("../utils/response").errorResponse
 const userAvatarFix = require("../utils/util").userAvatarFix
+const { batchGetAvatarValidity } = require("../utils/avatarCheck")
 const ErrorCode = require("./errorcode")
 const wechat = require("./wechat")
 
@@ -560,14 +561,23 @@ readMatch = async (clubid, matchid) => {
 
   players = userAvatarFix(players)
   
+  // 批量检查头像有效性并添加 avatarValid 字段
+  players = await batchGetAvatarValidity(players)
+  
   console.log(players)
 
   await games.forEach(game => {
     for (let i = 1; i < 5; i++) {
       let player = game['player' + i]
-      game['player' + i] = players.find((player) => {
-        return player._id === game['player' + i];
+      const foundPlayer = players.find((p) => {
+        return p._id === game['player' + i];
       })
+      if (foundPlayer) {
+        game['player' + i] = {
+          ...foundPlayer,
+          avatarValid: foundPlayer.avatarValid !== undefined ? foundPlayer.avatarValid : true
+        }
+      }
     }
   })
 
@@ -1091,6 +1101,10 @@ exports.getGames = async (request, result) => {
       })
       
       players = userAvatarFix(players)
+      
+      // 批量检查头像有效性并添加 avatarValid 字段
+      players = await batchGetAvatarValidity(players)
+      
       console.log('处理后的玩家数据:', players)
     }
 
@@ -1100,7 +1114,8 @@ exports.getGames = async (request, result) => {
       playersMap[player._id] = {
         _id: player._id,
         name: player.name || '未知',
-        avatarUrl: player.avatarUrl || ''
+        avatarUrl: player.avatarUrl || '',
+        avatarValid: player.avatarValid !== undefined ? player.avatarValid : true
       }
     })
 
@@ -1994,8 +2009,8 @@ exports.getRanking = async (request, result) => {
           return {
             playerId: pairStat.playerIds[0], // 使用第一个选手ID作为主ID
             playerIds: pairStat.playerIds, // 配对的所有选手ID
-            player: player1 || { _id: pairStat.playerIds[0], name: '未知', avatarUrl: '' },
-            player2: player2 || null, // 第二个选手信息
+            player: player1 || { _id: pairStat.playerIds[0], name: '未知', avatarUrl: '', avatarValid: false },
+            player2: player2 || null, // 第二个选手信息（已包含 avatarValid）
             wins: pairStat.wins,
             losses: pairStat.losses,
             total: pairStat.total,
@@ -2048,7 +2063,7 @@ exports.getRanking = async (request, result) => {
         }
         const result = {
           playerId: stat.playerId,
-          player: player || { _id: stat.playerId, name: '未知', avatarUrl: '' },
+          player: player || { _id: stat.playerId, name: '未知', avatarUrl: '', avatarValid: false },
           wins: stat.wins,
           losses: stat.losses,
           total: stat.total
@@ -2409,6 +2424,9 @@ getRankingForMiniProgram = async (matchId) => {
       })
       
       players = userAvatarFix(players)
+      
+      // 批量检查头像有效性并添加 avatarValid 字段
+      players = await batchGetAvatarValidity(players)
     }
 
     // 创建玩家映射
@@ -2417,7 +2435,8 @@ getRankingForMiniProgram = async (matchId) => {
       playersMap[player._id] = {
         _id: player._id,
         name: player.name || '未知',
-        avatarUrl: player.avatarUrl || ''
+        avatarUrl: player.avatarUrl || '',
+        avatarValid: player.avatarValid !== undefined ? player.avatarValid : true
       }
     })
 
@@ -2481,8 +2500,8 @@ getRankingForMiniProgram = async (matchId) => {
           return {
             playerId: pairStat.playerIds[0], // 使用第一个选手ID作为主ID
             playerIds: pairStat.playerIds, // 配对的所有选手ID
-            player: player1 || { _id: pairStat.playerIds[0], name: '未知', avatarUrl: '' },
-            player2: player2 || null, // 第二个选手信息
+            player: player1 || { _id: pairStat.playerIds[0], name: '未知', avatarUrl: '', avatarValid: false },
+            player2: player2 || null, // 第二个选手信息（已包含 avatarValid）
             wins: pairStat.wins,
             losses: pairStat.losses,
             total: pairStat.total,
@@ -2535,7 +2554,7 @@ getRankingForMiniProgram = async (matchId) => {
         }
         const result = {
           playerId: stat.playerId,
-          player: player || { _id: stat.playerId, name: '未知', avatarUrl: '' },
+          player: player || { _id: stat.playerId, name: '未知', avatarUrl: '', avatarValid: false },
           wins: stat.wins,
           losses: stat.losses,
           total: stat.total

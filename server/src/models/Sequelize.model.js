@@ -682,3 +682,50 @@ module.exports.userconfig = (database, Sequelize) => {
     })
 }
 
+// 头像有效性缓存表
+module.exports.avatarCache = (database, Sequelize) => {
+    return database.define("avatar_cache", {
+        _id: {
+            type: Sequelize.UUID,
+            defaultValue: Sequelize.UUIDV4,
+            primaryKey: true
+        },
+        avatarUrl: {
+            type: Sequelize.STRING,
+            allowNull: false,
+            unique: true,
+            comment: '头像URL（唯一索引）',
+            field: 'avatarurl'
+        },
+        isValid: {
+            type: Sequelize.BOOLEAN,
+            allowNull: false,
+            defaultValue: true,
+            comment: '头像是否有效：true=有效，false=无效',
+            field: 'isvalid'
+        },
+        checkedAt: {
+            type: Sequelize.DATE,
+            allowNull: false,
+            defaultValue: Sequelize.NOW,
+            comment: '最后检查时间',
+            field: 'checkedat'
+        },
+        checkCount: {
+            type: Sequelize.INTEGER,
+            defaultValue: 0,
+            comment: '检查次数',
+            field: 'checkcount'
+        }
+    }, {
+        freezeTableName: true,
+        createdAt: 'checkedAt',
+        updatedAt: 'checkedAt',
+        indexes: [
+            { fields: ['avatarurl'], unique: true },
+            { fields: ['isvalid'] },
+            { fields: ['checkedat'] }
+        ]
+    })
+}
+

@@ -44,6 +44,7 @@ db.admins = require("./Sequelize.model").admins(database, Sequelize)
 db.adminClubs = require("./Sequelize.model").adminClubs(database, Sequelize)
 db.scorelogs = require("./Sequelize.model").scorelogs(database, Sequelize)
 db.clubConfig = require("./Sequelize.model").clubConfig(database, Sequelize)
+db.avatarCache = require("./Sequelize.model").avatarCache(database, Sequelize)
 
 // Define associations
 db.matches.hasMany(db.games, {

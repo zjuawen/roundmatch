@@ -3,7 +3,7 @@ import { View, Text, Image, Input, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { matchService, gameService } from '../../services/api'
 import { getGlobalData, safeNavigateBack } from '../../utils'
-import { checkAvatarUrlAsync, generateAvatarColor, getAvatarText } from '../../utils/imageUtils'
+import { generateAvatarColor, getAvatarText } from '../../utils/imageUtils'
 import './detail.scss'
 
 export default class MatchDetail extends Component {
@@ -152,47 +152,16 @@ export default class MatchDetail extends Component {
         return orderA - orderB
       })
       
-      // 处理玩家头像 URL（先设置默认值，不阻塞页面加载）
+      // 处理玩家头像 URL（服务端已检查并返回 avatarValid，直接使用）
       for (const game of games) {
         for (let i = 1; i <= 4; i++) {
           const player = game[`player${i}`]
           if (player) {
             // 统一处理 avatarUrl 字段（可能返回的是 avatarurl）
             const avatarUrl = player.avatarUrl || player.avatarurl || ''
-            
-            if (avatarUrl && (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://'))) {
-              // 先设置头像URL，允许图片尝试加载
-              player.avatarUrl = avatarUrl
-              player.avatarValid = true // 默认认为有效，让图片先加载
-              
-              // 异步检查头像有效性，不阻塞页面加载
-              checkAvatarUrlAsync(avatarUrl, (isValid, newAvatarUrl) => {
-                // 找到对应的game和player并更新
-                const currentGames = this.state.games
-                const updatedGames = currentGames.map(game => {
-                  const updatedGame = { ...game }
-                  for (let j = 1; j <= 4; j++) {
-                    const p = game[`player${j}`]
-                    if (p && (p.avatarUrl === avatarUrl || p.avatarurl === avatarUrl)) {
-                      updatedGame[`player${j}`] = {
-                        ...p,
-                        avatarUrl: (!isValid && newAvatarUrl) ? newAvatarUrl : p.avatarUrl,
-                        avatarValid: isValid || !!newAvatarUrl
-                      }
-                    }
-                  }
-                  return updatedGame
-                })
-                
-                // 只有在有变化时才更新state
-                if (JSON.stringify(updatedGames) !== JSON.stringify(currentGames)) {
-                  this.setState({ games: updatedGames })
-                }
-              })
-            } else {
-              player.avatarUrl = ''
-              player.avatarValid = false
-            }
+            player.avatarUrl = avatarUrl || ''
+            // 使用服务端返回的 avatarValid，如果没有则默认为 true（向后兼容）
+            player.avatarValid = player.avatarValid !== undefined ? player.avatarValid : (avatarUrl ? true : false)
           }
         }
       }
@@ -321,32 +290,53 @@ export default class MatchDetail extends Component {
         })
         
         if (existingItem) {
-          // 保留现有项中的头像信息
+          // 保留现有项中的头像信息（优先使用服务端返回的 avatarValid）
           const preservedItem = { ...newItem }
           
           // 保留 player 的头像信息
           if (existingItem.player && newItem.player) {
+            const avatarUrl = newItem.player.avatarUrl || newItem.player.avatarurl || existingItem.player.avatarUrl || ''
             preservedItem.player = {
               ...newItem.player,
-              avatarUrl: existingItem.player.avatarUrl || newItem.player.avatarUrl || newItem.player.avatarurl || '',
-              avatarValid: existingItem.player.avatarValid !== undefined ? existingItem.player.avatarValid : true
+              avatarUrl: avatarUrl,
+              // 优先使用服务端返回的 avatarValid，如果没有则使用现有的
+              avatarValid: newItem.player.avatarValid !== undefined ? newItem.player.avatarValid : (existingItem.player.avatarValid !== undefined ? existingItem.player.avatarValid : true)
             }
           }
           
           // 保留 player2 的头像信息（固定搭档模式）
           if (existingItem.player2 && newItem.player2) {
+            const avatarUrl2 = newItem.player2.avatarUrl || newItem.player2.avatarurl || existingItem.player2.avatarUrl || ''
             preservedItem.player2 = {
               ...newItem.player2,
-              avatarUrl: existingItem.player2.avatarUrl || newItem.player2.avatarUrl || newItem.player2.avatarurl || '',
-              avatarValid: existingItem.player2.avatarValid !== undefined ? existingItem.player2.avatarValid : true
+              avatarUrl: avatarUrl2,
+              // 优先使用服务端返回的 avatarValid，如果没有则使用现有的
+              avatarValid: newItem.player2.avatarValid !== undefined ? newItem.player2.avatarValid : (existingItem.player2.avatarValid !== undefined ? existingItem.player2.avatarValid : true)
             }
           }
           
           return preservedItem
         }
         
-        // 如果没有找到对应的现有项，使用新数据
-        return newItem
+        // 如果没有找到对应的现有项，使用新数据，确保 avatarValid 字段存在
+        const processedItem = { ...newItem }
+        if (processedItem.player) {
+          const avatarUrl = processedItem.player.avatarUrl || processedItem.player.avatarurl || ''
+          processedItem.player = {
+            ...processedItem.player,
+            avatarUrl: avatarUrl,
+            avatarValid: processedItem.player.avatarValid !== undefined ? processedItem.player.avatarValid : (avatarUrl && avatarUrl.trim() ? true : false)
+          }
+        }
+        if (processedItem.player2) {
+          const avatarUrl2 = processedItem.player2.avatarUrl || processedItem.player2.avatarurl || ''
+          processedItem.player2 = {
+            ...processedItem.player2,
+            avatarUrl: avatarUrl2,
+            avatarValid: processedItem.player2.avatarValid !== undefined ? processedItem.player2.avatarValid : (avatarUrl2 && avatarUrl2.trim() ? true : false)
+          }
+        }
+        return processedItem
       })
       
       // 检查是否启用积分排名（如果排名数据中有score字段，则认为启用了积分排名）
@@ -828,14 +818,14 @@ export default class MatchDetail extends Component {
                           <View className='ranking-pair'>
                             <View className='ranking-pair-players'>
                               <View className='ranking-pair-player'>
-                                {item.player?.avatarUrl && item.player.avatarUrl.trim() !== '' ? (
+                                {item.player?.avatarValid && item.player?.avatarUrl && item.player.avatarUrl.trim() !== '' ? (
                                   <Image 
                                     className='ranking-player-avatar'
                                     src={item.player.avatarUrl}
                                     mode='aspectFill'
                                   />
                                 ) : (
-                                  <View 
+                                  <View
                                     className='ranking-player-avatar-text'
                                     style={{ backgroundColor: generateAvatarColor(item.player?.name || '') }}
                                   >
@@ -847,14 +837,14 @@ export default class MatchDetail extends Component {
                                 <Text className='ranking-player-name'>{item.player?.name || '未知'}</Text>
                               </View>
                               <View className='ranking-pair-player'>
-                                {item.player2?.avatarUrl && item.player2.avatarUrl.trim() !== '' ? (
+                                {item.player2?.avatarValid && item.player2?.avatarUrl && item.player2.avatarUrl.trim() !== '' ? (
                                   <Image 
                                     className='ranking-player-avatar'
                                     src={item.player2.avatarUrl}
                                     mode='aspectFill'
                                   />
                                 ) : (
-                                  <View 
+                                  <View
                                     className='ranking-player-avatar-text'
                                     style={{ backgroundColor: generateAvatarColor(item.player2?.name || '') }}
                                   >
@@ -870,14 +860,14 @@ export default class MatchDetail extends Component {
                         ) : (
                           // 非固定搭档模式：显示单个选手
                           <View className='ranking-player'>
-                            {item.player?.avatarUrl && item.player.avatarUrl.trim() !== '' ? (
+                            {item.player?.avatarValid && item.player?.avatarUrl && item.player.avatarUrl.trim() !== '' ? (
                               <Image 
                                 className='ranking-player-avatar'
                                 src={item.player.avatarUrl}
                                 mode='aspectFill'
                               />
                             ) : (
-                              <View 
+                              <View
                                 className='ranking-player-avatar-text'
                                 style={{ backgroundColor: generateAvatarColor(item.player?.name || '') }}
                               >
