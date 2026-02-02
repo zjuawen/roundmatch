@@ -13,6 +13,7 @@ const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/response").successResponse
 const errorResponse = require("../utils/response").errorResponse
 const userAvatarFix = require("../utils/util").userAvatarFix
+const { batchGetAvatarValidity } = require("../utils/avatarCheck")
 const ErrorCode = require("./errorcode")
 
 // RustFS 文件基础 URL（替代原来的 SERVER_URL_UPLOADS）
@@ -535,7 +536,7 @@ exports.listAll = async (request, result) => {
     }
 
     // 处理 avatar URL 并规范化字段名，添加所属俱乐部信息
-    rows = rows.map(user => {
+    let normalizedRows = rows.map(user => {
       let normalized = normalizeUserFields(user)
       
       // 处理 avatar URL
@@ -564,10 +565,13 @@ exports.listAll = async (request, result) => {
       
       return normalized
     })
+    
+    // 批量检查头像有效性并添加 avatarValid 字段
+    normalizedRows = await batchGetAvatarValidity(normalizedRows)
 
     successResponse(result, {
       data: {
-        list: rows,
+        list: normalizedRows,
         total: count,
         pageNum: pageNum,
         pageSize: pageSize
@@ -609,6 +613,12 @@ exports.getById = async (request, result) => {
         !avatarUrl.startsWith('http') && 
         !avatarUrl.startsWith('cloud://')) {
       user.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
+    }
+    
+    // 批量检查头像有效性并添加 avatarValid 字段
+    const usersWithAvatarValid = await batchGetAvatarValidity([user])
+    if (usersWithAvatarValid && usersWithAvatarValid.length > 0) {
+      user.avatarValid = usersWithAvatarValid[0].avatarValid
     }
 
     // 权限过滤：如果是俱乐部管理员，只能查看关联俱乐部的用户

@@ -16,7 +16,7 @@
             <span v-else>未知</span>
           </el-descriptions-item>
           <el-descriptions-item label="头像">
-            <Avatar :avatar-url="user.avatarUrl" :name="user.name || '未知'" :size="50" />
+            <Avatar :avatar-url="user.avatarUrl" :name="user.name || '未知'" :size="50" :avatar-valid="user.avatarValid" />
           </el-descriptions-item>
           <el-descriptions-item label="国家">{{ user.country || '未知' }}</el-descriptions-item>
           <el-descriptions-item label="省份">{{ user.province || '未知' }}</el-descriptions-item>

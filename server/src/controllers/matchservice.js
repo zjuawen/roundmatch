@@ -924,6 +924,29 @@ exports.getById = async (request, result) => {
       }
     }
 
+    // 重新计算完成场次：统计 score1 > 0 && score2 > 0 的比赛数量
+    try {
+      const allGames = await sequelizeExecute(
+        db.collection('games').findAll({
+          attributes: ['score1', 'score2'],
+          where: {
+            matchid: matchId
+          },
+          raw: true
+        })
+      )
+      
+      const finishedCount = allGames.filter(game => 
+        game.score1 > 0 && game.score2 > 0
+      ).length
+      
+      // 更新 match 对象的 finish 字段
+      match.finish = finishedCount
+    } catch (error) {
+      console.error('重新计算完成场次失败:', error)
+      // 如果计算失败，使用数据库中的值
+    }
+
     successResponse(result, {
       data: match
     })
@@ -2006,11 +2029,26 @@ exports.getRanking = async (request, result) => {
           const player1 = playersMap[pairStat.playerIds[0]]
           const player2 = pairStat.playerIds[1] ? playersMap[pairStat.playerIds[1]] : null
           
+          // 确保 player1 包含 avatarValid 字段
+          const player1Data = player1 || { _id: pairStat.playerIds[0], name: '未知', avatarUrl: '', avatarValid: false }
+          if (player1Data.avatarValid === undefined) {
+            player1Data.avatarValid = false
+          }
+          
+          // 确保 player2 包含 avatarValid 字段
+          let player2Data = null
+          if (player2) {
+            player2Data = { ...player2 }
+            if (player2Data.avatarValid === undefined) {
+              player2Data.avatarValid = false
+            }
+          }
+          
           return {
             playerId: pairStat.playerIds[0], // 使用第一个选手ID作为主ID
             playerIds: pairStat.playerIds, // 配对的所有选手ID
-            player: player1 || { _id: pairStat.playerIds[0], name: '未知', avatarUrl: '', avatarValid: false },
-            player2: player2 || null, // 第二个选手信息（已包含 avatarValid）
+            player: player1Data,
+            player2: player2Data, // 第二个选手信息（已包含 avatarValid）
             wins: pairStat.wins,
             losses: pairStat.losses,
             total: pairStat.total,
@@ -2061,9 +2099,14 @@ exports.getRanking = async (request, result) => {
         if (!player) {
           console.warn('找不到玩家信息，playerId:', stat.playerId)
         }
+        // 确保 player 对象包含 avatarValid 字段
+        const playerData = player || { _id: stat.playerId, name: '未知', avatarUrl: '', avatarValid: false }
+        if (playerData.avatarValid === undefined) {
+          playerData.avatarValid = false
+        }
         const result = {
           playerId: stat.playerId,
-          player: player || { _id: stat.playerId, name: '未知', avatarUrl: '', avatarValid: false },
+          player: playerData,
           wins: stat.wins,
           losses: stat.losses,
           total: stat.total

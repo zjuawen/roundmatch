@@ -19,7 +19,7 @@
       <el-table :data="users" v-loading="loading" stripe>
         <el-table-column label="头像" width="80" align="center">
           <template #default="{ row }">
-            <Avatar :avatar-url="row.avatarUrl" :name="row.name || '未知'" :size="40" />
+            <Avatar :avatar-url="row.avatarUrl" :name="row.name || '未知'" :size="40" :avatar-valid="row.avatarValid" />
           </template>
         </el-table-column>
         <el-table-column prop="name" label="姓名" />

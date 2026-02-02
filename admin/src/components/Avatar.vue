@@ -23,7 +23,6 @@
 
 <script setup>
 import { computed, ref, watch, onMounted, onUnmounted } from 'vue'
-import { mediaApi } from '@/api/media'
 
 const props = defineProps({
   avatarUrl: {
@@ -41,106 +40,22 @@ const props = defineProps({
   backgroundColor: {
     type: String,
     default: null // null 表示使用默认的颜色生成逻辑
+  },
+  avatarValid: {
+    type: Boolean,
+    default: undefined // undefined 表示未提供，需要检查；true/false 表示服务端已检查
   }
 })
 
-const showImage = ref(false) // 默认不显示图片，等待检查完成
+const showImage = ref(false)
 const imgRef = ref(null)
 const imageSrc = ref('')
-const isChecking = ref(false) // 是否正在检查
-
-// 缓存已检查过的头像URL结果
-const avatarCheckCache = new Map()
-
-// 使用后端 API 检查头像 URL 的响应头 X-Errno
-const checkAvatarUrl = async (url) => {
-  if (!url) {
-    showImage.value = false
-    imageSrc.value = ''
-    isChecking.value = false
-    return
-  }
-
-  // 检查缓存
-  if (avatarCheckCache.has(url)) {
-    const cached = avatarCheckCache.get(url)
-    if (cached.isValid) {
-      imageSrc.value = url
-      showImage.value = true
-    } else {
-      showImage.value = false
-      imageSrc.value = ''
-    }
-    isChecking.value = false
-    return
-  }
-
-  isChecking.value = true
-  showImage.value = false
-  imageSrc.value = '' // 先清空，避免图片加载
-
-  try {
-    // 调用后端 API 检查响应头
-    const response = await mediaApi.checkAvatar(url)
-    const { isValid, errno, replaced, newAvatarUrl, checked } = response.data
-    
-    // console.log('头像检查结果:', { url, isValid, errno, replaced, checked })
-    
-    // 如果已检查过或已替换，缓存结果
-    if (checked || replaced) {
-      avatarCheckCache.set(url, { isValid: replaced ? false : isValid, timestamp: Date.now() })
-      // 如果替换了，使用新头像URL
-      if (replaced && newAvatarUrl) {
-        avatarCheckCache.set(newAvatarUrl, { isValid: true, timestamp: Date.now() })
-        imageSrc.value = newAvatarUrl
-        showImage.value = true
-        isChecking.value = false
-        return
-      }
-    }
-    
-    // 缓存检查结果（缓存24小时）
-    avatarCheckCache.set(url, { isValid, timestamp: Date.now() })
-    
-    if (!isValid) {
-      // console.log('头像无效（X-Errno: -6101 或其他原因），使用文字头像')
-      showImage.value = false
-      imageSrc.value = ''
-      isChecking.value = false
-      return
-    }
-    
-    // 如果检查通过，设置图片源
-    // 注意：只有在检查通过后才设置 imageSrc，这样图片才会加载
-    imageSrc.value = url
-    showImage.value = true
-    isChecking.value = false
-  } catch (error) {
-    console.warn('检查头像URL失败:', error)
-    // 如果检查失败，尝试直接使用原 URL
-    // 如果图片加载失败，onerror 事件会处理
-    imageSrc.value = url
-    showImage.value = true
-    isChecking.value = false
-  }
-}
-
-// 定期清理过期的缓存（24小时）
-setInterval(() => {
-  const now = Date.now()
-  const expireTime = 24 * 60 * 60 * 1000 // 24小时
-  for (const [url, cache] of avatarCheckCache.entries()) {
-    if (now - cache.timestamp > expireTime) {
-      avatarCheckCache.delete(url)
-    }
-  }
-}, 60 * 60 * 1000) // 每小时清理一次
 
 // 图片加载错误处理（备用方案）
 const handleImageError = () => {
   console.log('图片加载失败，使用文字头像')
   showImage.value = false
-  imageSrc.value = '' // 清空图片源，确保不会再次尝试加载
+  imageSrc.value = ''
 }
 
 // 图片加载成功处理
@@ -156,27 +71,41 @@ const cleanupBlobUrl = () => {
   }
 }
 
-// 监听 avatarUrl 变化
-watch(() => props.avatarUrl, async (newUrl, oldUrl) => {
-  // 清理旧的 blob URL
+// 根据 avatarValid 和 avatarUrl 决定是否显示图片
+const updateImageDisplay = () => {
   cleanupBlobUrl()
   
-  if (newUrl) {
-    // 检查头像URL
-    await checkAvatarUrl(newUrl)
-  } else {
+  if (!props.avatarUrl || !props.avatarUrl.trim()) {
     showImage.value = false
     imageSrc.value = ''
+    return
   }
+  
+  // 如果服务端提供了 avatarValid 字段，直接使用
+  if (props.avatarValid !== undefined) {
+    if (props.avatarValid) {
+      imageSrc.value = props.avatarUrl
+      showImage.value = true
+    } else {
+      showImage.value = false
+      imageSrc.value = ''
+    }
+    return
+  }
+  
+  // 如果没有提供 avatarValid，尝试直接显示（兼容旧代码）
+  // 如果图片加载失败，onerror 事件会处理
+  imageSrc.value = props.avatarUrl
+  showImage.value = true
+}
+
+// 监听 avatarUrl 和 avatarValid 变化
+watch([() => props.avatarUrl, () => props.avatarValid], () => {
+  updateImageDisplay()
 }, { immediate: true })
 
-onMounted(async () => {
-  if (props.avatarUrl) {
-    await checkAvatarUrl(props.avatarUrl)
-  } else {
-    showImage.value = false
-    imageSrc.value = ''
-  }
+onMounted(() => {
+  updateImageDisplay()
 })
 
 // 组件卸载时清理 blob URL

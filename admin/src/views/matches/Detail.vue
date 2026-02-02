@@ -26,7 +26,6 @@
           </el-descriptions-item>
           <el-descriptions-item label="玩家数">{{ match.playerCount || 0 }}</el-descriptions-item>
           <el-descriptions-item label="总场次">{{ match.total || 0 }}</el-descriptions-item>
-          <el-descriptions-item label="完成场次">{{ match.finish || 0 }}</el-descriptions-item>
           <el-descriptions-item label="类型">
             <el-tag :type="getTypeTagType(match.type)">
               {{ getTypeLabel(match.type) }}
@@ -74,6 +73,23 @@
       
       <!-- 对阵情况标签页 -->
       <div v-show="activeTab === 'games'">
+      <!-- 比赛实时情况 -->
+      <div class="match-realtime-info" v-if="match">
+        <div class="realtime-info-item">
+          <span class="info-label">完成场次：</span>
+          <span class="info-value">{{ match.finish || 0 }} / {{ match.total || 0 }}</span>
+        </div>
+        <div class="realtime-info-item progress-item">
+          <div class="progress-container">
+            <el-progress 
+              :percentage="matchProgress" 
+              :status="matchProgressStatus"
+              :stroke-width="20"
+              :format="formatProgress"
+            />
+          </div>
+        </div>
+      </div>
       <div v-loading="gamesLoading">
         <div v-if="games && games.length > 0">
           <el-table :data="games" stripe border>
@@ -91,6 +107,7 @@
                         :avatar-url="row.player1.avatarUrl" 
                         :name="row.player1.name || '未知'"
                         :size="32"
+                        :avatar-valid="row.player1.avatarValid"
                       />
                       <span class="player-name">{{ row.player1.name || '未知' }}</span>
                     </div>
@@ -100,6 +117,7 @@
                         :avatar-url="row.player2.avatarUrl" 
                         :name="row.player2.name || '未知'"
                         :size="32"
+                        :avatar-valid="row.player2.avatarValid"
                       />
                       <span class="player-name">{{ row.player2.name || '未知' }}</span>
                     </div>
@@ -184,6 +202,7 @@
                         :avatar-url="row.player3.avatarUrl" 
                         :name="row.player3.name || '未知'"
                         :size="32"
+                        :avatar-valid="row.player3.avatarValid"
                       />
                       <span class="player-name">{{ row.player3.name || '未知' }}</span>
                     </div>
@@ -193,6 +212,7 @@
                         :avatar-url="row.player4.avatarUrl" 
                         :name="row.player4.name || '未知'"
                         :size="32"
+                        :avatar-valid="row.player4.avatarValid"
                       />
                       <span class="player-name">{{ row.player4.name || '未知' }}</span>
                     </div>
@@ -208,7 +228,25 @@
       </div>
       
       <!-- 排名统计标签页 -->
-      <div v-show="activeTab === 'ranking'" v-loading="rankingLoading">
+      <div v-show="activeTab === 'ranking'">
+      <!-- 比赛实时情况 -->
+      <div class="match-realtime-info" v-if="match">
+        <div class="realtime-info-item">
+          <span class="info-label">完成场次：</span>
+          <span class="info-value">{{ match.finish || 0 }} / {{ match.total || 0 }}</span>
+        </div>
+        <div class="realtime-info-item progress-item">
+          <div class="progress-container">
+            <el-progress 
+              :percentage="matchProgress" 
+              :status="matchProgressStatus"
+              :stroke-width="20"
+              :format="formatProgress"
+            />
+          </div>
+        </div>
+      </div>
+      <div v-loading="rankingLoading">
         <div v-if="ranking && ranking.length > 0">
           <el-table :data="ranking" stripe border>
             <el-table-column label="排名" width="80" align="center">
@@ -225,6 +263,7 @@
                     :avatar-url="row.player.avatarUrl" 
                     :name="row.player.name || '未知'"
                     :size="40"
+                    :avatar-valid="row.player.avatarValid"
                   />
                   <span class="player-name">{{ row.player.name || '未知' }}</span>
                   <!-- 固定搭档模式：显示第二个选手 -->
@@ -234,6 +273,7 @@
                       :avatar-url="row.player2.avatarUrl" 
                       :name="row.player2.name || '未知'"
                       :size="40"
+                      :avatar-valid="row.player2.avatarValid"
                     />
                     <span class="player-name">{{ row.player2.name || '未知' }}</span>
                   </template>
@@ -269,6 +309,7 @@
           </el-table>
         </div>
         <el-empty v-else description="暂无参赛选手" />
+      </div>
       </div>
       
       <!-- 操作流水标签页 -->
@@ -460,6 +501,55 @@ const getTypeTagType = (type) => {
   return typeTagMap[type] || 'info'
 }
 
+// 计算比赛进度百分比
+const matchProgress = computed(() => {
+  if (!match.value || !match.value.total || match.value.total === 0) {
+    return 0
+  }
+  const finish = match.value.finish || 0
+  const total = match.value.total || 0
+  return Math.round((finish / total) * 100)
+})
+
+// 获取进度条状态
+const matchProgressStatus = computed(() => {
+  const progress = matchProgress.value
+  if (progress === 0) {
+    return null // 未开始，显示默认颜色
+  } else if (progress === 100) {
+    return 'success' // 已完成，显示绿色
+  } else {
+    return null // 进行中，显示默认颜色
+  }
+})
+
+// 格式化进度显示
+const formatProgress = (percentage) => {
+  return `${percentage}%`
+}
+
+// 获取进度状态文本
+const getProgressStatusText = (progress) => {
+  if (progress === 0) {
+    return '未开始'
+  } else if (progress === 100) {
+    return '已完成'
+  } else {
+    return '进行中'
+  }
+}
+
+// 获取进度标签类型
+const getProgressTagType = (progress) => {
+  if (progress === 0) {
+    return 'info'
+  } else if (progress === 100) {
+    return 'success'
+  } else {
+    return 'warning'
+  }
+}
+
 const editScore = (row, index) => {
   editingScoreIndex.value = index
   editingScore.value = {
@@ -500,7 +590,7 @@ const saveScore = async (row, index) => {
     games.value[index].score1 = editingScore.value.score1
     games.value[index].score2 = editingScore.value.score2
     
-    // 重新加载赛事详情以更新完成场次
+    // 重新加载赛事详情以更新完成场次和进度
     await loadMatchDetail()
     
     // 如果当前在操作流水标签页，重新加载流水
@@ -853,5 +943,56 @@ const downloadQRCode = () => {
 
 .stat-value.reward-score {
   color: #f56c6c;
+}
+
+.progress-container {
+  width: 100%;
+}
+
+.progress-info {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+}
+
+.match-realtime-info {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  background: #f5f7fa;
+  border-radius: 4px;
+  border: 1px solid #e4e7ed;
+}
+
+.realtime-info-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.realtime-info-item.progress-item {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.info-label {
+  font-size: 14px;
+  color: #606266;
+  font-weight: 500;
+}
+
+.info-value {
+  font-size: 16px;
+  color: #303133;
+  font-weight: bold;
+}
+
+.progress-container {
+  flex: 1;
+  max-width: 400px;
 }
 </style>

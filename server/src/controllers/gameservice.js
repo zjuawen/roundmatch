@@ -83,18 +83,19 @@ exports.updateScore = async (request, result) => {
     }
 
     // 检查是否需要更新完成场次
-    // 如果旧比分都是0（未完成），新比分都大于0（已完成），则完成场次+1
+    // 判断是否完成的逻辑：score1 > 0 && score2 > 0
+    const oldCompleted = (game.score1 > 0 && game.score2 > 0)
+    const newCompleted = (score1 > 0 && score2 > 0)
+    
     let needInc = false
-    const oldBothZero = (game.score1 === 0 || game.score1 == null) && (game.score2 === 0 || game.score2 == null)
-    const newBothPositive = score1 > 0 && score2 > 0
-    if (oldBothZero && newBothPositive) {
+    let needDec = false
+    
+    // 如果从未完成变为已完成，完成场次+1
+    if (!oldCompleted && newCompleted) {
       needInc = true
     }
-    // 如果旧比分都大于0（已完成），新比分有0（未完成），则完成场次-1
-    let needDec = false
-    const oldBothPositive = game.score1 > 0 && game.score2 > 0
-    const newHasZero = (score1 === 0 || score1 == null) || (score2 === 0 || score2 == null)
-    if (oldBothPositive && newHasZero) {
+    // 如果从已完成变为未完成，完成场次-1
+    else if (oldCompleted && !newCompleted) {
       needDec = true
     }
 
@@ -277,11 +278,13 @@ saveGameData = async (clubid, gamedata, operator = null, operatorType = 'wechat'
     }
   }
 
+  // 判断是否完成的逻辑：score1 > 0 && score2 > 0
+  const oldCompleted = (old.score1 > 0 && old.score2 > 0)
+  const newCompleted = (gamedata.score1 > 0 && gamedata.score2 > 0)
+  
   let needInc = false
-  // 如果旧比分都是0（未完成），新比分都大于0（已完成），则完成场次+1
-  const oldBothZero = (old.score1 === 0 || old.score1 == null) && (old.score2 === 0 || old.score2 == null)
-  const newBothPositive = gamedata.score1 > 0 && gamedata.score2 > 0
-  if (oldBothZero && newBothPositive) {
+  // 如果从未完成变为已完成，完成场次+1
+  if (!oldCompleted && newCompleted) {
     needInc = true
   }
 
