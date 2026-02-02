@@ -611,11 +611,17 @@ const saveScore = async (row, index) => {
   }
 }
 
-const handleTabChange = (tabName) => {
-  if (tabName === 'logs' && scoreLogs.value.length === 0) {
-    loadScoreLogs()
-  } else if (tabName === 'ranking' && ranking.value.length === 0) {
-    loadRanking()
+const handleTabChange = async (tabName) => {
+  // 每次切换标签时都重新加载赛事详情（因为每个标签页都显示完成场次等信息）
+  await loadMatchDetail()
+  
+  // 根据切换的标签加载对应的数据
+  if (tabName === 'games') {
+    await loadGames()
+  } else if (tabName === 'ranking') {
+    await loadRanking()
+  } else if (tabName === 'logs') {
+    await loadScoreLogs()
   }
 }
 
