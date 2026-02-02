@@ -219,8 +219,77 @@ export default class MatchDetail extends Component {
     }
   }
 
-  // 加载排名数据
+  // 加载对阵数据（只刷新games，不刷新match信息和用户头像）
+  loadGames = async () => {
+    const { matchId, clubid, games: currentGames } = this.state
+    if (!matchId) {
+      console.error('loadGames: matchId 为空')
+      return
+    }
+    
+    console.log('开始刷新对阵数据，matchId:', matchId)
+    try {
+      const targetClubid = clubid || getGlobalData('selectedClubId')
+      const data = await matchService.read(targetClubid || null, matchId)
+      
+      // matchService.read 返回的是对阵数据数组
+      const newGames = Array.isArray(data.data) ? data.data : []
+      
+      // 按 order 字段排序（从小到大）
+      newGames.sort((a, b) => {
+        const orderA = a.order || 0
+        const orderB = b.order || 0
+        return orderA - orderB
+      })
+      
+      // 保留现有games中的头像信息（avatarUrl 和 avatarValid），只更新比分等数据
+      const updatedGames = newGames.map(newGame => {
+        // 查找当前games中对应的game（通过_id或order匹配）
+        const existingGame = currentGames.find(g => 
+          (g._id && g._id === newGame._id) || 
+          (g.order !== undefined && g.order === newGame.order)
+        )
+        
+        if (existingGame) {
+          // 保留现有游戏中的头像信息
+          const preservedGame = { ...newGame }
+          for (let i = 1; i <= 4; i++) {
+            const existingPlayer = existingGame[`player${i}`]
+            const newPlayer = newGame[`player${i}`]
+            if (existingPlayer && newPlayer) {
+              // 保留头像相关字段
+              preservedGame[`player${i}`] = {
+                ...newPlayer,
+                avatarUrl: existingPlayer.avatarUrl || newPlayer.avatarUrl || newPlayer.avatarurl || '',
+                avatarValid: existingPlayer.avatarValid !== undefined ? existingPlayer.avatarValid : true
+              }
+            }
+          }
+          return preservedGame
+        }
+        
+        // 如果没有找到对应的现有游戏，使用新数据（这种情况在首次加载后不应该发生）
+        return newGame
+      })
+      
+      console.log('刷新后的 games 数据:', updatedGames)
+      
+      // 更新games数据（保留头像信息）
+      this.setState({
+        games: updatedGames
+      })
+    } catch (error) {
+      console.error('Load games error:', error)
+      Taro.showToast({
+        title: '刷新对阵数据失败',
+        icon: 'none'
+      })
+    }
+  }
+
+  // 加载排名数据（只刷新排名数据，不刷新用户头像）
   loadRanking = async (matchId) => {
+    const { ranking: currentRanking } = this.state
     if (!matchId) {
       console.error('loadRanking: matchId 为空')
       return
@@ -231,14 +300,61 @@ export default class MatchDetail extends Component {
     try {
       const data = await matchService.ranking(matchId)
       console.log('排名 API 返回数据:', data)
-      const ranking = Array.isArray(data.data) ? data.data : []
-      console.log('解析后的排名数据:', ranking)
-      console.log('排名数据数量:', ranking.length)
+      const newRanking = Array.isArray(data.data) ? data.data : []
+      console.log('解析后的排名数据:', newRanking)
+      console.log('排名数据数量:', newRanking.length)
+      
+      // 保留现有排名数据中的头像信息（avatarUrl 和 avatarValid），只更新排名、积分等数据
+      const updatedRanking = newRanking.map(newItem => {
+        // 查找当前排名中对应的项（通过 playerId 或 playerIds 匹配）
+        const existingItem = currentRanking.find(item => {
+          if (newItem.playerId && item.playerId) {
+            return item.playerId === newItem.playerId
+          }
+          if (newItem.playerIds && item.playerIds) {
+            // 对于固定搭档模式，比较 playerIds 数组
+            const newIds = Array.isArray(newItem.playerIds) ? newItem.playerIds.sort().join(',') : ''
+            const existingIds = Array.isArray(item.playerIds) ? item.playerIds.sort().join(',') : ''
+            return newIds === existingIds && newIds !== ''
+          }
+          return false
+        })
+        
+        if (existingItem) {
+          // 保留现有项中的头像信息
+          const preservedItem = { ...newItem }
+          
+          // 保留 player 的头像信息
+          if (existingItem.player && newItem.player) {
+            preservedItem.player = {
+              ...newItem.player,
+              avatarUrl: existingItem.player.avatarUrl || newItem.player.avatarUrl || newItem.player.avatarurl || '',
+              avatarValid: existingItem.player.avatarValid !== undefined ? existingItem.player.avatarValid : true
+            }
+          }
+          
+          // 保留 player2 的头像信息（固定搭档模式）
+          if (existingItem.player2 && newItem.player2) {
+            preservedItem.player2 = {
+              ...newItem.player2,
+              avatarUrl: existingItem.player2.avatarUrl || newItem.player2.avatarUrl || newItem.player2.avatarurl || '',
+              avatarValid: existingItem.player2.avatarValid !== undefined ? existingItem.player2.avatarValid : true
+            }
+          }
+          
+          return preservedItem
+        }
+        
+        // 如果没有找到对应的现有项，使用新数据
+        return newItem
+      })
+      
       // 检查是否启用积分排名（如果排名数据中有score字段，则认为启用了积分排名）
-      const useScoreRanking = ranking.length > 0 && 
-        ranking.some(item => item.score !== undefined)
+      const useScoreRanking = updatedRanking.length > 0 && 
+        updatedRanking.some(item => item.score !== undefined)
+      
       this.setState({
-        ranking: ranking,
+        ranking: updatedRanking,
         useScoreRanking: useScoreRanking,
         rankingLoading: false
       })
@@ -249,16 +365,31 @@ export default class MatchDetail extends Component {
         useScoreRanking: false,
         rankingLoading: false
       })
+      Taro.showToast({
+        title: '刷新排名数据失败',
+        icon: 'none'
+      })
     }
   }
 
   // 切换 Tab
   handleTabChange = (tab) => {
+    const { matchId } = this.state
+    
+    // 如果切换到相同的tab，不处理
+    if (tab === this.state.activeTab) {
+      return
+    }
+    
     this.setState({ activeTab: tab })
     
-    // 如果切换到排名 tab 且排名数据未加载，则加载排名
-    if (tab === 'ranking' && this.state.ranking.length === 0 && !this.state.rankingLoading) {
-      this.loadRanking(this.state.matchId)
+    // 根据切换的tab刷新对应的数据
+    if (tab === 'games') {
+      // 切换到对阵tab，刷新对阵数据
+      this.loadGames()
+    } else if (tab === 'ranking') {
+      // 切换到排名tab，刷新排名数据
+      this.loadRanking(matchId)
     }
   }
 
@@ -681,62 +812,115 @@ export default class MatchDetail extends Component {
               <View className='ranking-loading'>加载排名中...</View>
             ) : this.state.ranking && this.state.ranking.length > 0 ? (
               <View className='ranking-list'>
-                {this.state.ranking.map((item, index) => (
-                  <View key={item.playerId} className='ranking-item'>
-                    <View className='ranking-rank'>
-                      <Text className={`ranking-rank-text ${item.rank === 1 ? 'rank-gold' : item.rank === 2 ? 'rank-silver' : item.rank === 3 ? 'rank-bronze' : ''}`}>
-                        {item.rank}
-                      </Text>
-                    </View>
-                    <View className='ranking-player'>
-                      {item.player?.avatarUrl ? (
-                        <Image 
-                          className='ranking-player-avatar'
-                          src={item.player.avatarUrl}
-                          mode='aspectFill'
-                        />
-                      ) : (
-                        <View 
-                          className='ranking-player-avatar-text'
-                          style={{ backgroundColor: generateAvatarColor(item.player?.name || '') }}
-                        >
-                          <Text className='ranking-player-avatar-text-content'>
-                            {getAvatarText(item.player?.name || '')}
-                          </Text>
-                        </View>
-                      )}
-                      <Text className='ranking-player-name'>{item.player?.name || '未知'}</Text>
-                    </View>
-                    <View className='ranking-stats'>
-                      <View className='ranking-stat-item'>
-                        <Text className='ranking-stat-label'>胜负</Text>
-                        <Text className='ranking-stat-value wins-losses'>{item.wins}-{item.losses}</Text>
+                {this.state.ranking.map((item, index) => {
+                  const isPairMode = (item.playerIds && item.playerIds.length > 1) || item.player2
+                  
+                  return (
+                    <View key={item.playerId} className={`ranking-item ${isPairMode ? 'ranking-item-pair' : ''}`}>
+                      <View className='ranking-rank'>
+                        <Text className={`ranking-rank-text ${item.rank === 1 ? 'rank-gold' : item.rank === 2 ? 'rank-silver' : item.rank === 3 ? 'rank-bronze' : ''}`}>
+                          {item.rank}
+                        </Text>
                       </View>
-                      {/* 如果启用积分排名，显示积分相关字段；否则显示胜率 */}
-                      {this.state.useScoreRanking ? (
-                        <>
-                          <View className='ranking-stat-item'>
-                            <Text className='ranking-stat-label'>总积分</Text>
-                            <Text className='ranking-stat-value score'>{item.score || 0}</Text>
+                      <View className='ranking-player-container'>
+                        {isPairMode ? (
+                          // 固定搭档模式：显示配对信息（上下分行排列）
+                          <View className='ranking-pair'>
+                            <View className='ranking-pair-players'>
+                              <View className='ranking-pair-player'>
+                                {item.player?.avatarUrl && item.player.avatarUrl.trim() !== '' ? (
+                                  <Image 
+                                    className='ranking-player-avatar'
+                                    src={item.player.avatarUrl}
+                                    mode='aspectFill'
+                                  />
+                                ) : (
+                                  <View 
+                                    className='ranking-player-avatar-text'
+                                    style={{ backgroundColor: generateAvatarColor(item.player?.name || '') }}
+                                  >
+                                    <Text className='ranking-player-avatar-text-content'>
+                                      {getAvatarText(item.player?.name || '')}
+                                    </Text>
+                                  </View>
+                                )}
+                                <Text className='ranking-player-name'>{item.player?.name || '未知'}</Text>
+                              </View>
+                              <View className='ranking-pair-player'>
+                                {item.player2?.avatarUrl && item.player2.avatarUrl.trim() !== '' ? (
+                                  <Image 
+                                    className='ranking-player-avatar'
+                                    src={item.player2.avatarUrl}
+                                    mode='aspectFill'
+                                  />
+                                ) : (
+                                  <View 
+                                    className='ranking-player-avatar-text'
+                                    style={{ backgroundColor: generateAvatarColor(item.player2?.name || '') }}
+                                  >
+                                    <Text className='ranking-player-avatar-text-content'>
+                                      {getAvatarText(item.player2?.name || '')}
+                                    </Text>
+                                  </View>
+                                )}
+                                <Text className='ranking-player-name'>{item.player2?.name || '未知'}</Text>
+                              </View>
+                            </View>
                           </View>
-                          <View className='ranking-stat-item'>
-                            <Text className='ranking-stat-label'>局胜分</Text>
-                            <Text className='ranking-stat-value base-score'>{item.baseScore || 0}</Text>
+                        ) : (
+                          // 非固定搭档模式：显示单个选手
+                          <View className='ranking-player'>
+                            {item.player?.avatarUrl && item.player.avatarUrl.trim() !== '' ? (
+                              <Image 
+                                className='ranking-player-avatar'
+                                src={item.player.avatarUrl}
+                                mode='aspectFill'
+                              />
+                            ) : (
+                              <View 
+                                className='ranking-player-avatar-text'
+                                style={{ backgroundColor: generateAvatarColor(item.player?.name || '') }}
+                              >
+                                <Text className='ranking-player-avatar-text-content'>
+                                  {getAvatarText(item.player?.name || '')}
+                                </Text>
+                              </View>
+                            )}
+                            <Text className='ranking-player-name'>{item.player?.name || '未知'}</Text>
                           </View>
-                          <View className='ranking-stat-item'>
-                            <Text className='ranking-stat-label'>奖励分</Text>
-                            <Text className='ranking-stat-value reward-score'>{item.rewardScore || 0}</Text>
-                          </View>
-                        </>
-                      ) : (
+                        )}
+                      </View>
+                      <View className='ranking-stats'>
                         <View className='ranking-stat-item'>
-                          <Text className='ranking-stat-label'>胜率</Text>
-                          <Text className='ranking-stat-value win-rate'>{item.winRate}%</Text>
+                          <Text className='ranking-stat-label'>胜负</Text>
+                          <Text className='ranking-stat-value wins-losses'>{item.wins}-{item.losses}</Text>
                         </View>
-                      )}
+                        {/* 如果启用积分排名，显示积分相关字段；否则显示胜率 */}
+                        {this.state.useScoreRanking ? (
+                          <>
+                            <View className='ranking-stat-item'>
+                              <Text className='ranking-stat-label'>总积分</Text>
+                              <Text className='ranking-stat-value score'>{item.score || 0}</Text>
+                            </View>
+                            <View className='ranking-stat-item'>
+                              <Text className='ranking-stat-label'>局胜分</Text>
+                              <Text className='ranking-stat-value base-score'>{item.baseScore || 0}</Text>
+                            </View>
+                            <View className='ranking-stat-item'>
+                              <Text className='ranking-stat-label'>奖励分</Text>
+                              <Text className='ranking-stat-value reward-score'>{item.rewardScore || 0}</Text>
+                            </View>
+                          </>
+                        ) : (
+                          <View className='ranking-stat-item'>
+                            <Text className='ranking-stat-label'>胜率</Text>
+                            <Text className='ranking-stat-value win-rate'>{item.winRate}%</Text>
+                          </View>
+                        )}
+                      </View>
                     </View>
-                  </View>
-                ))}
+                  )
+                })}
               </View>
             ) : (
               <View className='ranking-empty'>暂无排名数据</View>

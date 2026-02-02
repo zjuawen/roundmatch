@@ -480,7 +480,7 @@ readMatch = async (clubid, matchid) => {
             ]
           },
           order: [
-            ['order', 'DESC']
+            ['order', 'ASC']
           ],
           raw: true,
         })
@@ -500,7 +500,7 @@ readMatch = async (clubid, matchid) => {
             ]
           },
           order: [
-            ['order', 'DESC']
+            ['order', 'ASC']
           ],
           raw: true,
         })
@@ -521,7 +521,7 @@ readMatch = async (clubid, matchid) => {
           ]
         },
         order: [
-          ['order', 'DESC']
+          ['order', 'ASC']
         ],
         raw: true,
       })
@@ -1631,6 +1631,38 @@ exports.getQRCode = async (request, result) => {
   }
 }
 
+// 从对阵数据中推断固定搭档的配对关系
+// 返回一个 Map，key 是 playerId，value 是配对中的另一个 playerId
+inferPairRelations = (games) => {
+  const pairMap = new Map() // playerId -> partnerId
+  const processedPairs = new Set() // 已处理的配对（用排序后的ID对表示）
+  
+  games.forEach(game => {
+    if (game.player1 && game.player2 && game.player3 && game.player4) {
+      // 在固定搭档模式下，player1和player2是一对，player3和player4是一对
+      const pair1 = [game.player1, game.player2].sort()
+      const pair2 = [game.player3, game.player4].sort()
+      
+      const pair1Key = `${pair1[0]}_${pair1[1]}`
+      const pair2Key = `${pair2[0]}_${pair2[1]}`
+      
+      if (!processedPairs.has(pair1Key)) {
+        pairMap.set(pair1[0], pair1[1])
+        pairMap.set(pair1[1], pair1[0])
+        processedPairs.add(pair1Key)
+      }
+      
+      if (!processedPairs.has(pair2Key)) {
+        pairMap.set(pair2[0], pair2[1])
+        pairMap.set(pair2[1], pair2[0])
+        processedPairs.add(pair2Key)
+      }
+    }
+  })
+  
+  return pairMap
+}
+
 // 获取赛事排名统计（管理台）
 exports.getRanking = async (request, result) => {
   try {
@@ -1642,7 +1674,7 @@ exports.getRanking = async (request, result) => {
     // 先获取赛事信息用于权限检查
     let match = await sequelizeExecute(
       db.collection('matches').findByPk(matchId, {
-        attributes: ['_id', 'clubid'],
+        attributes: ['_id', 'clubid', 'type'],
         raw: true
       })
     )
@@ -1789,16 +1821,17 @@ exports.getRanking = async (request, result) => {
       let rewardPoints = 0
       if (scoreConfig.useScoreRanking && 
           scoreConfig.scoreRewardThreshold !== null && 
+          scoreConfig.scoreRewardThreshold > 0 &&
           scoreConfig.scoreRewardPoints !== null) {
         const margin = Math.abs(score1 - score2) // 净胜分
-        if (margin > scoreConfig.scoreRewardThreshold) {
-          const excess = margin - scoreConfig.scoreRewardThreshold
-          // 每超过阈值n分，就加m个积分
-          rewardPoints = Math.floor(excess / scoreConfig.scoreRewardThreshold) * scoreConfig.scoreRewardPoints
-          // 每局封顶k个积分
-          if (scoreConfig.scoreRewardMaxPerGame !== null && rewardPoints > scoreConfig.scoreRewardMaxPerGame) {
-            rewardPoints = scoreConfig.scoreRewardMaxPerGame
-          }
+        // 每达到阈值n分，就加m个积分（不需要超过阈值）
+        // 例如：阈值=5，奖励分=2
+        // 净胜分5分：5/5=1次，奖励分=1*2=2分
+        // 净胜分10分：10/5=2次，奖励分=2*2=4分
+        rewardPoints = Math.floor(margin / scoreConfig.scoreRewardThreshold) * scoreConfig.scoreRewardPoints
+        // 每局封顶k个积分
+        if (scoreConfig.scoreRewardMaxPerGame !== null && rewardPoints > scoreConfig.scoreRewardMaxPerGame) {
+          rewardPoints = scoreConfig.scoreRewardMaxPerGame
         }
       }
 
@@ -1902,8 +1935,111 @@ exports.getRanking = async (request, result) => {
       }
     })
 
+    // 判断是否为固定搭档模式
+    const isFixPairMode = match && match.type === 'fix'
+    let pairMap = null
+    let pairStats = null
+    
+    if (isFixPairMode) {
+      // 从对阵数据中推断配对关系
+      pairMap = inferPairRelations(allGames)
+      
+      // 按对合并统计数据
+      pairStats = {}
+      const processedPairs = new Set()
+      
+      Object.keys(playerStats).forEach(playerId => {
+        const partnerId = pairMap.get(playerId)
+        if (partnerId && playerStats[partnerId]) {
+          // 找到配对，合并统计数据
+          const pairKey = [playerId, partnerId].sort().join('_')
+          if (!processedPairs.has(pairKey)) {
+            processedPairs.add(pairKey)
+            const stat1 = playerStats[playerId]
+            const stat2 = playerStats[partnerId]
+            
+            // 合并统计数据：同一对的选手共享相同的统计数据
+            pairStats[pairKey] = {
+              playerIds: [playerId, partnerId],
+              wins: stat1.wins, // 使用第一个选手的胜场数（因为同一对的胜场数应该相同）
+              losses: stat1.losses, // 使用第一个选手的负场数
+              total: stat1.total, // 使用第一个选手的总场次
+              score: stat1.score || 0,
+              baseScore: stat1.baseScore || 0,
+              rewardScore: stat1.rewardScore || 0
+            }
+          }
+        } else {
+          // 没有找到配对，单独显示（这种情况不应该发生，但为了健壮性保留）
+          pairStats[playerId] = {
+            playerIds: [playerId],
+            wins: playerStats[playerId].wins,
+            losses: playerStats[playerId].losses,
+            total: playerStats[playerId].total,
+            score: playerStats[playerId].score || 0,
+            baseScore: playerStats[playerId].baseScore || 0,
+            rewardScore: playerStats[playerId].rewardScore || 0
+          }
+        }
+      })
+    }
+
     // 构建排名数据 - 确保所有队员都显示，即使没有完成任何比赛
-    let ranking = Object.values(playerStats)
+    let ranking = isFixPairMode && pairStats 
+      ? Object.values(pairStats).map(pairStat => {
+          // 固定搭档模式：返回配对信息
+          const player1 = playersMap[pairStat.playerIds[0]]
+          const player2 = pairStat.playerIds[1] ? playersMap[pairStat.playerIds[1]] : null
+          
+          return {
+            playerId: pairStat.playerIds[0], // 使用第一个选手ID作为主ID
+            playerIds: pairStat.playerIds, // 配对的所有选手ID
+            player: player1 || { _id: pairStat.playerIds[0], name: '未知', avatarUrl: '' },
+            player2: player2 || null, // 第二个选手信息
+            wins: pairStat.wins,
+            losses: pairStat.losses,
+            total: pairStat.total,
+            score: scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null ? pairStat.score : undefined,
+            baseScore: scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null ? pairStat.baseScore : undefined,
+            rewardScore: scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null ? pairStat.rewardScore : undefined,
+            winRate: scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null ? undefined : (pairStat.total > 0 ? ((pairStat.wins / pairStat.total) * 100).toFixed(1) : '0.0')
+          }
+        })
+        .sort((a, b) => {
+          if (scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null) {
+            // 按积分排名：1. 总积分降序 2. 胜场数降序 3. 负场数升序 4. 总场次降序
+            if (b.score !== a.score) {
+              return b.score - a.score
+            }
+            if (b.wins !== a.wins) {
+              return b.wins - a.wins
+            }
+            if (a.losses !== b.losses) {
+              return a.losses - b.losses
+            }
+            if (b.total !== a.total) {
+              return b.total - a.total
+            }
+          } else {
+            // 按胜场数排名：1. 胜场数降序 2. 负场数升序 3. 总场次降序
+            if (b.wins !== a.wins) {
+              return b.wins - a.wins
+            }
+            if (a.losses !== b.losses) {
+              return a.losses - b.losses
+            }
+            if (b.total !== a.total) {
+              return b.total - a.total
+            }
+          }
+          // 如果所有统计都一样，按 playerId 排序（保持稳定）
+          return a.playerId.localeCompare(b.playerId)
+        })
+        .map((item, index) => ({
+          ...item,
+          rank: index + 1
+        }))
+      : Object.values(playerStats)
       .map(stat => {
         const player = playersMap[stat.playerId]
         // 如果找不到玩家信息，仍然显示（使用默认值）
@@ -2091,7 +2227,7 @@ getRankingForMiniProgram = async (matchId) => {
       if (firstGame.matchid) {
         match = await sequelizeExecute(
           db.collection('matches').findByPk(firstGame.matchid, {
-            attributes: ['_id', 'clubid'],
+            attributes: ['_id', 'clubid', 'type'],
             raw: true
           })
         )
@@ -2100,7 +2236,7 @@ getRankingForMiniProgram = async (matchId) => {
       // 如果没有 games，直接通过 matchId 查询
       match = await sequelizeExecute(
         db.collection('matches').findByPk(fullMatchid, {
-          attributes: ['_id', 'clubid'],
+          attributes: ['_id', 'clubid', 'type'],
           raw: true
         })
       )
@@ -2171,16 +2307,17 @@ getRankingForMiniProgram = async (matchId) => {
       let rewardPoints = 0
       if (scoreConfig.useScoreRanking && 
           scoreConfig.scoreRewardThreshold !== null && 
+          scoreConfig.scoreRewardThreshold > 0 &&
           scoreConfig.scoreRewardPoints !== null) {
         const margin = Math.abs(score1 - score2) // 净胜分
-        if (margin > scoreConfig.scoreRewardThreshold) {
-          const excess = margin - scoreConfig.scoreRewardThreshold
-          // 每超过阈值n分，就加m个积分
-          rewardPoints = Math.floor(excess / scoreConfig.scoreRewardThreshold) * scoreConfig.scoreRewardPoints
-          // 每局封顶k个积分
-          if (scoreConfig.scoreRewardMaxPerGame !== null && rewardPoints > scoreConfig.scoreRewardMaxPerGame) {
-            rewardPoints = scoreConfig.scoreRewardMaxPerGame
-          }
+        // 每达到阈值n分，就加m个积分（不需要超过阈值）
+        // 例如：阈值=5，奖励分=2
+        // 净胜分5分：5/5=1次，奖励分=1*2=2分
+        // 净胜分10分：10/5=2次，奖励分=2*2=4分
+        rewardPoints = Math.floor(margin / scoreConfig.scoreRewardThreshold) * scoreConfig.scoreRewardPoints
+        // 每局封顶k个积分
+        if (scoreConfig.scoreRewardMaxPerGame !== null && rewardPoints > scoreConfig.scoreRewardMaxPerGame) {
+          rewardPoints = scoreConfig.scoreRewardMaxPerGame
         }
       }
       
@@ -2284,9 +2421,112 @@ getRankingForMiniProgram = async (matchId) => {
       }
     })
 
+    // 判断是否为固定搭档模式
+    const isFixPairMode = match && match.type === 'fix'
+    let pairMap = null
+    let pairStats = null
+    
+    if (isFixPairMode) {
+      // 从对阵数据中推断配对关系
+      pairMap = inferPairRelations(allGames)
+      
+      // 按对合并统计数据
+      pairStats = {}
+      const processedPairs = new Set()
+      
+      Object.keys(playerStats).forEach(playerId => {
+        const partnerId = pairMap.get(playerId)
+        if (partnerId && playerStats[partnerId]) {
+          // 找到配对，合并统计数据
+          const pairKey = [playerId, partnerId].sort().join('_')
+          if (!processedPairs.has(pairKey)) {
+            processedPairs.add(pairKey)
+            const stat1 = playerStats[playerId]
+            const stat2 = playerStats[partnerId]
+            
+            // 合并统计数据：同一对的选手共享相同的统计数据
+            pairStats[pairKey] = {
+              playerIds: [playerId, partnerId],
+              wins: stat1.wins, // 使用第一个选手的胜场数（因为同一对的胜场数应该相同）
+              losses: stat1.losses, // 使用第一个选手的负场数
+              total: stat1.total, // 使用第一个选手的总场次
+              score: stat1.score || 0,
+              baseScore: stat1.baseScore || 0,
+              rewardScore: stat1.rewardScore || 0
+            }
+          }
+        } else {
+          // 没有找到配对，单独显示（这种情况不应该发生，但为了健壮性保留）
+          pairStats[playerId] = {
+            playerIds: [playerId],
+            wins: playerStats[playerId].wins,
+            losses: playerStats[playerId].losses,
+            total: playerStats[playerId].total,
+            score: playerStats[playerId].score || 0,
+            baseScore: playerStats[playerId].baseScore || 0,
+            rewardScore: playerStats[playerId].rewardScore || 0
+          }
+        }
+      })
+    }
+
     // 构建排名数据 - 确保所有队员都显示，即使没有完成任何比赛
     console.log('开始构建排名数据，playerStats数量:', Object.keys(playerStats).length)
-    let ranking = Object.values(playerStats)
+    let ranking = isFixPairMode && pairStats 
+      ? Object.values(pairStats).map(pairStat => {
+          // 固定搭档模式：返回配对信息
+          const player1 = playersMap[pairStat.playerIds[0]]
+          const player2 = pairStat.playerIds[1] ? playersMap[pairStat.playerIds[1]] : null
+          
+          return {
+            playerId: pairStat.playerIds[0], // 使用第一个选手ID作为主ID
+            playerIds: pairStat.playerIds, // 配对的所有选手ID
+            player: player1 || { _id: pairStat.playerIds[0], name: '未知', avatarUrl: '' },
+            player2: player2 || null, // 第二个选手信息
+            wins: pairStat.wins,
+            losses: pairStat.losses,
+            total: pairStat.total,
+            score: scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null ? pairStat.score : undefined,
+            baseScore: scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null ? pairStat.baseScore : undefined,
+            rewardScore: scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null ? pairStat.rewardScore : undefined,
+            winRate: scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null ? undefined : (pairStat.total > 0 ? ((pairStat.wins / pairStat.total) * 100).toFixed(1) : '0.0')
+          }
+        })
+        .sort((a, b) => {
+          if (scoreConfig.useScoreRanking && scoreConfig.scoreWinPoints !== null) {
+            // 按积分排名：1. 总积分降序 2. 胜场数降序 3. 负场数升序 4. 总场次降序
+            if (b.score !== a.score) {
+              return b.score - a.score
+            }
+            if (b.wins !== a.wins) {
+              return b.wins - a.wins
+            }
+            if (a.losses !== b.losses) {
+              return a.losses - b.losses
+            }
+            if (b.total !== a.total) {
+              return b.total - a.total
+            }
+          } else {
+            // 按胜场数排名：1. 胜场数降序 2. 负场数升序 3. 总场次降序
+            if (b.wins !== a.wins) {
+              return b.wins - a.wins
+            }
+            if (a.losses !== b.losses) {
+              return a.losses - b.losses
+            }
+            if (b.total !== a.total) {
+              return b.total - a.total
+            }
+          }
+          // 如果所有统计都一样，按 playerId 排序（保持稳定）
+          return a.playerId.localeCompare(b.playerId)
+        })
+        .map((item, index) => ({
+          ...item,
+          rank: index + 1
+        }))
+      : Object.values(playerStats)
       .map(stat => {
         const player = playersMap[stat.playerId]
         // 如果找不到玩家信息，仍然显示（使用默认值）

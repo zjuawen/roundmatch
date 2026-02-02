@@ -447,6 +447,12 @@
   flex-direction: row;
   align-items: center;
   box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
+  
+  &.ranking-item-pair {
+    border-left: 4rpx solid #409eff;
+    background: linear-gradient(to right, rgba(64, 158, 255, 0.05) 0%, #fff 10%);
+    align-items: center; // 确保整体垂直居中
+  }
 }
 
 .ranking-rank {
@@ -475,13 +481,52 @@
   }
 }
 
-.ranking-player {
+.ranking-player-container {
   flex: 1;
+  margin-right: 20rpx;
+}
+
+.ranking-player {
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 16rpx;
-  margin-right: 20rpx;
+}
+
+.ranking-pair {
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+  width: 100%;
+}
+
+.ranking-pair-label {
+  display: flex;
+  align-items: center;
+}
+
+.ranking-pair-label-text {
+  font-size: 22rpx;
+  color: #409eff;
+  background-color: rgba(64, 158, 255, 0.1);
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  font-weight: 500;
+}
+
+.ranking-pair-players {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  width: 100%;
+}
+
+.ranking-pair-player {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12rpx;
+  width: 100%;
 }
 
 .ranking-player-avatar {
@@ -490,6 +535,11 @@
   border-radius: 50%;
   background-color: #f0f0f0;
   flex-shrink: 0;
+}
+
+.ranking-item-pair .ranking-player-avatar {
+  width: 56rpx;
+  height: 56rpx;
 }
 
 .ranking-player-avatar-text {
@@ -502,11 +552,20 @@
   flex-shrink: 0;
 }
 
+.ranking-item-pair .ranking-player-avatar-text {
+  width: 56rpx;
+  height: 56rpx;
+}
+
 .ranking-player-avatar-text-content {
   font-size: 32rpx;
   font-weight: bold;
   color: #fff;
   line-height: 1;
+}
+
+.ranking-item-pair .ranking-player-avatar-text-content {
+  font-size: 28rpx;
 }
 
 .ranking-player-name {
@@ -519,11 +578,16 @@
   white-space: nowrap;
 }
 
+.ranking-item-pair .ranking-player-name {
+  font-size: 28rpx;
+}
+
 .ranking-stats {
   display: flex;
   flex-direction: row;
   gap: 16rpx;
   flex-shrink: 0;
+  align-self: center; // 垂直居中
 }
 
 .ranking-stat-item {

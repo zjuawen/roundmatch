@@ -227,6 +227,16 @@
                     :size="40"
                   />
                   <span class="player-name">{{ row.player.name || '未知' }}</span>
+                  <!-- 固定搭档模式：显示第二个选手 -->
+                  <template v-if="match.type === 'fix' && row.player2">
+                    <span style="margin: 0 8px; color: #909399;">+</span>
+                    <Avatar 
+                      :avatar-url="row.player2.avatarUrl" 
+                      :name="row.player2.name || '未知'"
+                      :size="40"
+                    />
+                    <span class="player-name">{{ row.player2.name || '未知' }}</span>
+                  </template>
                 </div>
               </template>
             </el-table-column>
