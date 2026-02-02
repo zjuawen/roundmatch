@@ -223,9 +223,44 @@ exports.getScoreLogs = async (request, result) => {
     // 规范化字段名
     const normalizedLogs = logs.map(log => normalizeScoreLogFields(log))
 
+    // 查询微信用户的昵称/名称
+    const wechatLogs = normalizedLogs.filter(log => log.operatorType === 'wechat' && log.operator)
+    const openids = [...new Set(wechatLogs.map(log => log.operator).filter(Boolean))]
+    
+    let userMap = {}
+    if (openids.length > 0) {
+      const users = await sequelizeExecute(
+        db.collection('users').findAll({
+          where: {
+            openid: {
+              [Op.in]: openids
+            }
+          },
+          attributes: ['openid', 'name'],
+          raw: true
+        })
+      )
+      
+      // 构建 openid -> name 的映射
+      users.forEach(user => {
+        userMap[user.openid] = user.name || ''
+      })
+    }
+
+    // 为微信用户添加 operatorName 字段
+    const logsWithNames = normalizedLogs.map(log => {
+      if (log.operatorType === 'wechat' && log.operator) {
+        return {
+          ...log,
+          operatorName: userMap[log.operator] || ''
+        }
+      }
+      return log
+    })
+
     successResponse(result, {
       data: {
-        list: normalizedLogs,
+        list: logsWithNames,
         total: total
       }
     })
@@ -255,27 +290,36 @@ saveGameData = async (clubid, gamedata, operator = null, operatorType = 'wechat'
     })
   }
 
-  // 记录操作流水
-  if (operator) {
-    try {
-      await sequelizeExecute(
-        db.collection('scorelogs').create({
-          matchid: gamedata.matchid,
-          gameid: gamedata._id,
-          clubid: clubid,
-          oldScore1: old.score1,
-          oldScore2: old.score2,
-          newScore1: gamedata.score1,
-          newScore2: gamedata.score2,
-          operator: operator,
-          operatorType: operatorType,
-          remark: null
-        })
-      )
-    } catch (error) {
-      console.error('记录操作流水失败:', error)
-      // 不阻断主流程，只记录错误
-    }
+  // 如果 clubid 为空或 undefined，从 old game 数据中获取
+  let actualClubid = clubid
+  if (!actualClubid || actualClubid === 'undefined' || actualClubid === undefined) {
+    actualClubid = old.clubid || old.clubId || null
+  }
+
+  // 记录操作流水（无论是否有operator都记录，确保所有操作都有日志）
+  try {
+    // clubid 字段现在是 STRING 类型，可以直接使用（即使不是 UUID 格式也可以）
+    const clubidForLog = (actualClubid && actualClubid !== 'undefined' && actualClubid !== undefined) 
+      ? actualClubid 
+      : null
+    
+    await sequelizeExecute(
+      db.collection('scorelogs').create({
+        matchid: gamedata.matchid,
+        gameid: gamedata._id,
+        clubid: clubidForLog,
+        oldScore1: old.score1 != null ? old.score1 : -1,
+        oldScore2: old.score2 != null ? old.score2 : -1,
+        newScore1: gamedata.score1,
+        newScore2: gamedata.score2,
+        operator: operator || 'unknown',
+        operatorType: operatorType,
+        remark: null
+      })
+    )
+  } catch (error) {
+    console.error('记录操作流水失败:', error)
+    // 不阻断主流程，只记录错误
   }
 
   // 判断是否完成的逻辑：score1 > 0 && score2 > 0
@@ -330,7 +374,7 @@ readGameData = async (clubid, gamedata) => {
 updateMatchData = async (matchid) => {
   let updated = await sequelizeExecute(
     db.collection('matches').update({
-      finish: sequelize.literal('`finish` +1')
+      finish: sequelize.literal('"finish" + 1')
     }, {
       where: {
         _id: matchid

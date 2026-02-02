@@ -368,7 +368,7 @@
           <el-table-column label="操作者" width="150">
             <template #default="{ row }">
               <div style="font-size: 14px; color: #333;">
-                {{ row.operator }}
+                {{ (row.operatorType || row.operatortype) === 'wechat' && row.operatorName ? row.operatorName : row.operator }}
               </div>
             </template>
           </el-table-column>

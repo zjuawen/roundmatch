@@ -10,6 +10,7 @@ export default class MatchDetail extends Component {
   state = {
     match: null,
     games: [],
+    allGames: [], // 保存所有原始数据
     loading: true,
     clubid: null,
     matchId: null,
@@ -24,7 +25,16 @@ export default class MatchDetail extends Component {
     scoreDialogIndex: -1,
     tempScore1: '',
     tempScore2: '',
-    savingScore: false
+    savingScore: false,
+    // 筛选相关
+    filterType: null, // 'only' 只看该选手, 'exclude' 不看该选手
+    filterPlayerId: null, // 筛选的选手ID
+    filterPlayerName: null, // 筛选的选手名称
+    // 弹出菜单
+    menuShow: false,
+    menuPlayerId: null,
+    menuPlayerName: null,
+    menuPosition: { x: 0, y: 0 }
   }
 
   componentDidMount() {
@@ -171,7 +181,11 @@ export default class MatchDetail extends Component {
       // 立即设置state，不等待头像检查完成
       this.setState({
         games: games,
+        allGames: games, // 保存原始数据
         loading: false
+      }, () => {
+        // 如果有筛选条件，应用筛选
+        this.applyFilter()
       })
       
       // 如果当前在排名 tab，则加载排名数据
@@ -408,23 +422,146 @@ export default class MatchDetail extends Component {
         }
         return game
       })
-      return { games: updatedGames }
+      const updatedAllGames = prevState.allGames.map(game => {
+        if (game._id === gameId) {
+          const player = game[`player${playerIndex}`]
+          if (player) {
+            return {
+              ...game,
+              [`player${playerIndex}`]: {
+                ...player,
+                avatarValid: false
+              }
+            }
+          }
+        }
+        return game
+      })
+      return { games: updatedGames, allGames: updatedAllGames }
     })
+  }
+
+  // 长按头像显示菜单
+  handleAvatarLongPress = (e, playerId, playerName) => {
+    e.stopPropagation()
+    // 获取触摸位置
+    const touch = e.touches && e.touches[0] || e.changedTouches && e.changedTouches[0]
+    if (touch) {
+      this.setState({
+        menuShow: true,
+        menuPlayerId: playerId,
+        menuPlayerName: playerName,
+        menuPosition: { x: touch.clientX, y: touch.clientY }
+      })
+    } else {
+      this.setState({
+        menuShow: true,
+        menuPlayerId: playerId,
+        menuPlayerName: playerName,
+        menuPosition: { x: 0, y: 0 }
+      })
+    }
+  }
+
+  // 关闭菜单
+  handleMenuClose = () => {
+    this.setState({
+      menuShow: false,
+      menuPlayerId: null,
+      menuPlayerName: null
+    })
+  }
+
+  // 只看该选手
+  handleFilterOnly = () => {
+    const { menuPlayerId, menuPlayerName } = this.state
+    this.setState({
+      filterType: 'only',
+      filterPlayerId: menuPlayerId,
+      filterPlayerName: menuPlayerName,
+      menuShow: false
+    }, () => {
+      this.applyFilter()
+    })
+  }
+
+  // 不看该选手
+  handleFilterExclude = () => {
+    const { menuPlayerId, menuPlayerName } = this.state
+    this.setState({
+      filterType: 'exclude',
+      filterPlayerId: menuPlayerId,
+      filterPlayerName: menuPlayerName,
+      menuShow: false
+    }, () => {
+      this.applyFilter()
+    })
+  }
+
+  // 清除筛选
+  handleClearFilter = () => {
+    this.setState({
+      filterType: null,
+      filterPlayerId: null,
+      filterPlayerName: null
+    }, () => {
+      this.applyFilter()
+    })
+  }
+
+  // 应用筛选
+  applyFilter = () => {
+    const { allGames, filterType, filterPlayerId } = this.state
+    if (!filterType || !filterPlayerId) {
+      // 没有筛选条件，显示所有数据
+      this.setState({ games: allGames })
+      return
+    }
+
+    let filteredGames = []
+    if (filterType === 'only') {
+      // 只看该选手：只显示包含该选手的比赛
+      filteredGames = allGames.filter(game => {
+        return game.player1?._id === filterPlayerId ||
+               game.player2?._id === filterPlayerId ||
+               game.player3?._id === filterPlayerId ||
+               game.player4?._id === filterPlayerId
+      })
+    } else if (filterType === 'exclude') {
+      // 不看该选手：不显示包含该选手的比赛
+      filteredGames = allGames.filter(game => {
+        return game.player1?._id !== filterPlayerId &&
+               game.player2?._id !== filterPlayerId &&
+               game.player3?._id !== filterPlayerId &&
+               game.player4?._id !== filterPlayerId
+      })
+    }
+
+    this.setState({ games: filteredGames })
+  }
+
+  // 查看个人详情
+  handleViewPlayerDetail = () => {
+    const { menuPlayerId } = this.state
+    this.handleMenuClose()
+    if (menuPlayerId) {
+      Taro.navigateTo({
+        url: `/pages/users/detail?id=${menuPlayerId}`
+      })
+    }
   }
 
   // 点击 VS 或比分，打开比分输入对话框
   handleScoreClick = (game, index) => {
-    const isFinished = game.score1 >= 0 && game.score2 >= 0
-    if (isFinished) {
-      // 已完成的比赛，长按可以修改
-      return
-    }
+    // 如果比分是0，不显示0，显示为空
+    const score1 = game.score1 >= 0 ? game.score1 : -1
+    const score2 = game.score2 >= 0 ? game.score2 : -1
     
     this.setState({
       scoreDialogShow: true,
       scoreDialogIndex: index,
-      tempScore1: game.score1 >= 0 ? String(game.score1) : '',
-      tempScore2: game.score2 >= 0 ? String(game.score2) : ''
+      tempScore1: score1 > 0 ? String(score1) : '',
+      tempScore2: score2 > 0 ? String(score2) : ''
     })
   }
 
@@ -460,8 +597,9 @@ export default class MatchDetail extends Component {
       return
     }
 
-    const score1 = parseInt(tempScore1)
-    const score2 = parseInt(tempScore2)
+    // 空字符串转换为0，否则解析为整数
+    const score1 = tempScore1 === '' ? 0 : parseInt(tempScore1)
+    const score2 = tempScore2 === '' ? 0 : parseInt(tempScore2)
 
     // 验证比分
     if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
@@ -487,6 +625,9 @@ export default class MatchDetail extends Component {
     try {
       const openid = getGlobalData('openid')
       
+      // 获取 clubid，优先使用 state 中的，如果没有则从 game 数据中获取
+      const actualClubid = clubid || game.clubid || game.clubId || null
+      
       // 准备游戏数据
       const gamedata = {
         _id: game._id,
@@ -496,7 +637,7 @@ export default class MatchDetail extends Component {
       }
 
       // 调用 API 保存比分
-      await gameService.save(clubid, gamedata, openid)
+      await gameService.save(actualClubid, gamedata, openid)
 
       // 更新本地状态
       const updatedGames = games.map((g, idx) => {
@@ -553,7 +694,13 @@ export default class MatchDetail extends Component {
           return newGame
         })
         
-        this.setState({ games: updatedGames })
+        this.setState({ 
+          games: updatedGames,
+          allGames: updatedGames // 同时更新原始数据
+        }, () => {
+          // 如果有筛选条件，重新应用筛选
+          this.applyFilter()
+        })
         
         // 如果当前在排名 tab，重新加载排名
         if (this.state.activeTab === 'ranking') {
@@ -632,7 +779,7 @@ export default class MatchDetail extends Component {
         
         {/* 对阵内容 */}
         {this.state.activeTab === 'games' && (
-          <View className='games-list'>
+          <View className={`games-list ${this.state.filterType ? 'has-filter' : ''}`}>
           {games.map((game, index) => {
             const isFinished = game.score1 >= 0 && game.score2 >= 0
             
@@ -668,6 +815,7 @@ export default class MatchDetail extends Component {
                           className='game-player-avatar'
                           src={game.player1.avatarUrl}
                           mode='aspectFill'
+                          onLongPress={(e) => game.player1?._id && this.handleAvatarLongPress(e, game.player1._id, game.player1.name)}
                           onError={() => {
                             console.error('玩家1头像加载失败:', game.player1?.avatarUrl)
                             // 标记为无效，更新状态
@@ -678,15 +826,20 @@ export default class MatchDetail extends Component {
                         <View 
                           className='game-player-avatar-text'
                           style={{ backgroundColor: generateAvatarColor(game.player1?.name || '') }}
+                          onLongPress={(e) => game.player1?._id && this.handleAvatarLongPress(e, game.player1._id, game.player1.name)}
                         >
                           <Text className='game-player-avatar-text-content'>
                             {getAvatarText(game.player1?.name || '')}
                           </Text>
                         </View>
                       )}
-                      <Text className='game-player-name'>
-                        {game.player1?.name || '未知'}
-                      </Text>
+                      <View className='game-player-name'>
+                        <View className='game-player-name-wrapper'>
+                          <Text className='game-player-name-text'>
+                            {game.player1?.name || '未知'}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                     <View className='game-team-divider' />
                     <View className='game-player-row'>
@@ -695,6 +848,7 @@ export default class MatchDetail extends Component {
                           className='game-player-avatar'
                           src={game.player2.avatarUrl}
                           mode='aspectFill'
+                          onLongPress={(e) => game.player2?._id && this.handleAvatarLongPress(e, game.player2._id, game.player2.name)}
                           onError={() => {
                             console.error('玩家2头像加载失败:', game.player2?.avatarUrl)
                             this.handleAvatarError(game._id, 2)
@@ -704,22 +858,30 @@ export default class MatchDetail extends Component {
                         <View 
                           className='game-player-avatar-text'
                           style={{ backgroundColor: generateAvatarColor(game.player2?.name || '') }}
+                          onLongPress={(e) => game.player2?._id && this.handleAvatarLongPress(e, game.player2._id, game.player2.name)}
                         >
                           <Text className='game-player-avatar-text-content'>
                             {getAvatarText(game.player2?.name || '')}
                           </Text>
                         </View>
                       )}
-                      <Text className='game-player-name'>
-                        {game.player2?.name || '未知'}
-                      </Text>
+                      <View className='game-player-name'>
+                        <View className='game-player-name-wrapper'>
+                          <Text className='game-player-name-text'>
+                            {game.player2?.name || '未知'}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
                   
                   {/* 中间比分 */}
                   <View className='game-score-section'>
                     {isFinished ? (
-                      <View className='game-score-display'>
+                      <View 
+                        className='game-score-display game-score-clickable'
+                        onLongPress={() => this.handleScoreClick(game, index)}
+                      >
                         <Text className='game-score-winner'>{game.score1}</Text>
                         <Text className='game-score-separator'>:</Text>
                         <Text className='game-score-loser'>{game.score2}</Text>
@@ -742,6 +904,7 @@ export default class MatchDetail extends Component {
                           className='game-player-avatar'
                           src={game.player3.avatarUrl}
                           mode='aspectFill'
+                          onLongPress={(e) => game.player3?._id && this.handleAvatarLongPress(e, game.player3._id, game.player3.name)}
                           onError={() => {
                             console.error('玩家3头像加载失败:', game.player3?.avatarUrl)
                             this.handleAvatarError(game._id, 3)
@@ -751,15 +914,20 @@ export default class MatchDetail extends Component {
                         <View 
                           className='game-player-avatar-text'
                           style={{ backgroundColor: generateAvatarColor(game.player3?.name || '') }}
+                          onLongPress={(e) => game.player3?._id && this.handleAvatarLongPress(e, game.player3._id, game.player3.name)}
                         >
                           <Text className='game-player-avatar-text-content'>
                             {getAvatarText(game.player3?.name || '')}
                           </Text>
                         </View>
                       )}
-                      <Text className='game-player-name'>
-                        {game.player3?.name || '未知'}
-                      </Text>
+                      <View className='game-player-name'>
+                        <View className='game-player-name-wrapper'>
+                          <Text className='game-player-name-text'>
+                            {game.player3?.name || '未知'}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                     <View className='game-team-divider' />
                     <View className='game-player-row'>
@@ -768,6 +936,7 @@ export default class MatchDetail extends Component {
                           className='game-player-avatar'
                           src={game.player4.avatarUrl}
                           mode='aspectFill'
+                          onLongPress={(e) => game.player4?._id && this.handleAvatarLongPress(e, game.player4._id, game.player4.name)}
                           onError={() => {
                             console.error('玩家4头像加载失败:', game.player4?.avatarUrl)
                             this.handleAvatarError(game._id, 4)
@@ -777,15 +946,20 @@ export default class MatchDetail extends Component {
                         <View 
                           className='game-player-avatar-text'
                           style={{ backgroundColor: generateAvatarColor(game.player4?.name || '') }}
+                          onLongPress={(e) => game.player4?._id && this.handleAvatarLongPress(e, game.player4._id, game.player4.name)}
                         >
                           <Text className='game-player-avatar-text-content'>
                             {getAvatarText(game.player4?.name || '')}
                           </Text>
                         </View>
                       )}
-                      <Text className='game-player-name'>
-                        {game.player4?.name || '未知'}
-                      </Text>
+                      <View className='game-player-name'>
+                        <View className='game-player-name-wrapper'>
+                          <Text className='game-player-name-text'>
+                            {game.player4?.name || '未知'}
+                          </Text>
+                        </View>
+                      </View>
                     </View>
                   </View>
                 </View>
@@ -797,7 +971,7 @@ export default class MatchDetail extends Component {
         
         {/* 排名内容 */}
         {this.state.activeTab === 'ranking' && (
-          <View className='ranking-section'>
+          <View className={`ranking-section ${this.state.filterType ? 'has-filter' : ''}`}>
             {this.state.rankingLoading ? (
               <View className='ranking-loading'>加载排名中...</View>
             ) : this.state.ranking && this.state.ranking.length > 0 ? (
@@ -923,7 +1097,12 @@ export default class MatchDetail extends Component {
           <View className='score-dialog-mask' onClick={this.handleScoreDialogClose}>
             <View className='score-dialog' onClick={(e) => e.stopPropagation()}>
               <View className='score-dialog-header'>
-                <Text className='score-dialog-title'>输入比分</Text>
+                <Text className='score-dialog-title'>
+                  {this.state.scoreDialogIndex >= 0 && this.state.games[this.state.scoreDialogIndex] && 
+                   this.state.games[this.state.scoreDialogIndex].score1 >= 0 && 
+                   this.state.games[this.state.scoreDialogIndex].score2 >= 0
+                    ? '修改比分' : '输入比分'}
+                </Text>
               </View>
               
               <View className='score-dialog-content'>
@@ -931,7 +1110,7 @@ export default class MatchDetail extends Component {
                   <Input
                     className='score-input'
                     type='number'
-                    placeholder='0'
+                    placeholder=''
                     value={this.state.tempScore1}
                     onInput={this.handleScore1Input}
                     focus
@@ -940,7 +1119,7 @@ export default class MatchDetail extends Component {
                   <Input
                     className='score-input'
                     type='number'
-                    placeholder='0'
+                    placeholder=''
                     value={this.state.tempScore2}
                     onInput={this.handleScore2Input}
                   />
@@ -983,6 +1162,43 @@ export default class MatchDetail extends Component {
                 >
                   确定
                 </Button>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* 弹出菜单 */}
+        {this.state.menuShow && (
+          <View className='player-menu-mask' onClick={this.handleMenuClose}>
+            <View className='player-menu' onClick={(e) => e.stopPropagation()}>
+              <View className='player-menu-header'>
+                <Text className='player-menu-title'>{this.state.menuPlayerName}</Text>
+              </View>
+              <View className='player-menu-item' onClick={this.handleFilterOnly}>
+                <Text className='player-menu-item-text'>只看该选手</Text>
+              </View>
+              <View className='player-menu-item' onClick={this.handleFilterExclude}>
+                <Text className='player-menu-item-text'>不看该选手</Text>
+              </View>
+              <View className='player-menu-item' onClick={this.handleViewPlayerDetail}>
+                <Text className='player-menu-item-text'>个人详情</Text>
+              </View>
+              <View className='player-menu-item player-menu-item-cancel' onClick={this.handleMenuClose}>
+                <Text className='player-menu-item-text'>取消</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* 筛选条件显示 */}
+        {this.state.filterType && this.state.filterPlayerName && (
+          <View className='filter-bar'>
+            <View className='filter-content'>
+              <Text className='filter-text'>
+                {this.state.filterType === 'only' ? '只看' : '不看'}：{this.state.filterPlayerName}
+              </Text>
+              <View className='filter-clear' onClick={this.handleClearFilter}>
+                <Text className='filter-clear-text'>清除</Text>
               </View>
             </View>
           </View>

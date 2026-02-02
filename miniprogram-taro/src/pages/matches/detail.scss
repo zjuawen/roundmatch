@@ -58,6 +58,10 @@
   padding: 0 30rpx 30rpx;
   display: flex;
   flex-direction: column;
+  
+  &.has-filter {
+    padding-bottom: calc(30rpx + 100rpx + env(safe-area-inset-bottom));
+  }
 }
 
 /* 比赛卡片 */
@@ -129,13 +133,14 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  padding: 20rpx;
-  gap: 20rpx;
+  padding: 32rpx 30rpx;
+  gap: 24rpx;
 }
 
 /* 队伍区域 */
 .game-team {
-  flex: 1;
+  flex: 0 0 auto;
+  width: 220rpx;
   display: flex;
   flex-direction: column;
   gap: 0;
@@ -146,8 +151,9 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 12rpx;
-  padding: 10rpx 0;
+  gap: 10rpx;
+  padding: 8rpx 0;
+  min-width: 0; /* 允许flex子元素收缩 */
 }
 
 .game-team-divider {
@@ -157,16 +163,16 @@
 }
 
 .game-player-avatar {
-  width: 64rpx;
-  height: 64rpx;
+  width: 52rpx;
+  height: 52rpx;
   border-radius: 50%;
   background-color: #f0f0f0;
   flex-shrink: 0;
 }
 
 .game-player-avatar-text {
-  width: 64rpx;
-  height: 64rpx;
+  width: 52rpx;
+  height: 52rpx;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -175,7 +181,7 @@
 }
 
 .game-player-avatar-text-content {
-  font-size: 28rpx;
+  font-size: 24rpx;
   font-weight: bold;
   color: #fff;
   line-height: 1;
@@ -185,9 +191,63 @@
   font-size: 28rpx;
   color: #333;
   flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  position: relative;
+  max-width: 150rpx; /* 固定最大宽度 */
+}
+
+.game-player-name-wrapper {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  height: 40rpx;
+  line-height: 40rpx;
+}
+
+.game-player-name-text {
+  display: inline-block;
+  white-space: nowrap;
+  line-height: 40rpx;
+  height: 40rpx;
+  max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  /* 默认显示省略号，超出时自动滚动 */
+  animation: scroll-text-check 0.1s linear;
+}
+
+/* 检测文字是否超出，如果超出则启用滚动 */
+@keyframes scroll-text-check {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+/* 跑马灯效果 - 当文字超出时自动滚动 */
+.game-player-name-wrapper:hover .game-player-name-text,
+.game-player-name-wrapper:active .game-player-name-text {
+  animation: scroll-text 8s linear infinite;
+  padding-right: 30rpx;
+  text-overflow: clip;
+}
+
+@keyframes scroll-text {
+  0% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(0);
+  }
+  80% {
+    transform: translateX(calc(-100% + 150rpx));
+  }
+  100% {
+    transform: translateX(calc(-100% + 150rpx));
+  }
 }
 
 /* 比分区域 */
@@ -204,31 +264,41 @@
   flex-direction: row;
   align-items: baseline;
   gap: 8rpx;
+  
+  &.game-score-clickable {
+    padding: 10rpx 20rpx;
+    border-radius: 8rpx;
+    transition: background-color 0.2s;
+    
+    &:active {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+  }
 }
 
 .game-score-winner {
-  font-size: 48rpx;
+  font-size: 40rpx;
   font-weight: bold;
   color: #FF3B30;
   line-height: 1;
 }
 
 .game-score-separator {
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: bold;
   color: #666;
   line-height: 1;
 }
 
 .game-score-loser {
-  font-size: 48rpx;
+  font-size: 40rpx;
   font-weight: bold;
   color: #0478F3;
   line-height: 1;
 }
 
 .game-score-vs {
-  font-size: 36rpx;
+  font-size: 32rpx;
   font-weight: bold;
   color: #999;
 }
@@ -420,6 +490,10 @@
 .ranking-section {
   padding: 0 30rpx 30rpx;
   min-height: 400rpx;
+  
+  &.has-filter {
+    padding-bottom: calc(30rpx + 100rpx + env(safe-area-inset-bottom));
+  }
 }
 
 .ranking-loading,
@@ -628,4 +702,104 @@
   &.reward-score {
     color: #FF3B30;
   }
+}
+
+/* 弹出菜单 */
+.player-menu-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-menu {
+  background-color: #fff;
+  border-radius: 16rpx;
+  width: 500rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.15);
+}
+
+.player-menu-header {
+  padding: 30rpx;
+  border-bottom: 1rpx solid #E5E5E5;
+  text-align: center;
+}
+
+.player-menu-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+}
+
+.player-menu-item {
+  padding: 30rpx;
+  border-bottom: 1rpx solid #F5F5F5;
+  text-align: center;
+  
+  &:active {
+    background-color: #F5F5F5;
+  }
+  
+  &.player-menu-item-cancel {
+    border-bottom: none;
+    color: #999;
+  }
+}
+
+.player-menu-item-text {
+  font-size: 30rpx;
+  color: #333;
+  
+  .player-menu-item-cancel & {
+    color: #999;
+  }
+}
+
+/* 筛选条件显示 */
+.filter-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: #fff;
+  border-top: 1rpx solid #E5E5E5;
+  padding: 20rpx 30rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  z-index: 100;
+  box-shadow: 0 -2rpx 8rpx rgba(0, 0, 0, 0.06);
+}
+
+.filter-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.filter-text {
+  font-size: 28rpx;
+  color: #333;
+  flex: 1;
+}
+
+.filter-clear {
+  padding: 8rpx 20rpx;
+  background-color: #F5F5F5;
+  border-radius: 8rpx;
+  
+  &:active {
+    background-color: #E5E5E5;
+  }
+}
+
+.filter-clear-text {
+  font-size: 26rpx;
+  color: #666;
 }

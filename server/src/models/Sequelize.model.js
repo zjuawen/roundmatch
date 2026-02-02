@@ -519,16 +519,16 @@ module.exports.scorelogs = (database, Sequelize) => {
             primaryKey: true
         },
         matchid: {
-            type: Sequelize.UUID,
-            allowNull: false
+            type: Sequelize.STRING,
+            allowNull: false  // 改为 STRING 类型以兼容非 UUID 格式的 match ID
         },
         gameid: {
-            type: Sequelize.UUID,
-            allowNull: false
+            type: Sequelize.STRING,
+            allowNull: false  // 改为 STRING 类型以兼容非 UUID 格式的 game ID
         },
         clubid: {
-            type: Sequelize.UUID,
-            allowNull: false
+            type: Sequelize.STRING,
+            allowNull: true  // 改为 STRING 类型以兼容非 UUID 格式的俱乐部ID（与 admin_clubs 和 club_config 表一致）
         },
         oldScore1: {
             type: Sequelize.INTEGER,
