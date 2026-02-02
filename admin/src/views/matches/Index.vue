@@ -39,7 +39,13 @@
         <el-table-column prop="playerCount" label="玩家数" />
         <el-table-column prop="total" label="总场次" />
         <el-table-column prop="finish" label="完成场次" />
-        <el-table-column prop="type" label="类型" />
+        <el-table-column label="类型" width="120">
+          <template #default="{ row }">
+            <el-tag :type="getTypeTagType(row.type)" size="small">
+              {{ getTypeLabel(row.type) }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="remark" label="备注" />
         <el-table-column label="操作" width="200">
           <template #default="{ row }">
@@ -163,6 +169,26 @@ const formatDate = (date) => {
     hour: '2-digit',
     minute: '2-digit'
   })
+}
+
+// 获取比赛类型标签
+const getTypeLabel = (type) => {
+  const typeMap = {
+    'none': '无固定搭档',
+    'fixpair': '固定搭档',
+    'group': '分组比赛'
+  }
+  return typeMap[type] || type || '未知'
+}
+
+// 获取比赛类型标签样式
+const getTypeTagType = (type) => {
+  const typeTagMap = {
+    'none': 'info',
+    'fixpair': 'success',
+    'group': 'warning'
+  }
+  return typeTagMap[type] || 'info'
 }
 </script>
 

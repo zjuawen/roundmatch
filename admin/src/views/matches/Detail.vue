@@ -485,9 +485,9 @@ const formatDate = (date) => {
 
 const getTypeLabel = (type) => {
   const typeMap = {
-    'none': '无固定',
+    'none': '无固定搭档',
     'fix': '固定搭档',
-    'group': '分组'
+    'group': '分组比赛'
   }
   return typeMap[type] || type || '未知'
 }
