@@ -7,7 +7,7 @@
 /* 比赛信息头部 */
 .match-info-header {
   background-color: #fff;
-  padding: 40rpx 30rpx;
+  padding: 24rpx 30rpx 20rpx;
   margin-bottom: 20rpx;
 }
 
@@ -15,39 +15,39 @@
   font-size: 48rpx;
   font-weight: bold;
   color: #333;
-  margin-bottom: 30rpx;
+  margin-bottom: 16rpx;
 }
 
 .match-progress-container {
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 20rpx;
+  gap: 12rpx;
 }
 
 .match-progress-label {
-  font-size: 28rpx;
+  font-size: 24rpx;
   color: #666;
   white-space: nowrap;
 }
 
 .match-progress-bar-wrapper {
   flex: 1;
-  height: 16rpx;
+  height: 12rpx;
   background-color: #E5E5E5;
-  border-radius: 8rpx;
+  border-radius: 6rpx;
   overflow: hidden;
 }
 
 .match-progress-bar {
   height: 100%;
   background-color: #0478F3;
-  border-radius: 8rpx;
+  border-radius: 6rpx;
   transition: width 0.3s ease;
 }
 
 .match-progress-text {
-  font-size: 28rpx;
+  font-size: 24rpx;
   color: #333;
   font-weight: bold;
   white-space: nowrap;

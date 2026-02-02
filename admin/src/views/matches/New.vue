@@ -35,7 +35,7 @@
         <el-form-item label="类型" prop="type">
           <el-select v-model="matchForm.type" placeholder="请选择类型" style="width: 100%;" @change="handleTypeChange">
             <el-option label="无固定" value="none" />
-            <el-option label="固定搭档" value="fix" />
+            <el-option label="固定搭档" value="fixpair" />
             <el-option label="分组" value="group" />
           </el-select>
         </el-form-item>
@@ -87,7 +87,7 @@
             </div>
 
             <!-- 固定搭档类型：配对显示 -->
-            <div v-if="matchForm.type === 'fix'" style="margin-bottom: 15px;">
+            <div v-if="matchForm.type === 'fixpair'" style="margin-bottom: 15px;">
               <div style="font-weight: bold; margin-bottom: 8px;">
                 已配对 ({{ selectedPlayerPairs.filter(p => p.player1 || p.player2).length }} 组)
                 <span style="color: #999; font-size: 12px; font-weight: normal; margin-left: 10px;">
@@ -250,11 +250,11 @@
               </div>
               <div v-else>
                 <!-- 激活提示 -->
-                <div v-if="activeGroupSlot && (matchForm.type === 'fix' || matchForm.type === 'group')" 
+                <div v-if="activeGroupSlot && (matchForm.type === 'fixpair' || matchForm.type === 'group')" 
                      style="margin-bottom: 10px; padding: 8px; background-color: #ecf5ff; border: 1px solid #b3d8ff; border-radius: 4px; color: #409eff; font-size: 12px;">
                   <el-icon style="vertical-align: middle;"><InfoFilled /></el-icon>
                   <span style="margin-left: 5px;">
-                    {{ matchForm.type === 'fix' ? `已激活第${activeGroupSlot.pairIndex + 1}组合${activeGroupSlot.slot === 1 ? '左侧' : '右侧'}位置，点击下方成员进行选择` : 
+                    {{ matchForm.type === 'fixpair' ? `已激活第${activeGroupSlot.pairIndex + 1}组合${activeGroupSlot.slot === 1 ? '左侧' : '右侧'}位置，点击下方成员进行选择` : 
                        `已激活${activeGroupSlot.slot === 1 ? 'A组' : 'B组'}第${activeGroupSlot.pairIndex + 1}行，点击下方成员进行选择` }}
                   </span>
                   <el-button type="text" size="small" @click="activeGroupSlot = null" style="float: right; padding: 0; margin-top: -2px;">取消激活</el-button>
@@ -266,7 +266,7 @@
                     class="player-item"
                     :class="{ 
                       'player-selected': isPlayerSelected(player._id),
-                      'player-clickable': activeGroupSlot && (matchForm.type === 'fix' || matchForm.type === 'group')
+                      'player-clickable': activeGroupSlot && (matchForm.type === 'fixpair' || matchForm.type === 'group')
                     }"
                     @click="handlePlayerClick(player)"
                   >
@@ -547,7 +547,7 @@ const handleClubChange = (clubid) => {
 
 const handleTypeChange = () => {
   // 切换到固定搭档或分组类型时，确保有至少一个配对
-  if ((matchForm.value.type === 'fix' || matchForm.value.type === 'group') && selectedPlayerPairs.value.length === 0) {
+  if ((matchForm.value.type === 'fixpair' || matchForm.value.type === 'group') && selectedPlayerPairs.value.length === 0) {
     selectedPlayerPairs.value = [{ player1: null, player2: null }]
   }
   updatePlayerCount()
@@ -622,7 +622,7 @@ const isPlayerSelected = (playerId) => {
 
 const handlePlayerClick = (player) => {
   // 如果有激活的分组框，填入到激活的位置
-  if (activeGroupSlot.value && (matchForm.value.type === 'fix' || matchForm.value.type === 'group')) {
+  if (activeGroupSlot.value && (matchForm.value.type === 'fixpair' || matchForm.value.type === 'group')) {
     const { pairIndex, slot } = activeGroupSlot.value
     
     // 确保配对数组有足够的元素
@@ -638,7 +638,7 @@ const handlePlayerClick = (player) => {
     }
     
     // 对于固定搭档类型，保持激活状态，自动切换到该组合的另一个空位置
-    if (matchForm.value.type === 'fix') {
+    if (matchForm.value.type === 'fixpair') {
       const pair = selectedPlayerPairs.value[pairIndex]
       // 如果两个位置都填满了，取消激活
       if (pair.player1 && pair.player2) {
@@ -691,7 +691,7 @@ const activateGroupSlot = (pairIndex, slot) => {
   const pair = selectedPlayerPairs.value[pairIndex]
   
   // 对于固定搭档类型，如果点击的是同一个组合的另一个位置，切换激活位置
-  if (matchForm.value.type === 'fix' && activeGroupSlot.value && activeGroupSlot.value.pairIndex === pairIndex) {
+  if (matchForm.value.type === 'fixpair' && activeGroupSlot.value && activeGroupSlot.value.pairIndex === pairIndex) {
     // 如果点击的是已激活的位置，且该位置已有选手，取消激活
     if (activeGroupSlot.value.slot === slot && ((slot === 1 && pair.player1) || (slot === 2 && pair.player2))) {
       activeGroupSlot.value = null
@@ -765,7 +765,7 @@ const removePairPlayer = (pairIndex, slot) => {
     if (!selectedPlayerPairs.value[pairIndex].player1 && !selectedPlayerPairs.value[pairIndex].player2) {
       selectedPlayerPairs.value.splice(pairIndex, 1)
       // 如果删除后没有配对了，且当前是固定搭档或分组类型，至少保留一个空配对
-      if (selectedPlayerPairs.value.length === 0 && (matchForm.value.type === 'fix' || matchForm.value.type === 'group')) {
+      if (selectedPlayerPairs.value.length === 0 && (matchForm.value.type === 'fixpair' || matchForm.value.type === 'group')) {
         selectedPlayerPairs.value = [{ player1: null, player2: null }]
       }
       // 如果删除的位置在当前激活位置之前或相同，需要调整或取消激活
@@ -789,7 +789,7 @@ const removePairPlayer = (pairIndex, slot) => {
 const removePair = (pairIndex) => {
   selectedPlayerPairs.value.splice(pairIndex, 1)
   // 如果删除后没有配对了，且当前是固定搭档或分组类型，至少保留一个空配对
-  if (selectedPlayerPairs.value.length === 0 && (matchForm.value.type === 'fix' || matchForm.value.type === 'group')) {
+  if (selectedPlayerPairs.value.length === 0 && (matchForm.value.type === 'fixpair' || matchForm.value.type === 'group')) {
     selectedPlayerPairs.value = [{ player1: null, player2: null }]
   }
   // 如果删除的是当前激活的位置，取消激活
@@ -814,7 +814,7 @@ const removePlayer = (index) => {
 }
 
 const updatePlayerCount = () => {
-  if (matchForm.value.type === 'fix' || matchForm.value.type === 'group') {
+  if (matchForm.value.type === 'fixpair' || matchForm.value.type === 'group') {
     // 固定搭档和分组类型，计算配对中的实际选手数
     let count = 0
     selectedPlayerPairs.value.forEach(pair => {

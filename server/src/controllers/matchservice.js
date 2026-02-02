@@ -207,7 +207,7 @@ createMatchData = async (type, playerArray) => {
 
   var orderArraies = null
   var typeValue = 'none'
-  if (type == 'fixpair') {
+  if (type == 'fixpair' || type == 'fix') {
     typeValue = 'fix'
   } else if (type == 'group') {
     typeValue = 'group'
@@ -244,7 +244,7 @@ createMatchData = async (type, playerArray) => {
       playerArrayOnce = shuffleArrayGroup(playerArraySave, sortgroups)
     } else {
       playerArrayOnce = shuffleArray(playerArraySave, nosort)
-      if (type == 'fixpair') {
+      if (type == 'fixpair' || type == 'fix') {
         playerArrayOnce = flatPlayerArray(playerArrayOnce)
       }
     }
@@ -1267,7 +1267,7 @@ exports.create = async (request, result) => {
       // 获取比赛配置限制
       const matchConfig = await getMatchConfig()
 
-      // 转换类型：管理台传入的是 'fix'，需要转换为 'fixpair' 用于生成对阵数据
+      // 统一类型：将 'fix' 转换为 'fixpair'（向后兼容）
       let matchDataType = matchType
       if (matchType === 'fix') {
         matchDataType = 'fixpair'
@@ -1275,7 +1275,7 @@ exports.create = async (request, result) => {
 
       // 根据类型处理选手数组
       let playerArray = players
-      if (matchType === 'fix' || matchType === 'group') {
+      if (matchType === 'fixpair' || matchType === 'fix' || matchType === 'group') {
         // 固定搭档和分组类型，需要配对格式
         // 如果传入的是单个选手ID数组，需要转换为配对格式
         if (players[0] && typeof players[0] === 'string') {
@@ -1342,7 +1342,7 @@ exports.create = async (request, result) => {
         totalGames = games.length
 
         // 计算实际玩家数
-        if (matchType === 'fix' || matchType === 'group') {
+        if (matchType === 'fixpair' || matchType === 'fix' || matchType === 'group') {
           const playerArrayFlat = flatPlayerArray(playerArray)
           finalPlayerCount = playerArrayFlat.length
         } else {
@@ -1678,8 +1678,22 @@ inferPairRelations = (games) => {
   games.forEach(game => {
     if (game.player1 && game.player2 && game.player3 && game.player4) {
       // 在固定搭档模式下，player1和player2是一对，player3和player4是一对
-      const pair1 = [game.player1, game.player2].sort()
-      const pair2 = [game.player3, game.player4].sort()
+      // 提取玩家ID（支持对象和字符串ID两种格式）
+      const getPlayerId = (player) => {
+        if (typeof player === 'string') {
+          return player
+        }
+        return player._id || player.id || player
+      }
+      
+      const player1Id = getPlayerId(game.player1)
+      const player2Id = getPlayerId(game.player2)
+      const player3Id = getPlayerId(game.player3)
+      const player4Id = getPlayerId(game.player4)
+      
+      // 对配对ID进行排序以确保一致性
+      const pair1 = [player1Id, player2Id].sort()
+      const pair2 = [player3Id, player4Id].sort()
       
       const pair1Key = `${pair1[0]}_${pair1[1]}`
       const pair2Key = `${pair2[0]}_${pair2[1]}`
@@ -1818,13 +1832,27 @@ exports.getRanking = async (request, result) => {
       })
     }
 
+    // 辅助函数：提取玩家ID（支持对象和字符串ID两种格式）
+    const getPlayerId = (player) => {
+      if (!player) return null
+      if (typeof player === 'string') {
+        return player
+      }
+      return player._id || player.id || player
+    }
+    
     // 先收集所有参赛选手（从所有比赛中）
     const allPlayerIds = new Set()
     allGames.forEach(game => {
-      if (game.player1) allPlayerIds.add(game.player1)
-      if (game.player2) allPlayerIds.add(game.player2)
-      if (game.player3) allPlayerIds.add(game.player3)
-      if (game.player4) allPlayerIds.add(game.player4)
+      const player1Id = getPlayerId(game.player1)
+      const player2Id = getPlayerId(game.player2)
+      const player3Id = getPlayerId(game.player3)
+      const player4Id = getPlayerId(game.player4)
+      
+      if (player1Id) allPlayerIds.add(player1Id)
+      if (player2Id) allPlayerIds.add(player2Id)
+      if (player3Id) allPlayerIds.add(player3Id)
+      if (player4Id) allPlayerIds.add(player4Id)
     })
 
     // 初始化所有选手的统计（包括未完成比赛的选手）
@@ -1847,10 +1875,10 @@ exports.getRanking = async (request, result) => {
     )
     
     completedGames.forEach(game => {
-      const player1 = game.player1
-      const player2 = game.player2
-      const player3 = game.player3
-      const player4 = game.player4
+      const player1 = getPlayerId(game.player1)
+      const player2 = getPlayerId(game.player2)
+      const player3 = getPlayerId(game.player3)
+      const player4 = getPlayerId(game.player4)
       const score1 = game.score1
       const score2 = game.score2
 
@@ -1974,7 +2002,7 @@ exports.getRanking = async (request, result) => {
     })
 
     // 判断是否为固定搭档模式
-    const isFixPairMode = match && match.type === 'fix'
+    const isFixPairMode = match && (match.type === 'fixpair' || match.type === 'fix')
     let pairMap = null
     let pairStats = null
     
@@ -2312,14 +2340,28 @@ getRankingForMiniProgram = async (matchId) => {
       console.log('积分规则配置:', scoreConfig)
     }
 
+    // 辅助函数：提取玩家ID（支持对象和字符串ID两种格式）
+    const getPlayerId = (player) => {
+      if (!player) return null
+      if (typeof player === 'string') {
+        return player
+      }
+      return player._id || player.id || player
+    }
+    
     // 先收集所有参赛选手（从所有比赛中）
     const allPlayerIds = new Set()
     if (allGames && allGames.length > 0) {
       allGames.forEach(game => {
-        if (game.player1) allPlayerIds.add(game.player1)
-        if (game.player2) allPlayerIds.add(game.player2)
-        if (game.player3) allPlayerIds.add(game.player3)
-        if (game.player4) allPlayerIds.add(game.player4)
+        const player1Id = getPlayerId(game.player1)
+        const player2Id = getPlayerId(game.player2)
+        const player3Id = getPlayerId(game.player3)
+        const player4Id = getPlayerId(game.player4)
+        
+        if (player1Id) allPlayerIds.add(player1Id)
+        if (player2Id) allPlayerIds.add(player2Id)
+        if (player3Id) allPlayerIds.add(player3Id)
+        if (player4Id) allPlayerIds.add(player4Id)
       })
       console.log('收集到的参赛选手数量:', allPlayerIds.size)
       console.log('参赛选手ID列表:', Array.from(allPlayerIds))
@@ -2353,10 +2395,10 @@ getRankingForMiniProgram = async (matchId) => {
     )
     
     completedGames.forEach(game => {
-      const player1 = game.player1
-      const player2 = game.player2
-      const player3 = game.player3
-      const player4 = game.player4
+      const player1 = getPlayerId(game.player1)
+      const player2 = getPlayerId(game.player2)
+      const player3 = getPlayerId(game.player3)
+      const player4 = getPlayerId(game.player4)
       const score1 = game.score1
       const score2 = game.score2
 
@@ -2484,7 +2526,7 @@ getRankingForMiniProgram = async (matchId) => {
     })
 
     // 判断是否为固定搭档模式
-    const isFixPairMode = match && match.type === 'fix'
+    const isFixPairMode = match && (match.type === 'fixpair' || match.type === 'fix')
     let pairMap = null
     let pairStats = null
     

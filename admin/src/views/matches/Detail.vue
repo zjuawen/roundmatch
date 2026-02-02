@@ -267,7 +267,7 @@
                   />
                   <span class="player-name">{{ row.player.name || '未知' }}</span>
                   <!-- 固定搭档模式：显示第二个选手 -->
-                  <template v-if="match.type === 'fix' && row.player2">
+                  <template v-if="match.type === 'fixpair' && row.player2">
                     <span style="margin: 0 8px; color: #909399;">+</span>
                     <Avatar 
                       :avatar-url="row.player2.avatarUrl" 
@@ -486,7 +486,8 @@ const formatDate = (date) => {
 const getTypeLabel = (type) => {
   const typeMap = {
     'none': '无固定搭档',
-    'fix': '固定搭档',
+    'fixpair': '固定搭档',
+    'fix': '固定搭档', // 向后兼容
     'group': '分组比赛'
   }
   return typeMap[type] || type || '未知'
@@ -495,7 +496,8 @@ const getTypeLabel = (type) => {
 const getTypeTagType = (type) => {
   const typeTagMap = {
     'none': 'info',
-    'fix': 'success',
+    'fixpair': 'success',
+    'fix': 'success', // 向后兼容
     'group': 'warning'
   }
   return typeTagMap[type] || 'info'

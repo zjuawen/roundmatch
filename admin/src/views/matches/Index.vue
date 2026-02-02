@@ -176,6 +176,7 @@ const getTypeLabel = (type) => {
   const typeMap = {
     'none': '无固定搭档',
     'fixpair': '固定搭档',
+    'fix': '固定搭档', // 向后兼容
     'group': '分组比赛'
   }
   return typeMap[type] || type || '未知'
@@ -186,6 +187,7 @@ const getTypeTagType = (type) => {
   const typeTagMap = {
     'none': 'info',
     'fixpair': 'success',
+    'fix': 'success', // 向后兼容
     'group': 'warning'
   }
   return typeTagMap[type] || 'info'

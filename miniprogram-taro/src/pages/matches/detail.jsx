@@ -38,6 +38,11 @@ export default class MatchDetail extends Component {
   }
 
   componentDidMount() {
+    // 设置导航栏标题
+    Taro.setNavigationBarTitle({
+      title: '比赛详情'
+    })
+
     const openid = getGlobalData('openid')
     if (!openid) {
       Taro.redirectTo({
@@ -257,9 +262,35 @@ export default class MatchDetail extends Component {
       
       console.log('刷新后的 games 数据:', updatedGames)
       
-      // 更新games数据（保留头像信息）
+      // 更新allGames和games数据（保留头像信息）
+      // 先更新allGames，然后根据过滤条件更新games
+      const { filterType, filterPlayerId } = this.state
+      let finalGames = updatedGames
+      
+      // 如果有过滤条件，应用过滤
+      if (filterType && filterPlayerId) {
+        if (filterType === 'only') {
+          // 只看该选手：只显示包含该选手的比赛
+          finalGames = updatedGames.filter(game => {
+            return game.player1?._id === filterPlayerId ||
+                   game.player2?._id === filterPlayerId ||
+                   game.player3?._id === filterPlayerId ||
+                   game.player4?._id === filterPlayerId
+          })
+        } else if (filterType === 'exclude') {
+          // 不看该选手：不显示包含该选手的比赛
+          finalGames = updatedGames.filter(game => {
+            return game.player1?._id !== filterPlayerId &&
+                   game.player2?._id !== filterPlayerId &&
+                   game.player3?._id !== filterPlayerId &&
+                   game.player4?._id !== filterPlayerId
+          })
+        }
+      }
+      
       this.setState({
-        games: updatedGames
+        allGames: updatedGames,
+        games: finalGames
       })
     } catch (error) {
       console.error('Load games error:', error)
@@ -744,7 +775,6 @@ export default class MatchDetail extends Component {
       <View className='match-detail-page'>
         {/* 比赛标题和进度 */}
         <View className='match-info-header'>
-          <Text className='match-title'>比赛详情</Text>
           <View className='match-progress-container'>
             <Text className='match-progress-label'>比赛进度</Text>
             <View className='match-progress-bar-wrapper'>
