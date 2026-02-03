@@ -15,7 +15,10 @@ export default class MatchDetail extends Component {
     clubid: null,
     matchId: null,
     // Tab 切换
-    activeTab: 'games', // 'games' 或 'ranking'
+    activeTab: 'enrollment', // 'enrollment' 报名情况, 'games' 对阵, 'ranking' 排名
+    // 报名数据
+    enrollment: [], // 报名名单
+    matchInfo: null, // 比赛基本信息（从games中推断）
     // 排名数据
     ranking: [],
     rankingLoading: false,
@@ -183,10 +186,14 @@ export default class MatchDetail extends Component {
       
       console.log('处理后的 games 数据:', games)
       
+      // 提取报名信息
+      const enrollment = this.extractEnrollment(games)
+      
       // 立即设置state，不等待头像检查完成
       this.setState({
         games: games,
         allGames: games, // 保存原始数据
+        enrollment: enrollment,
         loading: false
       }, () => {
         // 如果有筛选条件，应用筛选
@@ -288,9 +295,13 @@ export default class MatchDetail extends Component {
         }
       }
       
+      // 更新报名信息
+      const enrollment = this.extractEnrollment(updatedGames)
+      
       this.setState({
         allGames: updatedGames,
-        games: finalGames
+        games: finalGames,
+        enrollment: enrollment
       })
     } catch (error) {
       console.error('Load games error:', error)
@@ -407,9 +418,119 @@ export default class MatchDetail extends Component {
     }
   }
 
+  // 从games数据中提取报名信息
+  extractEnrollment = (games) => {
+    if (!games || games.length === 0) {
+      return []
+    }
+    
+    // 辅助函数：提取player ID
+    const getPlayerId = (player) => {
+      if (!player) return null
+      if (typeof player === 'string') {
+        return player
+      }
+      return player._id || player.id || player
+    }
+    
+    // 判断是否为固定搭档模式（通过第一个game的player1和player2是否成对出现）
+    const isFixPairMode = games.some(game => game.player1 && game.player2)
+    
+    const enrollmentMap = new Map() // 用于去重
+    const processedPairs = new Set() // 已处理的配对
+    
+    games.forEach(game => {
+      if (isFixPairMode) {
+        // 固定搭档模式：player1和player2是一对，player3和player4是一对
+        if (game.player1 && game.player2) {
+          const player1Id = getPlayerId(game.player1)
+          const player2Id = getPlayerId(game.player2)
+          const pairKey1 = [player1Id, player2Id].sort().join('_')
+          if (!processedPairs.has(pairKey1)) {
+            processedPairs.add(pairKey1)
+            enrollmentMap.set(pairKey1, {
+              player1: game.player1,
+              player2: game.player2,
+              index: enrollmentMap.size + 1
+            })
+          }
+        }
+        if (game.player3 && game.player4) {
+          const player3Id = getPlayerId(game.player3)
+          const player4Id = getPlayerId(game.player4)
+          const pairKey2 = [player3Id, player4Id].sort().join('_')
+          if (!processedPairs.has(pairKey2)) {
+            processedPairs.add(pairKey2)
+            enrollmentMap.set(pairKey2, {
+              player1: game.player3,
+              player2: game.player4,
+              index: enrollmentMap.size + 1
+            })
+          }
+        }
+      } else {
+        // 非固定搭档模式：每个选手单独显示
+        const players = [game.player1, game.player2, game.player3, game.player4].filter(Boolean)
+        players.forEach(player => {
+          const playerId = getPlayerId(player)
+          if (playerId && !enrollmentMap.has(playerId)) {
+            enrollmentMap.set(playerId, {
+              player1: player,
+              player2: null,
+              index: enrollmentMap.size + 1
+            })
+          }
+        })
+      }
+    })
+    
+    return Array.from(enrollmentMap.values())
+  }
+
+  // 分享比赛按钮点击处理
+  handleShareMatch = () => {
+    // 使用 openType='share' 的按钮会自动触发分享
+    // 这里可以添加一些提示或日志
+    console.log('分享比赛', this.state.matchId)
+  }
+
+  // 小程序分享功能（当用户点击分享按钮或右上角分享菜单时触发）
+  onShareAppMessage = (res) => {
+    const { matchId, clubid } = this.state
+    
+    if (!matchId) {
+      return {
+        title: '比赛详情',
+        path: '/pages/matches/list'
+      }
+    }
+    
+    // 构建分享路径，包含比赛ID和clubid（如果有）
+    let sharePath = `/pages/matches/detail?id=${matchId}`
+    if (clubid) {
+      sharePath += `&clubid=${clubid}`
+    }
+    
+    // 获取比赛名称（如果有）
+    const matchName = this.getMatchName()
+    
+    return {
+      title: matchName || '比赛详情',
+      path: sharePath,
+      imageUrl: '' // 可以设置分享图片
+    }
+  }
+
+  // 获取比赛名称（用于分享标题）
+  getMatchName = () => {
+    // 可以从 games 数据中推断比赛信息，或者从其他来源获取
+    // 这里暂时返回默认值
+    return '比赛详情'
+  }
+
   // 切换 Tab
   handleTabChange = (tab) => {
-    const { matchId } = this.state
+    const { matchId, allGames } = this.state
     
     // 如果切换到相同的tab，不处理
     if (tab === this.state.activeTab) {
@@ -419,7 +540,11 @@ export default class MatchDetail extends Component {
     this.setState({ activeTab: tab })
     
     // 根据切换的tab刷新对应的数据
-    if (tab === 'games') {
+    if (tab === 'enrollment') {
+      // 切换到报名tab，从allGames提取报名信息
+      const enrollment = this.extractEnrollment(allGames)
+      this.setState({ enrollment })
+    } else if (tab === 'games') {
       // 切换到对阵tab，刷新对阵数据
       this.loadGames()
     } else if (tab === 'ranking') {
@@ -773,22 +898,16 @@ export default class MatchDetail extends Component {
 
     return (
       <View className='match-detail-page'>
-        {/* 比赛标题和进度 */}
-        <View className='match-info-header'>
-          <View className='match-progress-container'>
-            <Text className='match-progress-label'>比赛进度</Text>
-            <View className='match-progress-bar-wrapper'>
-              <View 
-                className='match-progress-bar'
-                style={{ width: `${progressPercent}%` }}
-              />
-            </View>
-            <Text className='match-progress-text'>{finishedCount}/{totalCount}场</Text>
-          </View>
-        </View>
-        
         {/* Tab 页签 */}
         <View className='tab-container'>
+          <View 
+            className={`tab-item ${this.state.activeTab === 'enrollment' ? 'active' : ''}`}
+            onClick={() => this.handleTabChange('enrollment')}
+          >
+            <Text className={`tab-text ${this.state.activeTab === 'enrollment' ? 'active' : ''}`}>
+              报名情况
+            </Text>
+          </View>
           <View 
             className={`tab-item ${this.state.activeTab === 'games' ? 'active' : ''}`}
             onClick={() => this.handleTabChange('games')}
@@ -806,6 +925,120 @@ export default class MatchDetail extends Component {
             </Text>
           </View>
         </View>
+        
+        {/* 比赛进度 - 仅在对阵界面显示 */}
+        {this.state.activeTab === 'games' && (
+          <View className='match-progress-section'>
+            <View className='match-progress-container'>
+              <Text className='match-progress-label'>比赛进度</Text>
+              <View className='match-progress-bar-wrapper'>
+                <View 
+                  className='match-progress-bar'
+                  style={{ width: `${progressPercent}%` }}
+                />
+              </View>
+              <Text className='match-progress-text'>{finishedCount}/{totalCount}场</Text>
+            </View>
+          </View>
+        )}
+        
+        {/* 报名情况内容 */}
+        {this.state.activeTab === 'enrollment' && (
+          <View className='enrollment-section'>
+            <View className='enrollment-header'>
+              <Text className='enrollment-title'>报名名单</Text>
+              <View className='enrollment-status'>
+                <Text className='enrollment-count'>{this.state.enrollment.length}</Text>
+                <Text className='enrollment-total'>/ {this.state.enrollment.length}</Text>
+              </View>
+            </View>
+            {this.state.enrollment && this.state.enrollment.length > 0 ? (
+              <View className='enrollment-list'>
+                {this.state.enrollment.map((item, index) => (
+                  <View key={index} className='enrollment-item'>
+                    <View className='enrollment-number'>
+                      <Text className='enrollment-number-text'>{item.index}</Text>
+                    </View>
+                    <View className='enrollment-players'>
+                      {/* 第一个选手 */}
+                      <View className='enrollment-player'>
+                        {item.player1?.avatarValid && item.player1?.avatarUrl && item.player1.avatarUrl.trim() !== '' ? (
+                          <Image 
+                            className='enrollment-player-avatar'
+                            src={item.player1.avatarUrl}
+                            mode='aspectFill'
+                          />
+                        ) : (
+                          <View
+                            className='enrollment-player-avatar-text'
+                            style={{ backgroundColor: generateAvatarColor(item.player1?.name || '') }}
+                          >
+                            <Text className='enrollment-player-avatar-text-content'>
+                              {getAvatarText(item.player1?.name || '')}
+                            </Text>
+                          </View>
+                        )}
+                        {item.player1?.gender !== undefined && (
+                          <View className={`enrollment-gender-badge ${item.player1.gender === 1 ? 'male' : 'female'}`}>
+                            <Text className='enrollment-gender-icon'>{item.player1.gender === 1 ? '♂' : '♀'}</Text>
+                          </View>
+                        )}
+                        <Text className='enrollment-player-name'>{item.player1?.name || '未知'}</Text>
+                      </View>
+                      {/* 固定搭档模式：显示第二个选手 */}
+                      {item.player2 && (
+                        <>
+                          <Text className='enrollment-pair-separator'>+</Text>
+                          <View className='enrollment-player'>
+                            {item.player2?.avatarValid && item.player2?.avatarUrl && item.player2.avatarUrl.trim() !== '' ? (
+                              <Image 
+                                className='enrollment-player-avatar'
+                                src={item.player2.avatarUrl}
+                                mode='aspectFill'
+                              />
+                            ) : (
+                              <View
+                                className='enrollment-player-avatar-text'
+                                style={{ backgroundColor: generateAvatarColor(item.player2?.name || '') }}
+                              >
+                                <Text className='enrollment-player-avatar-text-content'>
+                                  {getAvatarText(item.player2?.name || '')}
+                                </Text>
+                              </View>
+                            )}
+                            {item.player2?.gender !== undefined && (
+                              <View className={`enrollment-gender-badge ${item.player2.gender === 1 ? 'male' : 'female'}`}>
+                                <Text className='enrollment-gender-icon'>{item.player2.gender === 1 ? '♂' : '♀'}</Text>
+                              </View>
+                            )}
+                            <Text className='enrollment-player-name'>{item.player2?.name || '未知'}</Text>
+                          </View>
+                        </>
+                      )}
+                    </View>
+                  </View>
+                ))}
+              </View>
+            ) : (
+              <View className='enrollment-empty'>
+                <Text className='enrollment-empty-text'>暂无报名信息</Text>
+              </View>
+            )}
+          </View>
+        )}
+        
+        {/* 分享按钮 - 固定在底部，仅在报名情况界面显示 */}
+        {this.state.activeTab === 'enrollment' && (
+          <View className='enrollment-share-container-fixed'>
+            <Button 
+              className='enrollment-share-button'
+              openType='share'
+              onClick={this.handleShareMatch}
+            >
+              分享比赛
+            </Button>
+          </View>
+        )}
         
         {/* 对阵内容 */}
         {this.state.activeTab === 'games' && (

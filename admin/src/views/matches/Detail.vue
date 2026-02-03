@@ -34,28 +34,28 @@
           <el-descriptions-item label="创建者">{{ match.owner || '未知' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ formatDate(match.createDate) }}</el-descriptions-item>
           <el-descriptions-item label="更新时间">{{ formatDate(match.updateTime) }}</el-descriptions-item>
-          <el-descriptions-item label="备注" :span="2">
-            <span v-if="match.remark">{{ match.remark }}</span>
+          <el-descriptions-item label="备注">
+            <span v-if="match.remark" class="remark-text" :title="match.remark">{{ match.remark }}</span>
             <span v-else style="color: #999;">无</span>
           </el-descriptions-item>
-          <el-descriptions-item label="小程序码" :span="2">
-            <div v-if="match.qrcodeUrl" class="qrcode-container">
-              <img :src="match.qrcodeUrl" alt="小程序码" class="qrcode-image" />
-              <div class="qrcode-actions">
-                <el-button size="small" @click="downloadQRCode">下载</el-button>
-                <el-button size="small" @click="refreshQRCode">刷新</el-button>
-              </div>
-            </div>
-            <div v-else class="qrcode-loading">
-              <el-button size="small" type="primary" @click="generateQRCode" :loading="qrcodeGenerating">
-                生成小程序码
-              </el-button>
-            </div>
-          </el-descriptions-item>
           <el-descriptions-item label="状态">
-            <el-tag :type="match.delete ? 'danger' : 'success'">
+            <el-tag :type="match.delete ? 'danger' : 'success'" size="small">
               {{ match.delete ? '已删除' : '正常' }}
             </el-tag>
+          </el-descriptions-item>
+          <el-descriptions-item label="小程序码" :span="2">
+            <div v-if="match.qrcodeUrl" class="qrcode-container-compact">
+              <img :src="match.qrcodeUrl" alt="小程序码" class="qrcode-image-compact" />
+              <div class="qrcode-actions-compact">
+                <el-button size="small" type="text" @click="downloadQRCode">下载</el-button>
+                <el-button size="small" type="text" @click="refreshQRCode">刷新</el-button>
+              </div>
+            </div>
+            <div v-else class="qrcode-loading-compact">
+              <el-button size="small" type="primary" @click="generateQRCode" :loading="qrcodeGenerating">
+                生成
+              </el-button>
+            </div>
           </el-descriptions-item>
         </el-descriptions>
       </div>
@@ -761,28 +761,38 @@ const downloadQRCode = () => {
 </script>
 
 <style scoped>
-.qrcode-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
+.remark-text {
+  display: inline-block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.qrcode-image {
-  width: 200px;
-  height: 200px;
+.qrcode-container-compact {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+}
+
+.qrcode-image-compact {
+  width: 100px;
+  height: 100px;
   border: 1px solid #dcdfe6;
   border-radius: 4px;
-  padding: 8px;
+  padding: 4px;
   background: #fff;
+  flex-shrink: 0;
 }
 
-.qrcode-actions {
+.qrcode-actions-compact {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 4px;
 }
 
-.qrcode-loading {
+.qrcode-loading-compact {
   display: flex;
   align-items: center;
 }
@@ -875,32 +885,6 @@ const downloadQRCode = () => {
 .new-score {
   color: #409eff;
   font-weight: bold;
-}
-
-.qrcode-container {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-}
-
-.qrcode-image {
-  width: 200px;
-  height: 200px;
-  border: 1px solid #dcdfe6;
-  border-radius: 4px;
-  padding: 8px;
-  background: #fff;
-}
-
-.qrcode-actions {
-  display: flex;
-  gap: 8px;
-}
-
-.qrcode-loading {
-  display: flex;
-  align-items: center;
 }
 
 .rank-number {
