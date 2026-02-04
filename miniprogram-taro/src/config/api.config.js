@@ -25,7 +25,7 @@ const DEV_CONFIG = {
 // 生产环境配置
 const PROD_CONFIG = {
   // 生产环境服务器地址
-  default: 'https://xw.sdiread.com/'
+  default: 'https://rmapi.sdiread.com/'
 }
 
 /**
@@ -85,7 +85,7 @@ export function getRustfsUrl() {
     }
   } else {
     // 生产环境：使用生产 RustFS 地址
-    return 'https://rustfs.yourdomain.com/' // 请修改为你的生产环境 RustFS 地址
+    return 'https://rfapi.sdiread.com/' // 请修改为你的生产环境 RustFS 地址
   }
 }
 
