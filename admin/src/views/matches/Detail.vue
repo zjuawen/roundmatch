@@ -65,11 +65,86 @@
     <el-card style="margin-top: 20px;">
       <template #header>
         <el-tabs v-model="activeTab" @tab-change="handleTabChange">
+          <el-tab-pane label="报名情况" name="enrollment"></el-tab-pane>
           <el-tab-pane label="对阵情况" name="games"></el-tab-pane>
           <el-tab-pane label="排名统计" name="ranking"></el-tab-pane>
           <el-tab-pane label="操作流水" name="logs"></el-tab-pane>
         </el-tabs>
       </template>
+      
+      <!-- 报名情况标签页 -->
+      <div v-show="activeTab === 'enrollment'">
+        <div v-loading="enrollmentLoading">
+          <!-- 比赛类型和报名人数信息 -->
+          <div class="enrollment-info" v-if="match">
+            <div class="enrollment-info-item" v-if="match.type">
+              <span class="info-label">比赛类型：</span>
+              <span class="info-value">{{ getTypeLabel(match.type) }}</span>
+            </div>
+            <div class="enrollment-info-item">
+              <span class="info-label">报名名单：</span>
+              <span class="info-value">{{ enrollment.length }} 人</span>
+            </div>
+          </div>
+          
+          <!-- 报名列表 -->
+          <div v-if="enrollment && enrollment.length > 0" style="margin-top: 20px;">
+            <el-table :data="enrollment" stripe border>
+              <el-table-column label="序号" width="80" align="center">
+                <template #default="{ row }">
+                  <span>{{ row.index }}</span>
+                </template>
+              </el-table-column>
+              <el-table-column label="选手" min-width="300">
+                <template #default="{ row }">
+                  <div class="enrollment-players">
+                    <!-- 第一个选手 -->
+                    <div class="player-item" v-if="row.player1">
+                      <Avatar 
+                        :avatar-url="row.player1.avatarUrl" 
+                        :name="row.player1.name || '未知'"
+                        :size="32"
+                        :avatar-valid="row.player1.avatarValid"
+                      />
+                      <span class="player-name">{{ row.player1.name || '未知' }}</span>
+                      <el-tag 
+                        v-if="row.player1.gender !== undefined" 
+                        :type="row.player1.gender === 1 ? 'primary' : 'danger'"
+                        size="small"
+                        style="margin-left: 8px;"
+                      >
+                        {{ row.player1.gender === 1 ? '♂' : '♀' }}
+                      </el-tag>
+                    </div>
+                    <!-- 固定搭档模式：显示第二个选手 -->
+                    <template v-if="row.player2">
+                      <span class="player-separator">+</span>
+                      <div class="player-item">
+                        <Avatar 
+                          :avatar-url="row.player2.avatarUrl" 
+                          :name="row.player2.name || '未知'"
+                          :size="32"
+                          :avatar-valid="row.player2.avatarValid"
+                        />
+                        <span class="player-name">{{ row.player2.name || '未知' }}</span>
+                        <el-tag 
+                          v-if="row.player2.gender !== undefined" 
+                          :type="row.player2.gender === 1 ? 'primary' : 'danger'"
+                          size="small"
+                          style="margin-left: 8px;"
+                        >
+                          {{ row.player2.gender === 1 ? '♂' : '♀' }}
+                        </el-tag>
+                      </div>
+                    </template>
+                  </div>
+                </template>
+              </el-table-column>
+            </el-table>
+          </div>
+          <el-empty v-else description="暂无报名信息" />
+        </div>
+      </div>
       
       <!-- 对阵情况标签页 -->
       <div v-show="activeTab === 'games'">
@@ -419,7 +494,7 @@ const editingScoreIndex = ref(-1)
 const editingScore = ref({ score1: 0, score2: 0 })
 const qrcodeGenerating = ref(false)
 const savingScore = ref(false)
-const activeTab = ref('games')
+const activeTab = ref('enrollment')
 const scoreLogs = ref([])
 const logsLoading = ref(false)
 const logsPageNum = ref(1)
@@ -429,10 +504,16 @@ const selectedGameId = ref('')
 const ranking = ref([])
 const rankingLoading = ref(false)
 const useScoreRanking = ref(false) // 是否启用积分排名
+const enrollment = ref([])
+const enrollmentLoading = ref(false)
 
 onMounted(() => {
   loadMatchDetail()
   loadGames()
+  // 默认显示报名情况tab，加载报名数据
+  if (activeTab.value === 'enrollment') {
+    loadEnrollment()
+  }
 })
 
 const loadMatchDetail = async () => {
@@ -618,7 +699,9 @@ const handleTabChange = async (tabName) => {
   await loadMatchDetail()
   
   // 根据切换的标签加载对应的数据
-  if (tabName === 'games') {
+  if (tabName === 'enrollment') {
+    await loadEnrollment()
+  } else if (tabName === 'games') {
     await loadGames()
   } else if (tabName === 'ranking') {
     await loadRanking()
@@ -757,6 +840,115 @@ const downloadQRCode = () => {
   document.body.appendChild(link)
   link.click()
   document.body.removeChild(link)
+}
+
+// 提取报名信息
+const extractEnrollment = (games) => {
+  if (!games || games.length === 0) {
+    return []
+  }
+  
+  // 辅助函数：提取player ID
+  const getPlayerId = (player) => {
+    if (!player) return null
+    if (typeof player === 'string') {
+      return player
+    }
+    return player._id || player.id || player
+  }
+  
+  // 根据比赛类型决定显示方式
+  const matchType = match.value?.type || 'none'
+  const isPairMode = matchType === 'fixpair' || matchType === 'fix' || matchType === 'group'
+  
+  const enrollmentMap = new Map() // 用于去重
+  const processedPairs = new Set() // 已处理的配对
+  
+  games.forEach(game => {
+    if (isPairMode) {
+      // 固定搭档或分组模式：player1和player2是一对，player3和player4是一对
+      if (game.player1 && game.player2) {
+        const player1Id = getPlayerId(game.player1)
+        const player2Id = getPlayerId(game.player2)
+        const pairKey1 = [player1Id, player2Id].sort().join('_')
+        if (!processedPairs.has(pairKey1)) {
+          processedPairs.add(pairKey1)
+          enrollmentMap.set(pairKey1, {
+            player1: game.player1,
+            player2: game.player2,
+            index: enrollmentMap.size + 1
+          })
+        }
+      }
+      if (game.player3 && game.player4) {
+        const player3Id = getPlayerId(game.player3)
+        const player4Id = getPlayerId(game.player4)
+        const pairKey2 = [player3Id, player4Id].sort().join('_')
+        if (!processedPairs.has(pairKey2)) {
+          processedPairs.add(pairKey2)
+          enrollmentMap.set(pairKey2, {
+            player1: game.player3,
+            player2: game.player4,
+            index: enrollmentMap.size + 1
+          })
+        }
+      }
+    } else {
+      // 不固定模式：每个选手单独显示（按人员列表）
+      const players = [game.player1, game.player2, game.player3, game.player4].filter(Boolean)
+      players.forEach(player => {
+        const playerId = getPlayerId(player)
+        if (playerId && !enrollmentMap.has(playerId)) {
+          enrollmentMap.set(playerId, {
+            player1: player,
+            player2: null,
+            index: enrollmentMap.size + 1
+          })
+        }
+      })
+    }
+  })
+  
+  return Array.from(enrollmentMap.values())
+}
+
+// 加载报名情况
+const loadEnrollment = async () => {
+  if (!matchId) return
+  
+  enrollmentLoading.value = true
+  try {
+    // 确保 match 数据已加载
+    if (!match.value) {
+      await loadMatchDetail()
+    }
+    
+    // 加载games数据
+    const response = await matchesApi.getGames(matchId)
+    let gamesData = response.data || []
+    
+    // 处理玩家头像 URL（与服务端返回的 avatarValid 保持一致）
+    for (const game of gamesData) {
+      for (let i = 1; i <= 4; i++) {
+        const player = game[`player${i}`]
+        if (player) {
+          // 统一处理 avatarUrl 字段（可能返回的是 avatarurl）
+          const avatarUrl = player.avatarUrl || player.avatarurl || ''
+          player.avatarUrl = avatarUrl || ''
+          // 使用服务端返回的 avatarValid，如果没有则默认为 true（向后兼容）
+          player.avatarValid = player.avatarValid !== undefined ? player.avatarValid : (avatarUrl ? true : false)
+        }
+      }
+    }
+    
+    // 从games数据中提取报名信息
+    enrollment.value = extractEnrollment(gamesData)
+  } catch (error) {
+    ElMessage.error('加载报名情况失败：' + (error.response?.data?.msg || error.message))
+    enrollment.value = []
+  } finally {
+    enrollmentLoading.value = false
+  }
 }
 </script>
 
@@ -986,5 +1178,37 @@ const downloadQRCode = () => {
 .progress-container {
   flex: 1;
   max-width: 400px;
+}
+
+.enrollment-info {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 15px 20px;
+  margin-bottom: 20px;
+  background: #f0f7ff;
+  border-radius: 4px;
+  border-left: 4px solid #409eff;
+}
+
+.enrollment-info-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.enrollment-players {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.player-separator {
+  color: #999;
+  font-size: 16px;
+  font-weight: bold;
+  margin: 0 4px;
 }
 </style>

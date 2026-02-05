@@ -1032,13 +1032,6 @@ export default class MatchDetail extends Component {
         {/* 报名情况内容 */}
         {this.state.activeTab === 'enrollment' && (
           <View className='enrollment-section'>
-            <View className='enrollment-header'>
-              <Text className='enrollment-title'>报名名单</Text>
-              <View className='enrollment-status'>
-                <Text className='enrollment-count'>{this.state.enrollment.length}</Text>
-                <Text className='enrollment-total'>/ {this.state.enrollment.length}</Text>
-              </View>
-            </View>
             {/* 比赛类型显示 */}
             {this.state.matchInfo && this.state.matchInfo.type && (
               <View className='enrollment-match-type'>
@@ -1050,6 +1043,11 @@ export default class MatchDetail extends Component {
                 </Text>
               </View>
             )}
+            {/* 报名名单显示 */}
+            <View className='enrollment-match-type'>
+              <Text className='enrollment-match-type-label'>报名名单：</Text>
+              <Text className='enrollment-match-type-value'>{this.state.enrollment.length} 人</Text>
+            </View>
             {this.state.enrollment && this.state.enrollment.length > 0 ? (
               <View className='enrollment-list'>
                 {this.state.enrollment.map((item, index) => (
@@ -1557,8 +1555,8 @@ export default class MatchDetail extends Component {
           </View>
         )}
 
-        {/* 筛选条件显示 */}
-        {this.state.filterType && this.state.filterPlayerName && (
+        {/* 筛选条件显示 - 仅在对阵界面显示 */}
+        {this.state.activeTab === 'games' && this.state.filterType && this.state.filterPlayerName && (
           <View className='filter-bar'>
             <View className='filter-content'>
               <Text className='filter-text'>
