@@ -13,6 +13,7 @@ export default class Login extends Component {
   }
 
   componentDidMount() {
+    // 如果已登录，自动跳转（但不要强制未登录用户跳转）
     if (this.isLogin()) {
       this.redirect()
       return
@@ -24,6 +25,8 @@ export default class Login extends Component {
       })
     }
 
+    // 尝试静默登录（获取 openid），但不强制要求用户授权
+    // 这样可以让用户先浏览页面，需要时再授权
     this.login()
   }
 
@@ -47,14 +50,16 @@ export default class Login extends Component {
       
       if (data.data && data.data.openid) {
         saveGlobalData('openid', data.data.openid)
-      }
-
-      if (data.data && data.data.userInfo != null) {
-        saveGlobalData('userInfo', data.data.userInfo)
-        this.redirect()
+        // 如果同时获取到了用户信息，自动跳转
+        if (data.data && data.data.userInfo != null) {
+          saveGlobalData('userInfo', data.data.userInfo)
+          this.redirect()
+        }
+        // 否则只保存 openid，不跳转，让用户主动授权获取用户信息
       }
     } catch (error) {
       console.error('Login error:', error)
+      // 登录失败不影响页面显示，用户可以选择稍后重试
     }
   }
 

@@ -43,6 +43,29 @@
   color: #999;
 }
 
+.enrollment-match-type {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  margin-bottom: 20rpx;
+  padding: 16rpx 20rpx;
+  background-color: #f0f7ff;
+  border-radius: 12rpx;
+  border-left: 4rpx solid #0478F3;
+}
+
+.enrollment-match-type-label {
+  font-size: 26rpx;
+  color: #666;
+  margin-right: 12rpx;
+}
+
+.enrollment-match-type-value {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: #0478F3;
+}
+
 .enrollment-list {
   display: flex;
   flex-direction: column;
@@ -52,7 +75,7 @@
 .enrollment-item {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: center; /* 垂直居中对齐 */
   background-color: #fff;
   border-radius: 16rpx;
   padding: 20rpx;
@@ -69,6 +92,7 @@
   border-radius: 12rpx;
   margin-right: 20rpx;
   flex-shrink: 0;
+  align-self: center; /* 确保在父容器中垂直居中 */
 }
 
 .enrollment-number-text {
@@ -81,16 +105,18 @@
   flex: 1;
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: center; /* 垂直居中对齐 */
   gap: 12rpx;
+  align-self: center; /* 确保在父容器中垂直居中 */
 }
 
 .enrollment-player {
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: center; /* 垂直居中对齐 */
   gap: 12rpx;
   position: relative;
+  align-self: center; /* 确保在父容器中垂直居中 */
 }
 
 .enrollment-player-avatar {
@@ -211,10 +237,8 @@
   padding: 20rpx 30rpx;
   z-index: 99;
   border-bottom: 1rpx solid #E5E5E5;
-  /* 进度区域高度：padding(20rpx * 2) + 进度条(12rpx) + 文字(24rpx) ≈ 76rpx，取80rpx */
-  height: 80rpx;
-  display: flex;
-  align-items: center;
+  box-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+  /* 让内容自然撑开，不限制高度 */
 }
 
 .match-progress-container {
@@ -254,8 +278,8 @@
 
 /* 比赛列表 */
 .games-list {
-  padding: calc(92rpx + 80rpx + 20rpx) 30rpx 30rpx;
-  /* 顶部间距：tab高度(92rpx) + 进度条高度(80rpx) + 额外间距(20rpx) */
+  padding: calc(92rpx + 76rpx + 20rpx) 30rpx 30rpx;
+  /* 顶部间距：tab高度(92rpx) + 进度条高度(约76rpx) + 额外间距(20rpx) */
   display: flex;
   flex-direction: column;
   
@@ -344,6 +368,8 @@
   display: flex;
   flex-direction: column;
   gap: 0;
+  justify-content: center; /* 垂直居中 */
+  align-items: center; /* 水平居中 */
 }
 
 /* 玩家行 */
@@ -354,12 +380,24 @@
   gap: 10rpx;
   padding: 8rpx 0;
   min-width: 0; /* 允许flex子元素收缩 */
+  width: 100%; /* 确保占满父容器宽度 */
+}
+
+/* 左侧队伍：名称在左，头像在右 */
+.game-team-left .game-player-row {
+  justify-content: flex-start; /* 左对齐 */
+}
+
+/* 右侧队伍：头像在左，名称在右（保持原样） */
+.game-team-right .game-player-row {
+  justify-content: flex-start; /* 左对齐 */
 }
 
 .game-team-divider {
   height: 1rpx;
   background-color: #E5E5E5;
   margin: 0;
+  width: 100%; /* 占满父容器宽度 */
 }
 
 .game-player-avatar {
@@ -395,6 +433,39 @@
   overflow: hidden;
   position: relative;
   max-width: 150rpx; /* 固定最大宽度 */
+  order: 1; /* 默认顺序 */
+}
+
+/* 左侧队伍：名称在前（order: 1），头像在后（order: 2），名称右对齐 */
+.game-team-left .game-player-name {
+  order: 1;
+  text-align: right; /* 文字右对齐 */
+}
+
+.game-team-left .game-player-name-wrapper {
+  display: flex;
+  justify-content: flex-end; /* 内容右对齐 */
+}
+
+.game-team-left .game-player-avatar,
+.game-team-left .game-player-avatar-text {
+  order: 2;
+}
+
+/* 右侧队伍：头像在前（order: 1），名称在后（order: 2），名称左对齐 */
+.game-team-right .game-player-avatar,
+.game-team-right .game-player-avatar-text {
+  order: 1;
+}
+
+.game-team-right .game-player-name {
+  order: 2;
+  text-align: left; /* 文字左对齐 */
+}
+
+.game-team-right .game-player-name-wrapper {
+  display: flex;
+  justify-content: flex-start; /* 内容左对齐 */
 }
 
 .game-player-name-wrapper {
@@ -457,6 +528,7 @@
   align-items: center;
   justify-content: center;
   min-width: 100rpx;
+  align-self: center; /* 确保在父容器中垂直居中 */
 }
 
 .game-score-display {
@@ -494,6 +566,22 @@
   font-size: 40rpx;
   font-weight: bold;
   color: #0478F3;
+  line-height: 1;
+}
+
+.game-score-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8rpx;
+  align-self: center; /* 确保在比分区域中垂直居中 */
+}
+
+.game-score-hint {
+  font-size: 20rpx;
+  color: #999;
+  opacity: 0.6;
   line-height: 1;
 }
 
@@ -663,21 +751,19 @@
   position: relative;
   transition: all 0.3s;
   
-  &.active {
-    &::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 4rpx;
-      background-color: #0478F3;
-    }
-  }
-  
   &:active {
     background-color: rgba(0, 0, 0, 0.02);
   }
+}
+
+/* 滑动指示器 */
+.tab-indicator {
+  position: absolute;
+  bottom: 0;
+  height: 4rpx;
+  background-color: #0478F3;
+  transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 2rpx 2rpx 0 0;
 }
 
 .tab-text {

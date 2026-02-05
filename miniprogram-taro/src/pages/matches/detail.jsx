@@ -46,14 +46,8 @@ export default class MatchDetail extends Component {
       title: '比赛详情'
     })
 
-    const openid = getGlobalData('openid')
-    if (!openid) {
-      Taro.redirectTo({
-        url: '/pages/login/index'
-      })
-      return
-    }
-
+    // 允许未登录用户查看比赛详情（只读模式）
+    // 未登录时，某些操作（如填写比分）会被禁用
     this.loadMatch()
   }
 
@@ -148,20 +142,31 @@ export default class MatchDetail extends Component {
       // 调用 API，即使 clubid 为 null 也可以（API 会通过 matchid 查询）
       const data = await matchService.read(targetClubid || null, matchId)
       
-      // 如果之前没有 clubid，从返回的数据中获取（如果有 games，可以从第一个 game 获取 clubid）
-      if (!targetClubid && data.data && data.data.length > 0) {
-        // 注意：readMatch 返回的是 games 数组，不包含 match 信息
-        // 我们需要通过其他方式获取 clubid，或者让 API 返回
-        // 暂时先不处理，因为 API 已经支持 clubid 为 null
+      // 解析返回的数据结构：可能是数组（旧格式）或对象（新格式：{games, match}）
+      let games = []
+      let matchInfo = null
+      
+      if (Array.isArray(data.data)) {
+        // 旧格式：直接是 games 数组
+        games = data.data
+      } else if (data.data && data.data.games) {
+        // 新格式：包含 games 和 match 的对象
+        games = Array.isArray(data.data.games) ? data.data.games : []
+        matchInfo = data.data.match || null
+      } else {
+        games = []
       }
       
-      // 如果还是没有 clubid，尝试从第一个 game 中获取（如果有）
-      if (!targetClubid && data.data && data.data.length > 0 && data.data[0].clubid) {
-        targetClubid = data.data[0].clubid
-        this.setState({ clubid: targetClubid })
+      // 如果之前没有 clubid，从返回的数据中获取
+      if (!targetClubid) {
+        if (matchInfo && matchInfo.clubid) {
+          targetClubid = matchInfo.clubid
+          this.setState({ clubid: targetClubid })
+        } else if (games.length > 0 && games[0].clubid) {
+          targetClubid = games[0].clubid
+          this.setState({ clubid: targetClubid })
+        }
       }
-      // matchService.read 返回的是对阵数据数组
-      const games = Array.isArray(data.data) ? data.data : []
       
       // 按 order 字段排序（从小到大）
       games.sort((a, b) => {
@@ -194,6 +199,7 @@ export default class MatchDetail extends Component {
         games: games,
         allGames: games, // 保存原始数据
         enrollment: enrollment,
+        matchInfo: matchInfo, // 保存比赛信息（包括 type）
         loading: false
       }, () => {
         // 如果有筛选条件，应用筛选
@@ -227,8 +233,20 @@ export default class MatchDetail extends Component {
       const targetClubid = clubid || getGlobalData('selectedClubId')
       const data = await matchService.read(targetClubid || null, matchId)
       
-      // matchService.read 返回的是对阵数据数组
-      const newGames = Array.isArray(data.data) ? data.data : []
+      // 解析返回的数据结构：可能是数组（旧格式）或对象（新格式：{games, match}）
+      let newGames = []
+      let matchInfo = null
+      
+      if (Array.isArray(data.data)) {
+        // 旧格式：直接是 games 数组
+        newGames = data.data
+      } else if (data.data && data.data.games) {
+        // 新格式：包含 games 和 match 的对象
+        newGames = Array.isArray(data.data.games) ? data.data.games : []
+        matchInfo = data.data.match || null
+      } else {
+        newGames = []
+      }
       
       // 按 order 字段排序（从小到大）
       newGames.sort((a, b) => {
@@ -301,7 +319,8 @@ export default class MatchDetail extends Component {
       this.setState({
         allGames: updatedGames,
         games: finalGames,
-        enrollment: enrollment
+        enrollment: enrollment,
+        matchInfo: matchInfo || this.state.matchInfo // 保留或更新比赛信息
       })
     } catch (error) {
       console.error('Load games error:', error)
@@ -433,15 +452,16 @@ export default class MatchDetail extends Component {
       return player._id || player.id || player
     }
     
-    // 判断是否为固定搭档模式（通过第一个game的player1和player2是否成对出现）
-    const isFixPairMode = games.some(game => game.player1 && game.player2)
+    // 根据比赛类型决定显示方式
+    const matchType = this.state.matchInfo?.type || 'none'
+    const isPairMode = matchType === 'fixpair' || matchType === 'fix' || matchType === 'group'
     
     const enrollmentMap = new Map() // 用于去重
     const processedPairs = new Set() // 已处理的配对
     
     games.forEach(game => {
-      if (isFixPairMode) {
-        // 固定搭档模式：player1和player2是一对，player3和player4是一对
+      if (isPairMode) {
+        // 固定搭档或分组模式：player1和player2是一对，player3和player4是一对
         if (game.player1 && game.player2) {
           const player1Id = getPlayerId(game.player1)
           const player2Id = getPlayerId(game.player2)
@@ -469,7 +489,7 @@ export default class MatchDetail extends Component {
           }
         }
       } else {
-        // 非固定搭档模式：每个选手单独显示
+        // 不固定模式：每个选手单独显示（按人员列表）
         const players = [game.player1, game.player2, game.player3, game.player4].filter(Boolean)
         players.forEach(player => {
           const playerId = getPlayerId(player)
@@ -526,6 +546,19 @@ export default class MatchDetail extends Component {
     // 可以从 games 数据中推断比赛信息，或者从其他来源获取
     // 这里暂时返回默认值
     return '比赛详情'
+  }
+
+  // 获取滑动指示器的位置
+  getTabIndicatorLeft = () => {
+    const { activeTab } = this.state
+    // 计算每个 tab 的位置（每个 tab 占 33.333% 宽度）
+    const tabIndexMap = {
+      'enrollment': 0,
+      'games': 1,
+      'ranking': 2
+    }
+    const index = tabIndexMap[activeTab] || 0
+    return `${index * 33.333}%`
   }
 
   // 切换 Tab
@@ -709,6 +742,21 @@ export default class MatchDetail extends Component {
 
   // 点击 VS 或比分，打开比分输入对话框
   handleScoreClick = (game, index) => {
+    // 检查登录状态，未登录用户不能填写比分
+    const openid = getGlobalData('openid')
+    if (!openid) {
+      Taro.showToast({
+        title: '请先登录后再填写比分',
+        icon: 'none',
+        duration: 2000
+      })
+      setTimeout(() => {
+        Taro.navigateTo({
+          url: '/pages/login/index'
+        })
+      }, 2000)
+      return
+    }
     // 如果比分是0，不显示0，显示为空
     const score1 = game.score1 >= 0 ? game.score1 : -1
     const score2 = game.score2 >= 0 ? game.score2 : -1
@@ -747,6 +795,23 @@ export default class MatchDetail extends Component {
 
   // 保存比分
   handleSaveScore = async () => {
+    // 检查登录状态，未登录用户不能保存比分
+    const openid = getGlobalData('openid')
+    if (!openid) {
+      Taro.showToast({
+        title: '请先登录后再保存比分',
+        icon: 'none',
+        duration: 2000
+      })
+      this.handleScoreDialogClose()
+      setTimeout(() => {
+        Taro.navigateTo({
+          url: '/pages/login/index'
+        })
+      }, 2000)
+      return
+    }
+
     const { games, scoreDialogIndex, tempScore1, tempScore2, clubid } = this.state
     
     if (scoreDialogIndex < 0 || scoreDialogIndex >= games.length) {
@@ -779,7 +844,6 @@ export default class MatchDetail extends Component {
     this.setState({ savingScore: true })
 
     try {
-      const openid = getGlobalData('openid')
       
       // 获取 clubid，优先使用 state 中的，如果没有则从 game 数据中获取
       const actualClubid = clubid || game.clubid || game.clubId || null
@@ -824,7 +888,21 @@ export default class MatchDetail extends Component {
       const { clubid, matchId } = this.state
       if (clubid && matchId) {
         const data = await matchService.read(clubid, matchId)
-        const games = Array.isArray(data.data) ? data.data : []
+        
+        // 解析返回的数据结构：可能是数组（旧格式）或对象（新格式：{games, match}）
+        let games = []
+        let matchInfo = null
+        
+        if (Array.isArray(data.data)) {
+          // 旧格式：直接是 games 数组
+          games = data.data
+        } else if (data.data && data.data.games) {
+          // 新格式：包含 games 和 match 的对象
+          games = Array.isArray(data.data.games) ? data.data.games : []
+          matchInfo = data.data.match || null
+        } else {
+          games = []
+        }
         
         // 按 order 字段排序
         games.sort((a, b) => {
@@ -852,7 +930,8 @@ export default class MatchDetail extends Component {
         
         this.setState({ 
           games: updatedGames,
-          allGames: updatedGames // 同时更新原始数据
+          allGames: updatedGames, // 同时更新原始数据
+          matchInfo: matchInfo || this.state.matchInfo // 保留或更新比赛信息
         }, () => {
           // 如果有筛选条件，重新应用筛选
           this.applyFilter()
@@ -924,6 +1003,14 @@ export default class MatchDetail extends Component {
               排名
             </Text>
           </View>
+          {/* 滑动指示器 */}
+          <View 
+            className='tab-indicator'
+            style={{
+              left: this.getTabIndicatorLeft(),
+              width: '33.333%'
+            }}
+          />
         </View>
         
         {/* 比赛进度 - 仅在对阵界面显示 */}
@@ -952,6 +1039,17 @@ export default class MatchDetail extends Component {
                 <Text className='enrollment-total'>/ {this.state.enrollment.length}</Text>
               </View>
             </View>
+            {/* 比赛类型显示 */}
+            {this.state.matchInfo && this.state.matchInfo.type && (
+              <View className='enrollment-match-type'>
+                <Text className='enrollment-match-type-label'>比赛类型：</Text>
+                <Text className='enrollment-match-type-value'>
+                  {this.state.matchInfo.type === 'fixpair' || this.state.matchInfo.type === 'fix' ? '固定搭档' :
+                   this.state.matchInfo.type === 'group' ? '分组' :
+                   this.state.matchInfo.type === 'none' ? '无固定' : '未知'}
+                </Text>
+              </View>
+            )}
             {this.state.enrollment && this.state.enrollment.length > 0 ? (
               <View className='enrollment-list'>
                 {this.state.enrollment.map((item, index) => (
@@ -1071,8 +1169,15 @@ export default class MatchDetail extends Component {
                 {/* 主要内容区域 */}
                 <View className='game-card-content'>
                   {/* 左侧队伍 */}
-                  <View className='game-team'>
+                  <View className='game-team game-team-left'>
                     <View className='game-player-row'>
+                      <View className='game-player-name'>
+                        <View className='game-player-name-wrapper'>
+                          <Text className='game-player-name-text'>
+                            {game.player1?.name || '未知'}
+                          </Text>
+                        </View>
+                      </View>
                       {game.player1?.avatarValid && game.player1?.avatarUrl ? (
                         <Image 
                           className='game-player-avatar'
@@ -1096,16 +1201,16 @@ export default class MatchDetail extends Component {
                           </Text>
                         </View>
                       )}
-                      <View className='game-player-name'>
-                        <View className='game-player-name-wrapper'>
-                          <Text className='game-player-name-text'>
-                            {game.player1?.name || '未知'}
-                          </Text>
-                        </View>
-                      </View>
                     </View>
                     <View className='game-team-divider' />
                     <View className='game-player-row'>
+                      <View className='game-player-name'>
+                        <View className='game-player-name-wrapper'>
+                          <Text className='game-player-name-text'>
+                            {game.player2?.name || '未知'}
+                          </Text>
+                        </View>
+                      </View>
                       {game.player2?.avatarValid && game.player2?.avatarUrl ? (
                         <Image 
                           className='game-player-avatar'
@@ -1128,39 +1233,38 @@ export default class MatchDetail extends Component {
                           </Text>
                         </View>
                       )}
-                      <View className='game-player-name'>
-                        <View className='game-player-name-wrapper'>
-                          <Text className='game-player-name-text'>
-                            {game.player2?.name || '未知'}
-                          </Text>
-                        </View>
-                      </View>
                     </View>
                   </View>
                   
                   {/* 中间比分 */}
                   <View className='game-score-section'>
                     {isFinished ? (
-                      <View 
-                        className='game-score-display game-score-clickable'
-                        onLongPress={() => this.handleScoreClick(game, index)}
-                      >
-                        <Text className='game-score-winner'>{game.score1}</Text>
-                        <Text className='game-score-separator'>:</Text>
-                        <Text className='game-score-loser'>{game.score2}</Text>
+                      <View className='game-score-container'>
+                        <View 
+                          className='game-score-display game-score-clickable'
+                          onLongPress={() => this.handleScoreClick(game, index)}
+                        >
+                          <Text className='game-score-winner'>{game.score1}</Text>
+                          <Text className='game-score-separator'>:</Text>
+                          <Text className='game-score-loser'>{game.score2}</Text>
+                        </View>
+                        <Text className='game-score-hint'>长按修改比分</Text>
                       </View>
                     ) : (
-                      <View 
-                        className='game-score-vs-clickable'
-                        onClick={() => this.handleScoreClick(game, index)}
-                      >
-                        <Text className='game-score-vs'>VS</Text>
+                      <View className='game-score-container'>
+                        <View 
+                          className='game-score-vs-clickable'
+                          onClick={() => this.handleScoreClick(game, index)}
+                        >
+                          <Text className='game-score-vs'>VS</Text>
+                        </View>
+                        <Text className='game-score-hint'>点击填写比分</Text>
                       </View>
                     )}
                   </View>
                   
                   {/* 右侧队伍 */}
-                  <View className='game-team'>
+                  <View className='game-team game-team-right'>
                     <View className='game-player-row'>
                       {game.player3?.avatarValid && game.player3?.avatarUrl ? (
                         <Image 

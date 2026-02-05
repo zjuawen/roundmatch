@@ -29,13 +29,7 @@ export default class ClubList extends Component {
     const userInfo = getGlobalData('userInfo')
     console.log('ClubList initData, openid:', openid)
     
-    if (!openid) {
-      Taro.redirectTo({
-        url: '/pages/login/index'
-      })
-      return
-    }
-    
+    // 允许未登录用户查看页面，但不加载数据
     // 加载用户信息
     if (userInfo) {
       this.setState({
@@ -44,11 +38,14 @@ export default class ClubList extends Component {
       })
     }
     
-    // 如果 openid 已存在且与 state 中的不同，或者 clubs 为空，则重新加载
-    if (openid !== this.state.openid || this.state.clubs.length === 0) {
+    // 如果已登录且 openid 已存在且与 state 中的不同，或者 clubs 为空，则重新加载
+    if (openid && (openid !== this.state.openid || this.state.clubs.length === 0)) {
       this.setState({ openid })
       // 直接传递 openid，避免 setState 异步问题
       this.loadClubs(openid)
+    } else if (!openid) {
+      // 未登录状态，清空 openid
+      this.setState({ openid: null, clubs: [] })
     }
   }
 
@@ -173,7 +170,11 @@ export default class ClubList extends Component {
 
         {/* 俱乐部列表 */}
         <View className='page-body'>
-          {loading ? (
+          {!this.state.openid ? (
+            <View className='empty'>
+              请先登录以查看已加入的俱乐部。点击右上角头像进行登录。
+            </View>
+          ) : loading ? (
             <View className='loading'>加载中...</View>
           ) : clubs.length === 0 ? (
             <View className='empty'>

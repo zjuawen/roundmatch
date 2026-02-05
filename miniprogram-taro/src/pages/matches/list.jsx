@@ -14,19 +14,16 @@ export default class MatchList extends Component {
   }
 
   componentDidMount() {
+    // 允许未登录用户查看页面（显示空列表或提示）
     const openid = getGlobalData('openid')
-    if (!openid) {
-      Taro.redirectTo({
-        url: '/pages/login/index'
-      })
-      return
-    }
-    
-    // 从全局存储读取 clubid（如果是从俱乐部列表跳转过来的）
     const clubid = getGlobalData('selectedClubId')
     
     this.setState({ openid, clubid })
-    this.loadMatches(clubid, openid)
+    
+    // 只有登录后才加载数据
+    if (openid) {
+      this.loadMatches(clubid, openid)
+    }
   }
 
   componentDidShow() {
@@ -34,18 +31,16 @@ export default class MatchList extends Component {
     const openid = getGlobalData('openid')
     const clubid = getGlobalData('selectedClubId')
     
-    // 如果 openid 不存在，重定向到登录页
-    if (!openid) {
-      Taro.redirectTo({
-        url: '/pages/login/index'
-      })
-      return
-    }
-    
     // 如果 clubid 或 openid 有变化，重新加载数据
     if (clubid !== this.state.clubid || openid !== this.state.openid) {
       this.setState({ clubid, openid })
-      this.loadMatches(clubid, openid)
+      // 只有登录后才加载数据
+      if (openid) {
+        this.loadMatches(clubid, openid)
+      } else {
+        // 未登录时清空列表
+        this.setState({ matches: [] })
+      }
     }
   }
 
@@ -102,7 +97,7 @@ export default class MatchList extends Component {
   }
 
   render() {
-    const { matches, loading } = this.state
+    const { matches, loading, openid } = this.state
 
     return (
       <View className='match-list-page'>
@@ -110,7 +105,9 @@ export default class MatchList extends Component {
           <Text className='title'>比赛列表</Text>
         </View>
         
-        {loading ? (
+        {!openid ? (
+          <View className='empty'>请先登录以查看比赛列表。点击右上角头像进行登录。</View>
+        ) : loading ? (
           <View className='loading'>加载中...</View>
         ) : (
           <View className='match-list'>

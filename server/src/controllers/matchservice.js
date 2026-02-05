@@ -583,7 +583,26 @@ readMatch = async (clubid, matchid) => {
 
   console.log(games)
 
-  return games
+  // 查询 match 信息（包括 type）
+  let matchInfo = null
+  if (finalMatchid) {
+    try {
+      matchInfo = await sequelizeExecute(
+        db.collection('matches').findByPk(finalMatchid, {
+          attributes: ['_id', 'clubid', 'type', 'name'],
+          raw: true
+        })
+      )
+    } catch (error) {
+      console.error('查询 match 信息失败:', error)
+    }
+  }
+
+  // 返回 games 数组和 match 信息
+  return {
+    games: games,
+    match: matchInfo
+  }
 }
 
 //删除比赛数据

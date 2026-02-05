@@ -32,6 +32,13 @@ module.exports = {
 	 */
 	async getUnlimitedQRCode(scene, page, options = {}) {
 		try {
+			// 日志输出：小程序码指向的页面路径和参数
+			console.log('========== 生成小程序码 ==========')
+			console.log('页面路径 (page):', page || '未指定（使用默认首页）')
+			console.log('场景值 (scene):', scene)
+			console.log('完整路径:', page ? `${page}?scene=${encodeURIComponent(scene)}` : `首页?scene=${encodeURIComponent(scene)}`)
+			console.log('================================')
+			
 			// 获取 access_token
 			const tokenData = await wxappApi.ensureAccessToken()
 			const accessToken = tokenData.accessToken
@@ -112,6 +119,11 @@ module.exports = {
 
 			// 上传到对象存储（uploadFile 返回完整的 URL 字符串）
 			const qrcodeUrl = await uploadFile(tempFilePath, objectKey)
+			
+			// 日志输出：小程序码生成成功
+			console.log('小程序码生成成功')
+			console.log('小程序码URL:', qrcodeUrl)
+			console.log('================================')
 			
 			// 删除临时文件
 			try {
