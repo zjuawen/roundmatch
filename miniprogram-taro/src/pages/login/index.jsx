@@ -1,44 +1,150 @@
 import { Component } from 'react'
-import { View, Button, Image } from '@tarojs/components'
+import { View, Button, Image, Input } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { userService } from '../../services/api'
 import { saveGlobalData, getGlobalData } from '../../utils'
+import userUnloginImage from '../../assets/images/user-unlogin.png'
 import './index.scss'
+
+const defaultAvatarUrl = userUnloginImage
 
 export default class Login extends Component {
   state = {
-    avatarUrl: '/images/user-unlogin.png',
+    avatarUrl: defaultAvatarUrl,
+    nickname: '',
     userInfo: {},
-    canIUseGetUserProfile: false
+    returnUrl: null // 授权后返回的页面 URL
   }
 
   componentDidMount() {
-    // 如果已登录，自动跳转（但不要强制未登录用户跳转）
-    if (this.isLogin()) {
+    // 获取返回 URL 参数
+    const router = Taro.getCurrentInstance().router
+    const params = router?.params || {}
+    let returnUrl = params.returnUrl || null
+    
+    // 解码 returnUrl
+    if (returnUrl) {
+      try {
+        returnUrl = decodeURIComponent(returnUrl)
+      } catch (e) {
+        console.error('Failed to decode returnUrl:', e)
+      }
+    }
+    
+    console.log('Login page mounted, returnUrl:', returnUrl)
+    
+    // 保存返回 URL 到 state（解码后的）
+    this.setState({ returnUrl })
+
+    // 检查登录状态
+    const openid = getGlobalData('openid')
+    const userInfo = getGlobalData('userInfo')
+    const isLoggedIn = this.isLogin()
+    
+    console.log('Login status check:', { 
+      openid: !!openid, 
+      userInfo: !!userInfo, 
+      isLoggedIn, 
+      returnUrl,
+      openidValue: openid,
+      userInfoValue: userInfo
+    })
+
+    // 如果已登录（有 openid 和 userInfo），且有 returnUrl，直接跳转回原页面
+    if (isLoggedIn && returnUrl) {
+      console.log('Already logged in with returnUrl, redirecting...')
+      this.redirect(returnUrl)
+      return
+    }
+    
+    // 如果已登录但没有 returnUrl，跳转到默认页面
+    if (isLoggedIn && !returnUrl) {
+      console.log('Already logged in without returnUrl, redirecting to default...')
       this.redirect()
       return
     }
 
-    if (Taro.getUserProfile) {
-      this.setState({
-        canIUseGetUserProfile: true
-      })
-    }
+    // 如果有 returnUrl 但未完全登录，需要用户授权，不自动跳转
+    // 显示授权界面，等待用户操作
+    console.log('Not fully logged in, showing auth interface')
 
-    // 尝试静默登录（获取 openid），但不强制要求用户授权
-    // 这样可以让用户先浏览页面，需要时再授权
-    this.login()
+    // 如果有 returnUrl，说明用户需要授权，不自动跳转
+    // 如果没有 returnUrl，尝试静默登录
+    if (!returnUrl) {
+      console.log('No returnUrl, attempting silent login...')
+      this.login()
+    } else {
+      // 有 returnUrl 时，只尝试获取 openid（如果还没有），但不自动跳转
+      // 确保页面显示授权按钮
+      const currentOpenid = getGlobalData('openid')
+      console.log('Has returnUrl, current openid:', !!currentOpenid)
+      if (!currentOpenid) {
+        console.log('No openid, attempting login...')
+        this.login()
+      } else {
+        console.log('Has openid but no userInfo, waiting for user to authorize')
+      }
+    }
   }
 
   isLogin = () => {
-    return (getGlobalData('openid') != null) && (getGlobalData('userInfo') != null)
+    const openid = getGlobalData('openid')
+    const userInfo = getGlobalData('userInfo')
+    const result = (openid != null && openid !== false && openid !== '') && 
+                   (userInfo != null && userInfo !== false && userInfo !== '')
+    console.log('isLogin check:', { openid, userInfo, result })
+    return result
   }
 
-  redirect = () => {
-    // 跳转到 tabBar 页面需要使用 switchTab，不能使用 redirectTo
-    Taro.switchTab({
-      url: '/pages/clubs/list'
-    })
+  redirect = (returnUrl = null) => {
+    // 如果有返回 URL，跳转到返回页面
+    if (returnUrl) {
+      try {
+        // 解码 URL
+        const decodedUrl = decodeURIComponent(returnUrl)
+        // 检查是否是 tabBar 页面
+        if (decodedUrl.includes('/pages/clubs/list') || decodedUrl.includes('/pages/matches/list')) {
+          // tabBar 页面需要使用 switchTab
+          const tabBarUrl = decodedUrl.includes('/pages/clubs/list') ? '/pages/clubs/list' : '/pages/matches/list'
+          Taro.switchTab({
+            url: tabBarUrl
+          })
+        } else {
+          // 非 tabBar 页面，使用 redirectTo 或 navigateTo
+          // 如果包含参数，使用 navigateTo 保持页面栈
+          if (decodedUrl.includes('?')) {
+            Taro.redirectTo({
+              url: decodedUrl
+            }).catch(() => {
+              // 如果 redirectTo 失败（可能是 tabBar 页面），尝试 navigateTo
+              Taro.navigateTo({
+                url: decodedUrl
+              }).catch(() => {
+                // 如果都失败，跳转到默认页面
+                Taro.switchTab({
+                  url: '/pages/clubs/list'
+                })
+              })
+            })
+          } else {
+            Taro.redirectTo({
+              url: decodedUrl
+            })
+          }
+        }
+      } catch (error) {
+        console.error('跳转返回页面失败:', error)
+        // 跳转失败，跳转到默认页面
+        Taro.switchTab({
+          url: '/pages/clubs/list'
+        })
+      }
+    } else {
+      // 没有返回 URL，跳转到 tabBar 页面需要使用 switchTab，不能使用 redirectTo
+      Taro.switchTab({
+        url: '/pages/clubs/list'
+      })
+    }
   }
 
   login = async () => {
@@ -50,10 +156,16 @@ export default class Login extends Component {
       
       if (data.data && data.data.openid) {
         saveGlobalData('openid', data.data.openid)
-        // 如果同时获取到了用户信息，自动跳转
+        // 如果同时获取到了用户信息
         if (data.data && data.data.userInfo != null) {
           saveGlobalData('userInfo', data.data.userInfo)
-          this.redirect()
+          // 如果有 returnUrl，跳转回原页面；否则跳转到默认页面
+          const { returnUrl } = this.state
+          // 只有在没有 returnUrl 时才自动跳转（避免打断用户授权流程）
+          if (!returnUrl) {
+            this.redirect(null)
+          }
+          // 如果有 returnUrl，说明用户需要授权，不自动跳转，等待用户点击授权按钮
         }
         // 否则只保存 openid，不跳转，让用户主动授权获取用户信息
       }
@@ -63,123 +175,185 @@ export default class Login extends Component {
     }
   }
 
-  getUserProfile = async (e) => {
-    try {
-      // 使用 openType='getUserProfile' 时，用户信息在 e.detail.userInfo 中
-      // 不需要再次调用 Taro.getUserProfile
-      const userInfo = e.detail?.userInfo
-      
-      if (!userInfo) {
-        Taro.showToast({
-          title: '获取用户信息失败',
-          icon: 'none'
-        })
-        return
-      }
-      
-      console.log('获取到用户信息:', userInfo)
-      
-      let openid = getGlobalData('openid')
-      
-      // 如果没有 openid，先执行登录
-      if (!openid) {
-        console.log('没有 openid，执行登录...')
-        await this.login()
-        openid = getGlobalData('openid')
-        console.log('登录后获取到 openid:', openid)
-      }
-      
-      if (!openid) {
-        Taro.showToast({
-          title: '登录失败，请重试',
-          icon: 'none'
-        })
-        return
-      }
-      
-      if (openid && userInfo) {
-        console.log('开始更新用户信息，openid:', openid, 'userInfo:', userInfo)
-        
-        try {
-          const updateResult = await userService.update(openid, userInfo)
-          console.log('更新用户信息结果:', updateResult)
-          
-          // 检查更新结果，即使失败也继续执行
-          if (updateResult && updateResult.code === 0) {
-            console.log('更新用户信息成功')
-          } else {
-            console.warn('更新用户信息返回异常:', updateResult)
-          }
-        } catch (updateError) {
-          console.error('更新用户信息异常:', updateError)
-          // 即使更新失败，也继续执行后续逻辑
-        }
-        
-        // 保存用户信息到本地存储
-        try {
-          saveGlobalData('userInfo', userInfo)
-          console.log('用户信息已保存到本地存储')
-        } catch (saveError) {
-          console.error('保存用户信息失败:', saveError)
-        }
-        
-        // 跳转到俱乐部列表
-        try {
-          console.log('准备跳转到俱乐部列表')
-          this.redirect()
-        } catch (redirectError) {
-          console.error('跳转失败:', redirectError)
-          Taro.showToast({
-            title: '跳转失败，请重试',
-            icon: 'none'
-          })
-        }
-      } else {
-        console.error('缺少必要参数:', { openid, userInfo })
-        Taro.showToast({
-          title: '参数错误',
-          icon: 'none'
-        })
-      }
-    } catch (error) {
-      console.error('getUserProfile error:', error)
+  // 选择头像
+  onChooseAvatar = (e) => {
+    const { avatarUrl } = e.detail
+    console.log('选择头像:', avatarUrl)
+    this.setState({
+      avatarUrl: avatarUrl || defaultAvatarUrl
+    })
+  }
+
+  // 输入昵称
+  onNicknameInput = (e) => {
+    const nickname = e.detail.value
+    console.log('输入昵称:', nickname)
+    this.setState({
+      nickname: nickname
+    })
+  }
+
+  // 昵称输入完成（失焦）
+  onNicknameBlur = (e) => {
+    const nickname = e.detail.value
+    console.log('昵称输入完成:', nickname)
+    this.setState({
+      nickname: nickname
+    })
+  }
+
+  // 提交用户信息
+  handleSubmit = async () => {
+    const { avatarUrl, nickname } = this.state
+    
+    // 验证必填项
+    if (!nickname || nickname.trim() === '') {
       Taro.showToast({
-        title: error.message || '授权失败，请重试',
+        title: '请输入昵称',
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+
+    // 构建用户信息对象
+    const userInfo = {
+      avatarUrl: avatarUrl || defaultAvatarUrl,
+      nickName: nickname.trim()
+    }
+
+    console.log('提交用户信息:', userInfo)
+    
+    let openid = getGlobalData('openid')
+    
+    // 如果没有 openid，先执行登录
+    if (!openid) {
+      console.log('没有 openid，执行登录...')
+      await this.login()
+      openid = getGlobalData('openid')
+      console.log('登录后获取到 openid:', openid)
+    }
+    
+    if (!openid) {
+      Taro.showToast({
+        title: '登录失败，请重试',
+        icon: 'none'
+      })
+      return
+    }
+    
+    if (openid && userInfo) {
+      console.log('开始更新用户信息，openid:', openid, 'userInfo:', userInfo)
+      
+      try {
+        const updateResult = await userService.update(openid, userInfo)
+        console.log('更新用户信息结果:', updateResult)
+        
+        // 检查更新结果，即使失败也继续执行
+        if (updateResult && updateResult.code === 0) {
+          console.log('更新用户信息成功')
+        } else {
+          console.warn('更新用户信息返回异常:', updateResult)
+        }
+      } catch (updateError) {
+        console.error('更新用户信息异常:', updateError)
+        // 即使更新失败，也继续执行后续逻辑
+      }
+      
+      // 保存用户信息到本地存储
+      try {
+        saveGlobalData('userInfo', userInfo)
+        console.log('用户信息已保存到本地存储')
+      } catch (saveError) {
+        console.error('保存用户信息失败:', saveError)
+      }
+      
+      // 跳转到返回页面或默认页面
+      try {
+        const { returnUrl } = this.state
+        console.log('准备跳转，returnUrl:', returnUrl)
+        this.redirect(returnUrl)
+      } catch (redirectError) {
+        console.error('跳转失败:', redirectError)
+        Taro.showToast({
+          title: '跳转失败，请重试',
+          icon: 'none'
+        })
+      }
+    } else {
+      console.error('缺少必要参数:', { openid, userInfo })
+      Taro.showToast({
+        title: '参数错误',
         icon: 'none'
       })
     }
   }
 
   render() {
-    const { canIUseGetUserProfile } = this.state
+    const { avatarUrl, nickname, returnUrl } = this.state
+    const openid = getGlobalData('openid')
+    const userInfo = getGlobalData('userInfo')
+    
+    console.log('Login page render:', { 
+      returnUrl: !!returnUrl,
+      openid: !!openid,
+      userInfo: !!userInfo,
+      avatarUrl,
+      nickname
+    })
 
     return (
       <View className='login-page'>
         <View className='login-content'>
-          <Image 
-            className='avatar' 
-            src={this.state.avatarUrl || '/images/user-unlogin.png'}
-            onError={(e) => {
-              console.error('头像加载失败:', e)
-              this.setState({ avatarUrl: '/images/user-unlogin.png' })
-            }}
-          />
-          {canIUseGetUserProfile ? (
+          <View className='title-section'>
+            <View className='title-icon'>👤</View>
+            <View className='title-text'>完善个人信息</View>
+            <View className='title-desc'>请设置您的头像和昵称</View>
+          </View>
+          
+          <View className='avatar-wrapper'>
             <Button 
-              className='login-button' 
-              openType='getUserProfile' 
-              onGetUserProfile={this.getUserProfile}
+              className='avatar-button' 
+              openType='chooseAvatar'
+              onChooseAvatar={this.onChooseAvatar}
             >
-              授权登录
+              <Image 
+                className='avatar' 
+                src={avatarUrl || defaultAvatarUrl}
+                mode='aspectFill'
+                onError={(e) => {
+                  console.error('头像加载失败:', e)
+                  this.setState({ avatarUrl: defaultAvatarUrl })
+                }}
+              />
             </Button>
-          ) : (
-            <Button 
-              className='login-button' 
-              openType='getUserInfo' 
-              onGetUserInfo={this.getUserProfile}
-            >
-              授权登录
-            </Button>
+            <View className='avatar-hint'>点击选择头像</View>
+          </View>
+          
+          <View className='nickname-wrapper'>
+            <View className='nickname-label'>昵称</View>
+            <Input 
+              className='nickname-input' 
+              type='nickname'
+              // placeholder='请输入昵称'
+              value={nickname}
+              onInput={this.onNicknameInput}
+              onBlur={this.onNicknameBlur}
+              maxLength={20}
+            />
+          </View>
+          
+          <Button 
+            className='login-button' 
+            onClick={this.handleSubmit}
+          >
+            完成授权
+          </Button>
+          
+          {returnUrl && (
+            <View className='return-hint'>
+              授权完成后将自动返回原页面
+            </View>
           )}
         </View>
       </View>

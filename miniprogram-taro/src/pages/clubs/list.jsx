@@ -3,6 +3,7 @@ import { View, Text, Image, Input } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { clubService } from '../../services/api'
 import { getGlobalData, saveGlobalData } from '../../utils'
+import userUnloginImage from '../../assets/images/user-unlogin.png'
 import './list.scss'
 
 export default class ClubList extends Component {
@@ -10,7 +11,7 @@ export default class ClubList extends Component {
     clubs: [],
     loading: false,
     openid: null,
-    avatarUrl: '/assets/images/user-unlogin.png',
+    avatarUrl: userUnloginImage,
     userInfo: null,
     searchKeyword: ''
   }
@@ -33,7 +34,7 @@ export default class ClubList extends Component {
     // 加载用户信息
     if (userInfo) {
       this.setState({
-        avatarUrl: userInfo.avatarUrl || '/images/user-unlogin.png',
+        avatarUrl: userInfo.avatarUrl || userUnloginImage,
         userInfo
       })
     }
@@ -150,11 +151,11 @@ export default class ClubList extends Component {
         <View className='page-header'>
           <Image 
             className='avatar-user' 
-            src={avatarUrl || '/assets/images/user-unlogin.png'}
+            src={avatarUrl || userUnloginImage}
             onClick={this.handleUserAvatarClick}
             onError={(e) => {
               console.error('用户头像加载失败:', avatarUrl, e)
-              this.setState({ avatarUrl: '/assets/images/user-unlogin.png' })
+              this.setState({ avatarUrl: userUnloginImage })
             }}
           />
           <View className='search-container'>
@@ -191,28 +192,30 @@ export default class ClubList extends Component {
                     onClick={() => this.handleClubClick(club)}
                   >
                     <View className='club-content'>
-                      <Image 
-                        className='club-avatar' 
-                        src={club.logo || '/assets/images/default-club-logo.svg'}
-                        mode='aspectFit'
-                        onError={(e) => {
-                          console.error('俱乐部 Logo 加载失败:', club.logo, e)
-                          // 如果加载失败，更新状态使用默认图片
-                          const updatedClubs = this.state.clubs.map((c, idx) => 
-                            idx === index 
-                              ? { ...c, logo: '/assets/images/default-club-logo.svg' }
-                              : c
-                          )
-                          this.setState({ clubs: updatedClubs })
-                        }}
-                      />
-                      {club.vip && (
+                      <View className='club-avatar-wrapper'>
                         <Image 
-                          className='vip-icon' 
-                          src='/assets/images/vip.svg'
+                          className='club-avatar' 
+                          src={club.logo || '/assets/images/default-club-logo.svg'}
                           mode='aspectFit'
+                          onError={(e) => {
+                            console.error('俱乐部 Logo 加载失败:', club.logo, e)
+                            // 如果加载失败，更新状态使用默认图片
+                            const updatedClubs = this.state.clubs.map((c, idx) => 
+                              idx === index 
+                                ? { ...c, logo: '/assets/images/default-club-logo.svg' }
+                                : c
+                            )
+                            this.setState({ clubs: updatedClubs })
+                          }}
                         />
-                      )}
+                        {(club.vip === 1 || club.vip === true || club.vip === '1') && (
+                          <Image 
+                            className='vip-icon' 
+                            src='/assets/images/vip.svg'
+                            mode='aspectFit'
+                          />
+                        )}
+                      </View>
                       <Text className='club-name'>{club.wholeName}</Text>
                       <Text className='club-shortname'>[ {club.shortName} ]</Text>
                       {club.owner && (

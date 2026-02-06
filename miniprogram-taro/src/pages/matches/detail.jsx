@@ -2,7 +2,7 @@ import { Component } from 'react'
 import { View, Text, Image, Input, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
 import { matchService, gameService } from '../../services/api'
-import { getGlobalData, safeNavigateBack } from '../../utils'
+import { getGlobalData, saveGlobalData, safeNavigateBack } from '../../utils'
 import { generateAvatarColor, getAvatarText } from '../../utils/imageUtils'
 import './detail.scss'
 
@@ -49,6 +49,49 @@ export default class MatchDetail extends Component {
     // 允许未登录用户查看比赛详情（只读模式）
     // 未登录时，某些操作（如填写比分）会被禁用
     this.loadMatch()
+  }
+
+  componentDidShow() {
+    // 检查是否有待处理的填写比分操作（从授权页面返回后）
+    const pendingAction = getGlobalData('pendingScoreAction')
+    
+    if (pendingAction) {
+      try {
+        const actionData = JSON.parse(pendingAction)
+        if (actionData.action === 'score' && actionData.gameIndex !== undefined) {
+          const gameIndex = parseInt(actionData.gameIndex)
+          const games = this.state.games || []
+          
+          // 检查登录和授权状态
+          const openid = getGlobalData('openid')
+          const userInfo = getGlobalData('userInfo')
+          
+          if (openid && userInfo && gameIndex >= 0 && gameIndex < games.length) {
+            // 授权完成，继续执行填写比分的操作
+            const game = games[gameIndex]
+            const score1 = game.score1 >= 0 ? game.score1 : -1
+            const score2 = game.score2 >= 0 ? game.score2 : -1
+            
+            this.setState({
+              scoreDialogShow: true,
+              scoreDialogIndex: gameIndex,
+              tempScore1: score1 > 0 ? String(score1) : '',
+              tempScore2: score2 > 0 ? String(score2) : ''
+            })
+            
+            // 清除待处理操作标记
+            saveGlobalData('pendingScoreAction', null)
+          } else {
+            // 如果授权未完成，清除待处理操作
+            saveGlobalData('pendingScoreAction', null)
+          }
+        }
+      } catch (error) {
+        console.error('处理待处理操作失败:', error)
+        // 清除无效的待处理操作
+        saveGlobalData('pendingScoreAction', null)
+      }
+    }
   }
 
   loadMatch = async () => {
@@ -742,21 +785,54 @@ export default class MatchDetail extends Component {
 
   // 点击 VS 或比分，打开比分输入对话框
   handleScoreClick = (game, index) => {
-    // 检查登录状态，未登录用户不能填写比分
+    // 检查登录状态和授权状态
     const openid = getGlobalData('openid')
-    if (!openid) {
-      Taro.showToast({
-        title: '请先登录后再填写比分',
-        icon: 'none',
-        duration: 2000
+    const userInfo = getGlobalData('userInfo')
+    
+    // 如果没有 openid 或没有 userInfo，需要先授权
+    if (!openid || !userInfo) {
+      Taro.showModal({
+        title: '需要授权',
+        content: '填写比分需要先授权获取微信用户信息，是否前往授权？',
+        confirmText: '前往授权',
+        cancelText: '取消',
+        success: (res) => {
+          if (res.confirm) {
+            // 保存待处理的操作信息到全局存储
+            const actionData = {
+              action: 'score',
+              gameIndex: index,
+              matchId: this.state.matchId,
+              clubid: this.state.clubid
+            }
+            saveGlobalData('pendingScoreAction', JSON.stringify(actionData))
+            
+            // 保存当前页面信息，用于授权后返回
+            const { matchId, clubid } = this.state
+            const returnUrl = `/pages/matches/detail?clubid=${clubid || ''}&id=${matchId || ''}`
+            
+            console.log('准备跳转到登录页面，returnUrl:', returnUrl)
+            
+            // 跳转到登录页面，传递返回参数
+            Taro.navigateTo({
+              url: `/pages/login/index?returnUrl=${encodeURIComponent(returnUrl)}`,
+              success: () => {
+                console.log('跳转到登录页面成功')
+              },
+              fail: (err) => {
+                console.error('跳转到登录页面失败:', err)
+                Taro.showToast({
+                  title: '跳转失败，请重试',
+                  icon: 'none'
+                })
+              }
+            })
+          }
+        }
       })
-      setTimeout(() => {
-        Taro.navigateTo({
-          url: '/pages/login/index'
-        })
-      }, 2000)
       return
     }
+    
     // 如果比分是0，不显示0，显示为空
     const score1 = game.score1 >= 0 ? game.score1 : -1
     const score2 = game.score2 >= 0 ? game.score2 : -1
@@ -1246,7 +1322,7 @@ export default class MatchDetail extends Component {
                           <Text className='game-score-separator'>:</Text>
                           <Text className='game-score-loser'>{game.score2}</Text>
                         </View>
-                        <Text className='game-score-hint'>长按修改比分</Text>
+                        <Text className='game-score-hint'>长按修改</Text>
                       </View>
                     ) : (
                       <View className='game-score-container'>
@@ -1256,7 +1332,7 @@ export default class MatchDetail extends Component {
                         >
                           <Text className='game-score-vs'>VS</Text>
                         </View>
-                        <Text className='game-score-hint'>点击填写比分</Text>
+                        <Text className='game-score-hint'>点击填写</Text>
                       </View>
                     )}
                   </View>
