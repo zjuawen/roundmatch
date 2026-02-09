@@ -320,12 +320,16 @@
 /* 左侧序号徽章 */
 .game-number-badge {
   width: 72rpx;
+  min-width: 72rpx;
+  max-width: 72rpx;
   background: linear-gradient(180deg, #0478F3 0%, #005A9B 100%);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 24rpx 0;
+  flex-shrink: 0;
+  box-sizing: border-box;
 }
 
 .game-number-text {
