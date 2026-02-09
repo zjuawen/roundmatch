@@ -57,6 +57,8 @@ exports.main = async (request, result) => {
     data = await readUserConfig(event.openid, key)
   } else if (action == 'isVip') {
     data = await isUserVip(event.openid)
+  } else if (action == 'linkPlayer') {
+    data = await linkPlayer(event.playerId, event.openid, event.clubid)
   }
 
   console.log('userService return:')
@@ -288,6 +290,70 @@ isUserVip = async (openid) => {
     vip = false
   }
   return vip
+}
+
+// 关联选手和微信用户
+linkPlayer = async (playerId, openid, clubid) => {
+  console.log('linkPlayer: playerId=' + playerId + ', openid=' + openid + ', clubid=' + clubid)
+  
+  if (!playerId || !openid) {
+    throw new Error('参数不完整')
+  }
+
+  // 检查选手是否存在
+  const player = await sequelizeExecute(
+    db.collection('players').findOne({
+      where: {
+        _id: playerId
+      },
+      raw: true
+    })
+  )
+
+  if (!player) {
+    throw new Error('选手不存在')
+  }
+
+  // 如果提供了 clubid，验证选手是否属于该俱乐部
+  if (clubid && player.clubid !== clubid) {
+    throw new Error('选手不属于该俱乐部')
+  }
+
+  // 检查该 openid 是否已经关联了其他选手（在同一俱乐部内）
+  if (clubid) {
+    const existingPlayer = await sequelizeExecute(
+      db.collection('players').findOne({
+        where: {
+          openid: openid,
+          clubid: clubid,
+          _id: { [Op.ne]: playerId } // 排除当前选手
+        },
+        raw: true
+      })
+    )
+
+    if (existingPlayer) {
+      throw new Error('该微信账号已关联其他选手')
+    }
+  }
+
+  // 更新选手的 openid
+  const updateResult = await sequelizeExecute(
+    db.collection('players').update({
+      openid: openid
+    }, {
+      where: {
+        _id: playerId
+      }
+    })
+  )
+
+  console.log('linkPlayer result:', updateResult)
+
+  return {
+    success: true,
+    message: '关联成功'
+  }
 }
 
 readUserDetail = async (openid) => {

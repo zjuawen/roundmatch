@@ -1058,6 +1058,140 @@
   }
 }
 
+/* 选手选择对话框 */
+.player-select-dialog-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.player-select-dialog {
+  width: 600rpx;
+  max-height: 80vh;
+  background-color: #fff;
+  border-radius: 16rpx;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.player-select-dialog-header {
+  padding: 40rpx 30rpx 20rpx;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.player-select-dialog-title {
+  font-size: 36rpx;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 12rpx;
+  text-align: center;
+}
+
+.player-select-dialog-desc {
+  font-size: 26rpx;
+  color: #666;
+  text-align: center;
+  line-height: 1.6;
+}
+
+.player-select-dialog-content {
+  padding: 30rpx;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.player-select-item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  background-color: #f8f9fa;
+  border-radius: 12rpx;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+  
+  &:active {
+    background-color: #e9ecef;
+    border-color: #667eea;
+  }
+  
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+.player-select-avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  margin-right: 24rpx;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.player-select-avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+}
+
+.player-select-avatar-text {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.player-select-avatar-text-content {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #fff;
+}
+
+.player-select-name {
+  font-size: 32rpx;
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+}
+
+.player-select-dialog-footer {
+  padding: 20rpx 30rpx 30rpx;
+  border-top: 1px solid #f0f0f0;
+  display: flex;
+  justify-content: center;
+}
+
+.player-select-dialog-btn {
+  padding: 20rpx 60rpx;
+  border-radius: 8rpx;
+  font-size: 32rpx;
+  border: none;
+  
+  &::after {
+    border: none;
+  }
+}
+
+.player-select-dialog-btn-cancel {
+  background-color: #f5f5f5;
+  color: #666;
+  
+  &:active {
+    background-color: #e0e0e0;
+  }
+}
+
 /* 筛选条件显示 */
 .filter-bar {
   position: fixed;

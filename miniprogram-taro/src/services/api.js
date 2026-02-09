@@ -79,6 +79,14 @@ export const userService = {
       openid, 
       userInfo: JSON.stringify(userInfo) 
     })
+  },
+  linkPlayer: (playerId, openid, clubid) => {
+    return api.get('api/userservice', {
+      action: 'linkPlayer',
+      playerId,
+      openid,
+      clubid: clubid || null
+    })
   }
 }
 

@@ -549,7 +549,7 @@ readMatch = async (clubid, matchid) => {
 
   players = await sequelizeExecute(
     db.collection('players').findAll({
-      attributes: ['_id', 'name', 'avatarUrl'],
+      attributes: ['_id', 'name', 'avatarUrl', 'openid'],
       where: {
         _id: {
           [Op.in]: players
@@ -575,7 +575,8 @@ readMatch = async (clubid, matchid) => {
       if (foundPlayer) {
         game['player' + i] = {
           ...foundPlayer,
-          avatarValid: foundPlayer.avatarValid !== undefined ? foundPlayer.avatarValid : true
+          avatarValid: foundPlayer.avatarValid !== undefined ? foundPlayer.avatarValid : true,
+          openid: foundPlayer.openid || null
         }
       }
     }
@@ -1120,7 +1121,7 @@ exports.getGames = async (request, result) => {
     if (playerIds.length > 0) {
       players = await sequelizeExecute(
         db.collection('players').findAll({
-          attributes: ['_id', 'name', 'avatarurl'],
+          attributes: ['_id', 'name', 'avatarurl', 'openid'],
           where: {
             _id: {
               [Op.in]: playerIds
@@ -1138,7 +1139,8 @@ exports.getGames = async (request, result) => {
         return {
           _id: player._id,
           name: player.name,
-          avatarUrl: player.avatarurl || player.avatarUrl || ''
+          avatarUrl: player.avatarurl || player.avatarUrl || '',
+          openid: player.openid || null
         }
       })
       
@@ -1157,7 +1159,8 @@ exports.getGames = async (request, result) => {
         _id: player._id,
         name: player.name || '未知',
         avatarUrl: player.avatarUrl || '',
-        avatarValid: player.avatarValid !== undefined ? player.avatarValid : true
+        avatarValid: player.avatarValid !== undefined ? player.avatarValid : true,
+        openid: player.openid || null
       }
     })
 
@@ -2540,7 +2543,8 @@ getRankingForMiniProgram = async (matchId) => {
         _id: player._id,
         name: player.name || '未知',
         avatarUrl: player.avatarUrl || '',
-        avatarValid: player.avatarValid !== undefined ? player.avatarValid : true
+        avatarValid: player.avatarValid !== undefined ? player.avatarValid : true,
+        openid: player.openid || null
       }
     })
 

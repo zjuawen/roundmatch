@@ -1,7 +1,7 @@
 import { Component } from 'react'
 import { View, Text, Image, Input, Button } from '@tarojs/components'
 import Taro from '@tarojs/taro'
-import { matchService, gameService } from '../../services/api'
+import { matchService, gameService, userService } from '../../services/api'
 import { getGlobalData, saveGlobalData, safeNavigateBack } from '../../utils'
 import { generateAvatarColor, getAvatarText } from '../../utils/imageUtils'
 import './detail.scss'
@@ -37,7 +37,11 @@ export default class MatchDetail extends Component {
     menuShow: false,
     menuPlayerId: null,
     menuPlayerName: null,
-    menuPosition: { x: 0, y: 0 }
+    menuPosition: { x: 0, y: 0 },
+    // 用户验证和选择
+    playerSelectDialogShow: false, // 选手选择对话框
+    unlinkedPlayers: [], // 未关联微信用户的选手列表
+    pendingScoreData: null // 待保存的比分数据（等待用户选择选手后保存）
   }
 
   componentDidMount() {
@@ -833,6 +837,36 @@ export default class MatchDetail extends Component {
       return
     }
     
+    // 检查用户是否是本次比赛的参赛者
+    const isParticipant = this.checkUserIsParticipant()
+    
+    if (!isParticipant) {
+      // 如果不是参赛者，检查是否有未关联微信用户的选手
+      const unlinkedPlayers = this.getUnlinkedPlayers()
+      
+      if (unlinkedPlayers.length > 0) {
+        // 有未关联的选手，弹出选择对话框
+        // 保存当前要打开的比赛信息，选择选手后打开比分对话框
+        this.setState({
+          playerSelectDialogShow: true,
+          unlinkedPlayers: unlinkedPlayers,
+          pendingScoreData: {
+            gameIndex: index
+          }
+        })
+        return
+      } else {
+        // 没有未关联的选手，提示用户无权操作
+        Taro.showToast({
+          title: '您不是本次比赛的参赛者，无法填写比分',
+          icon: 'none',
+          duration: 3000
+        })
+        return
+      }
+    }
+    
+    // 用户是参赛者，打开比分对话框
     // 如果比分是0，不显示0，显示为空
     const score1 = game.score1 >= 0 ? game.score1 : -1
     const score2 = game.score2 >= 0 ? game.score2 : -1
@@ -867,6 +901,57 @@ export default class MatchDetail extends Component {
       tempScore1: '',
       tempScore2: ''
     })
+  }
+
+  // 检查用户是否是本次比赛的参赛者
+  checkUserIsParticipant = () => {
+    const openid = getGlobalData('openid')
+    if (!openid) {
+      return false
+    }
+
+    const { allGames } = this.state
+    
+    // 检查所有 games 中的 player1-player4 是否包含当前用户的 openid
+    for (const game of allGames) {
+      for (let i = 1; i <= 4; i++) {
+        const player = game[`player${i}`]
+        if (player && player.openid === openid) {
+          return true
+        }
+      }
+    }
+    
+    return false
+  }
+
+  // 获取未关联微信用户的选手列表
+  getUnlinkedPlayers = () => {
+    const { allGames } = this.state
+    const unlinkedPlayers = []
+    const playerMap = new Map() // 用于去重
+    
+    // 遍历所有 games，找出未关联微信用户的选手
+    for (const game of allGames) {
+      for (let i = 1; i <= 4; i++) {
+        const player = game[`player${i}`]
+        if (player && player._id) {
+          // 检查选手是否已关联微信用户（openid 为空或 null）
+          const hasOpenid = player.openid && player.openid.trim() !== ''
+          if (!hasOpenid && !playerMap.has(player._id)) {
+            playerMap.set(player._id, player)
+            unlinkedPlayers.push({
+              _id: player._id,
+              name: player.name || '未知',
+              avatarUrl: player.avatarUrl || '',
+              avatarValid: player.avatarValid !== undefined ? player.avatarValid : true
+            })
+          }
+        }
+      }
+    }
+    
+    return unlinkedPlayers
   }
 
   // 保存比分
@@ -917,12 +1002,21 @@ export default class MatchDetail extends Component {
       return
     }
 
+    // 直接保存比分（验证已在打开对话框时完成）
+    await this.doSaveScore(score1, score2, scoreDialogIndex)
+  }
+
+  // 执行保存比分的操作
+  doSaveScore = async (score1, score2, gameIndex) => {
+    const { games, clubid } = this.state
+    const game = games[gameIndex]
+    
     this.setState({ savingScore: true })
 
     try {
-      
       // 获取 clubid，优先使用 state 中的，如果没有则从 game 数据中获取
       const actualClubid = clubid || game.clubid || game.clubId || null
+      const openid = getGlobalData('openid')
       
       // 准备游戏数据
       const gamedata = {
@@ -937,7 +1031,7 @@ export default class MatchDetail extends Component {
 
       // 更新本地状态
       const updatedGames = games.map((g, idx) => {
-        if (idx === scoreDialogIndex) {
+        if (idx === gameIndex) {
           return {
             ...g,
             score1: score1,
@@ -961,34 +1055,34 @@ export default class MatchDetail extends Component {
       this.handleScoreDialogClose()
 
       // 重新加载比赛数据以更新进度（不重新检查头像，只更新比分）
-      const { clubid, matchId } = this.state
+      const { matchId } = this.state
       if (clubid && matchId) {
         const data = await matchService.read(clubid, matchId)
         
         // 解析返回的数据结构：可能是数组（旧格式）或对象（新格式：{games, match}）
-        let games = []
+        let newGames = []
         let matchInfo = null
         
         if (Array.isArray(data.data)) {
           // 旧格式：直接是 games 数组
-          games = data.data
+          newGames = data.data
         } else if (data.data && data.data.games) {
           // 新格式：包含 games 和 match 的对象
-          games = Array.isArray(data.data.games) ? data.data.games : []
+          newGames = Array.isArray(data.data.games) ? data.data.games : []
           matchInfo = data.data.match || null
         } else {
-          games = []
+          newGames = []
         }
         
         // 按 order 字段排序
-        games.sort((a, b) => {
+        newGames.sort((a, b) => {
           const orderA = a.order || 0
           const orderB = b.order || 0
           return orderA - orderB
         })
         
         // 保留已有的头像有效性状态，只更新比分
-        const updatedGames = games.map(newGame => {
+        const updatedGames = newGames.map(newGame => {
           const oldGame = this.state.games.find(g => g._id === newGame._id)
           if (oldGame) {
             // 保留头像有效性状态
@@ -1028,6 +1122,67 @@ export default class MatchDetail extends Component {
     }
   }
 
+  // 选择选手并关联
+  handleSelectPlayer = async (selectedPlayer) => {
+    const openid = getGlobalData('openid')
+    const { pendingScoreData, clubid, games } = this.state
+    
+    if (!openid || !selectedPlayer || !pendingScoreData) {
+      Taro.showToast({
+        title: '参数错误',
+        icon: 'none'
+      })
+      return
+    }
+
+    try {
+      // 调用 API 关联选手和微信用户
+      await userService.linkPlayer(selectedPlayer._id, openid, clubid)
+      
+      // 关闭选择对话框
+      this.setState({
+        playerSelectDialogShow: false,
+        unlinkedPlayers: [],
+        pendingScoreData: null
+      })
+
+      // 重新加载比赛数据以更新选手关联信息
+      const { matchId } = this.state
+      if (clubid && matchId) {
+        await this.loadMatch()
+      }
+
+      // 关联成功后，打开比分对话框
+      const gameIndex = pendingScoreData.gameIndex
+      if (gameIndex >= 0 && gameIndex < games.length) {
+        const game = games[gameIndex]
+        const score1 = game.score1 >= 0 ? game.score1 : -1
+        const score2 = game.score2 >= 0 ? game.score2 : -1
+        
+        this.setState({
+          scoreDialogShow: true,
+          scoreDialogIndex: gameIndex,
+          tempScore1: score1 > 0 ? String(score1) : '',
+          tempScore2: score2 > 0 ? String(score2) : ''
+        })
+      }
+    } catch (error) {
+      console.error('关联选手失败:', error)
+      Taro.showToast({
+        title: '关联失败，请重试',
+        icon: 'none'
+      })
+    }
+  }
+
+  // 关闭选手选择对话框
+  handlePlayerSelectDialogClose = () => {
+    this.setState({
+      playerSelectDialogShow: false,
+      unlinkedPlayers: [],
+      pendingScoreData: null
+    })
+  }
 
   render() {
     const { games, loading } = this.state
@@ -1640,6 +1795,55 @@ export default class MatchDetail extends Component {
               </Text>
               <View className='filter-clear' onClick={this.handleClearFilter}>
                 <Text className='filter-clear-text'>清除</Text>
+              </View>
+            </View>
+          </View>
+        )}
+
+        {/* 选手选择对话框 */}
+        {this.state.playerSelectDialogShow && this.state.unlinkedPlayers.length > 0 && (
+          <View className='player-select-dialog-mask' onClick={this.handlePlayerSelectDialogClose}>
+            <View className='player-select-dialog' onClick={(e) => e.stopPropagation()}>
+              <View className='player-select-dialog-header'>
+                <Text className='player-select-dialog-title'>选择您的身份</Text>
+                <Text className='player-select-dialog-desc'>您不是本次比赛的参赛者，请选择您对应的选手身份</Text>
+              </View>
+              <View className='player-select-dialog-content'>
+                {this.state.unlinkedPlayers.map((player, index) => (
+                  <View 
+                    key={player._id || index}
+                    className='player-select-item'
+                    onClick={() => this.handleSelectPlayer(player)}
+                  >
+                    <View className='player-select-avatar'>
+                      {player.avatarValid && player.avatarUrl && player.avatarUrl.trim() !== '' ? (
+                        <Image 
+                          className='player-select-avatar-image'
+                          src={player.avatarUrl}
+                          mode='aspectFill'
+                        />
+                      ) : (
+                        <View
+                          className='player-select-avatar-text'
+                          style={{ backgroundColor: generateAvatarColor(player.name || '') }}
+                        >
+                          <Text className='player-select-avatar-text-content'>
+                            {getAvatarText(player.name || '')}
+                          </Text>
+                        </View>
+                      )}
+                    </View>
+                    <Text className='player-select-name'>{player.name || '未知'}</Text>
+                  </View>
+                ))}
+              </View>
+              <View className='player-select-dialog-footer'>
+                <Button 
+                  className='player-select-dialog-btn player-select-dialog-btn-cancel'
+                  onClick={this.handlePlayerSelectDialogClose}
+                >
+                  取消
+                </Button>
               </View>
             </View>
           </View>
