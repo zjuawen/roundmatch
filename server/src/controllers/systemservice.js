@@ -62,35 +62,45 @@ isAuditing = async () => {
 }
 
 getNotices = async (openid, page) => {
-  let notices = await sequelizeExecute(
-    db.collection('notices').findAll({
-      where: {
-        page: page,
-        enable: {
-          [Op.not]: false
-        }
-      },
-      attributes: {
-        exclude: ['enable', 'page', 'createDate', 'updateTime']
-      },
-      order: [
-        ['order', 'DESC']
-      ],
-      raw: true
+  try {
+    let notices = await sequelizeExecute(
+      db.collection('notices').findAll({
+        where: {
+          page: page,
+          enable: {
+            [Op.ne]: 0  // PostgreSQL 中 enable 可能是 INTEGER 类型，0=禁用，1=启用
+          }
+        },
+        attributes: {
+          exclude: ['enable', 'page', 'createDate', 'updateTime']
+        },
+        order: [
+          ['order', 'DESC']
+        ],
+        raw: true
+      })
+    )
+
+    console.log('getNotices result:', notices)
+
+    // 处理查询结果可能为 null 的情况
+    if (!notices || !Array.isArray(notices)) {
+      return []
+    }
+
+    let data = notices.map(a => {
+      // console.log(a)
+      a.title = a.content
+      delete a.content
+      // console.log(a)
+      return a
     })
-  )
-
-  console.log(notices)
-
-  let data = notices.map(a => {
-    // console.log(a)
-    a.title = a.content
-    delete a.content
-    // console.log(a)
-    return a
-  })
-  return data
-
+    return data
+  } catch (error) {
+    console.error('getNotices error:', error)
+    // 查询失败时返回空数组
+    return []
+  }
 }
 
 

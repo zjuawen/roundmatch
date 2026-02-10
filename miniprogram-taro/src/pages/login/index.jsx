@@ -13,10 +13,15 @@ export default class Login extends Component {
     avatarUrl: defaultAvatarUrl,
     nickname: '',
     userInfo: {},
-    returnUrl: null // 授权后返回的页面 URL
+    returnUrl: null, // 授权后返回的页面 URL
+    checking: true // 正在检查登录状态
   }
 
   componentDidMount() {
+    this.initLogin()
+  }
+
+  initLogin = async () => {
     // 获取返回 URL 参数
     const router = Taro.getCurrentInstance().router
     const params = router?.params || {}
@@ -34,21 +39,24 @@ export default class Login extends Component {
     console.log('Login page mounted, returnUrl:', returnUrl)
     
     // 保存返回 URL 到 state（解码后的）
-    this.setState({ returnUrl })
+    this.setState({ returnUrl, checking: true })
 
+    // 先尝试静默登录获取 openid
+    const { silentLogin } = await import('../../utils')
+    let openid = await silentLogin()
+    
     // 检查登录状态
-    const openid = getGlobalData('openid')
     const userInfo = getGlobalData('userInfo')
-    const isLoggedIn = this.isLogin()
+    const isLoggedIn = openid && userInfo && userInfo.name
     
     console.log('Login status check:', { 
       openid: !!openid, 
       userInfo: !!userInfo, 
       isLoggedIn, 
-      returnUrl,
-      openidValue: openid,
-      userInfoValue: userInfo
+      returnUrl
     })
+
+    this.setState({ checking: false })
 
     // 如果已登录（有 openid 和 userInfo），且有 returnUrl，直接跳转回原页面
     if (isLoggedIn && returnUrl) {
@@ -64,26 +72,14 @@ export default class Login extends Component {
       return
     }
 
-    // 如果有 returnUrl 但未完全登录，需要用户授权，不自动跳转
+    // 如果有 openid 但没有 userInfo，需要用户授权获取用户信息
     // 显示授权界面，等待用户操作
-    console.log('Not fully logged in, showing auth interface')
-
-    // 如果有 returnUrl，说明用户需要授权，不自动跳转
-    // 如果没有 returnUrl，尝试静默登录
-    if (!returnUrl) {
-      console.log('No returnUrl, attempting silent login...')
-      this.login()
-    } else {
-      // 有 returnUrl 时，只尝试获取 openid（如果还没有），但不自动跳转
-      // 确保页面显示授权按钮
-      const currentOpenid = getGlobalData('openid')
-      console.log('Has returnUrl, current openid:', !!currentOpenid)
-      if (!currentOpenid) {
-        console.log('No openid, attempting login...')
-        this.login()
-      } else {
-        console.log('Has openid but no userInfo, waiting for user to authorize')
-      }
+    if (openid && !userInfo) {
+      console.log('Has openid but no userInfo, showing auth interface')
+      // 页面会显示授权界面
+    } else if (!openid) {
+      console.log('No openid, showing auth interface')
+      // 页面会显示授权界面
     }
   }
 
@@ -103,9 +99,12 @@ export default class Login extends Component {
         // 解码 URL
         const decodedUrl = decodeURIComponent(returnUrl)
         // 检查是否是 tabBar 页面
-        if (decodedUrl.includes('/pages/clubs/list') || decodedUrl.includes('/pages/matches/list')) {
+        if (decodedUrl.includes('/pages/matches/list') || decodedUrl.includes('/pages/profile/index')) {
           // tabBar 页面需要使用 switchTab
-          const tabBarUrl = decodedUrl.includes('/pages/clubs/list') ? '/pages/clubs/list' : '/pages/matches/list'
+          let tabBarUrl = '/pages/matches/list'
+          if (decodedUrl.includes('/pages/profile/index')) {
+            tabBarUrl = '/pages/profile/index'
+          }
           Taro.switchTab({
             url: tabBarUrl
           })
@@ -116,13 +115,13 @@ export default class Login extends Component {
             Taro.redirectTo({
               url: decodedUrl
             }).catch(() => {
-              // 如果 redirectTo 失败（可能是 tabBar 页面），尝试 navigateTo
+              // 如果 redirectTo 失败，尝试 navigateTo
               Taro.navigateTo({
                 url: decodedUrl
               }).catch(() => {
-                // 如果都失败，跳转到默认页面
+                // 如果都失败，跳转到默认页面（比赛列表）
                 Taro.switchTab({
-                  url: '/pages/clubs/list'
+                  url: '/pages/matches/list'
                 })
               })
             })
@@ -134,15 +133,15 @@ export default class Login extends Component {
         }
       } catch (error) {
         console.error('跳转返回页面失败:', error)
-        // 跳转失败，跳转到默认页面
+        // 跳转失败，跳转到默认页面（比赛列表）
         Taro.switchTab({
-          url: '/pages/clubs/list'
+          url: '/pages/matches/list'
         })
       }
     } else {
-      // 没有返回 URL，跳转到 tabBar 页面需要使用 switchTab，不能使用 redirectTo
+      // 没有返回 URL，跳转到默认页面（比赛列表）
       Taro.switchTab({
-        url: '/pages/clubs/list'
+        url: '/pages/matches/list'
       })
     }
   }
@@ -219,7 +218,8 @@ export default class Login extends Component {
     // 构建用户信息对象
     const userInfo = {
       avatarUrl: avatarUrl || defaultAvatarUrl,
-      nickName: nickname.trim()
+      name: nickname.trim(), // 使用 name 字段，与后端保持一致
+      nickName: nickname.trim() // 同时保存 nickName 以兼容旧数据
     }
 
     console.log('提交用户信息:', userInfo)
@@ -290,17 +290,19 @@ export default class Login extends Component {
   }
 
   render() {
-    const { avatarUrl, nickname, returnUrl } = this.state
-    const openid = getGlobalData('openid')
-    const userInfo = getGlobalData('userInfo')
+    const { avatarUrl, nickname, returnUrl, checking } = this.state
     
-    console.log('Login page render:', { 
-      returnUrl: !!returnUrl,
-      openid: !!openid,
-      userInfo: !!userInfo,
-      avatarUrl,
-      nickname
-    })
+    // 如果正在检查登录状态，显示加载界面
+    if (checking) {
+      return (
+        <View className='loading-page'>
+          <View className='loading-container'>
+            <View className='loading-spinner'></View>
+            <View className='loading-text'>程序正在初始化...</View>
+          </View>
+        </View>
+      )
+    }
 
     return (
       <View className='login-page'>

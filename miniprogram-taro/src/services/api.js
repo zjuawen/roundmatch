@@ -63,6 +63,7 @@ export default new ApiService()
 // API functions
 export const clubService = {
   list: (openid) => api.get('api/clubservice', { action: 'list', openid }),
+  listPublic: (province) => api.get('api/clubservice', { action: 'listPublic', province }),
   create: (info, userInfo) => api.get('api/clubservice', { action: 'create', info, userInfo }),
   join: (clubid, userInfo, password) => api.get('api/clubservice', { action: 'join', clubid, userInfo, password }),
   info: (clubid) => api.get('api/clubservice', { action: 'info', clubid }),
@@ -114,7 +115,52 @@ export const gameService = {
 }
 
 export const mediaService = {
-  checkAvatar: (url) => api.get('api/media/check-avatar', { url })
+  checkAvatar: (url) => api.get('api/media/check-avatar', { url }),
+  upload: (filePath, type = 'head') => {
+    return new Promise((resolve, reject) => {
+      console.log('开始上传文件:', filePath, '类型:', type)
+      
+      Taro.uploadFile({
+        url: SERVER_URL + 'api/mediaService',
+        filePath: filePath,
+        name: 'file',
+        formData: {
+          action: 'upload',
+          type: type
+        },
+        success: (res) => {
+          console.log('上传响应原始数据:', res)
+          try {
+            let data
+            if (typeof res.data === 'string') {
+              data = JSON.parse(res.data)
+            } else {
+              data = res.data
+            }
+            
+            console.log('解析后的响应数据:', data)
+            
+            if (data.code === 0) {
+              resolve(data)
+            } else {
+              reject(new Error(data.msg || '上传失败'))
+            }
+          } catch (error) {
+            console.error('解析响应失败:', error, '原始数据:', res.data)
+            reject(new Error('解析响应失败: ' + error.message))
+          }
+        },
+        fail: (err) => {
+          console.error('上传文件失败:', err)
+          reject(err)
+        }
+      })
+    })
+  }
+}
+
+export const systemService = {
+  getNotices: (openid, page) => api.get('api/systemservice', { action: 'notices', openid, page })
 }
 
 const api = new ApiService()

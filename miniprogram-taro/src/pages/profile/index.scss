@@ -1,0 +1,151 @@
+.profile-page {
+  min-height: 100vh;
+  background-color: #F6F6F6;
+  padding-bottom: 100rpx;
+}
+
+.profile-header {
+  background-color: #ffffff;
+  padding: 60rpx 40rpx;
+  display: flex;
+  align-items: center;
+  margin-bottom: 20rpx;
+}
+
+.avatar {
+  width: 120rpx;
+  height: 120rpx;
+  border-radius: 60rpx;
+  margin-right: 30rpx;
+  border: 2rpx solid #e5e5e5;
+}
+
+.user-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.nickname {
+  font-size: 36rpx;
+  font-weight: 500;
+  color: #333;
+  margin-bottom: 10rpx;
+}
+
+.location {
+  font-size: 28rpx;
+  color: #999;
+}
+
+.profile-content {
+  background-color: #ffffff;
+}
+
+.menu-section {
+  padding: 0 40rpx;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 28rpx;
+  color: #999;
+  padding: 30rpx 0 20rpx 0;
+}
+
+.menu-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 30rpx 0;
+  cursor: pointer;
+  
+  &.menu-item-active {
+    background-color: #f5f5f5;
+    margin: 0 -40rpx;
+    padding-left: 40rpx;
+    padding-right: 40rpx;
+  }
+}
+
+.club-info-wrapper {
+  display: flex;
+  align-items: center;
+  flex: 1;
+}
+
+.club-logo {
+  width: 60rpx;
+  height: 60rpx;
+  border-radius: 8rpx;
+  margin-right: 20rpx;
+}
+
+.club-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.club-name {
+  font-size: 32rpx;
+  color: #333;
+  margin-bottom: 5rpx;
+}
+
+.club-shortname {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.current-badge {
+  font-size: 24rpx;
+  color: #3cc51f;
+  padding: 5rpx 15rpx;
+  background-color: #e8f5e9;
+  border-radius: 20rpx;
+}
+
+.menu-label {
+  font-size: 32rpx;
+  color: #333;
+  
+  &.logout {
+    color: #ff4444;
+  }
+}
+
+.menu-arrow {
+  font-size: 40rpx;
+  color: #999;
+}
+
+.menu-divider {
+  height: 1rpx;
+  background-color: #e5e5e5;
+  margin-left: 0;
+}
+
+.expand-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 30rpx 0;
+  cursor: pointer;
+  color: #3cc51f;
+}
+
+.expand-text {
+  font-size: 28rpx;
+  color: #3cc51f;
+  margin-right: 10rpx;
+}
+
+.expand-arrow {
+  font-size: 24rpx;
+  color: #3cc51f;
+  transition: transform 0.3s ease;
+  
+  &.expanded {
+    transform: rotate(180deg);
+  }
+}

@@ -67,6 +67,10 @@ module.exports.clubs = (database, Sequelize) => {
             type: Sequelize.INTEGER,
             defaultValue: 10
         },
+        description: {
+            type: Sequelize.TEXT,
+            allowNull: true
+        },
         createDate: {
             type: Sequelize.DATE,
             set(value) {

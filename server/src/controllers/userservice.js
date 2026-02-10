@@ -117,6 +117,7 @@ upSertUserInfo = async (openid, userInfo) => {
   )
 
   let avatarUrl = userInfo.avatarUrl
+  // 如果 avatarUrl 包含完整的 URL，需要去掉 host 部分，只保存相对路径
   if (avatarUrl != null && avatarUrl.startsWith(SERVER_URL_UPLOADS)) {
     avatarUrl = avatarUrl.substring(SERVER_URL_UPLOADS.length)
     console.log('trim avatarUrl to: ' + avatarUrl)
@@ -127,7 +128,7 @@ upSertUserInfo = async (openid, userInfo) => {
 
   if (obj != null) {
     console.log('updateUserInfo')
-
+    
     let playerCount = await sequelizeExecute(
       db.collection('players').update({
         name: userInfo.name,
@@ -141,23 +142,27 @@ upSertUserInfo = async (openid, userInfo) => {
     )
     console.log('update player count: ' + playerCount)
 
-    return await updateUserInfo(openid, userInfo)
+    const result = await updateUserInfo(openid, userInfo)
+    // 如果 updateUserInfo 返回了 userInfo，直接返回；否则返回结果
+    return result
   } else {
     console.log('addUserInfo')
-    return await addUserInfo(openid, userInfo)
+    const result = await addUserInfo(openid, userInfo)
+    // 如果 addUserInfo 返回了 userInfo，直接返回；否则返回结果
+    return result
   }
-
-
-
 }
 
 //更新用户微信信息
 updateUserInfo = async (openid, userInfo) => {
   console.log(userInfo)
   // let dt = new Date()
+  // 处理昵称字段：优先使用 name，如果没有则使用 nickName
+  const name = userInfo.name || userInfo.nickName || null
+  
   let users = await sequelizeExecute(
     db.collection('users').update({
-      name: userInfo.name,
+      name: name,
       avatarUrl: userInfo.avatarUrl,
       gender: userInfo.gender,
       country: userInfo.country,
@@ -175,6 +180,24 @@ updateUserInfo = async (openid, userInfo) => {
   // let count = await updatePlayerInfo(openid, userInfo)
 
   if (users[0] === 1) {
+    // 更新成功后，返回更新后的用户信息（包含完整的 avatarUrl）
+    const { fixUserInfoAvatar } = require("../utils/util")
+    const updatedUserInfo = await sequelizeExecute(
+      db.collection('users').findOne({
+        where: {
+          openid: openid
+        },
+        raw: true
+      })
+    )
+    
+    if (updatedUserInfo) {
+      return {
+        count: 1,
+        userInfo: fixUserInfoAvatar(updatedUserInfo)
+      }
+    }
+    
     return {
       count: 1
     }
@@ -194,11 +217,14 @@ addUserInfo = async (openid, userInfo) => {
   }
 
   console.log('create user with openid: ' + openid)
+  
+  // 处理昵称字段：优先使用 name，如果没有则使用 nickName
+  const name = userInfo.name || userInfo.nickName || null
 
   let user = await sequelizeExecute(
     db.collection('users').create({
       openid: openid,
-      name: userInfo.name,
+      name: name,
       avatarUrl: userInfo.avatarUrl,
       gender: userInfo.gender,
       country: userInfo.country,
@@ -210,8 +236,20 @@ addUserInfo = async (openid, userInfo) => {
 
   console.log(user)
 
+  // 返回用户信息时，确保 avatarUrl 有完整的 host 信息
+  const { fixUserInfoAvatar } = require("../utils/util")
+  let userData = user
+  if (user && user.dataValues) {
+    userData = user.dataValues
+  } else if (user && typeof user.toJSON === 'function') {
+    userData = user.toJSON()
+  }
+  
+  const fixedUserInfo = fixUserInfoAvatar(userData)
+
   return {
-    msg: user
+    msg: fixedUserInfo || user,
+    userInfo: fixedUserInfo
   }
 
 }
@@ -368,13 +406,9 @@ readUserDetail = async (openid) => {
 
   console.log(userInfo)
   if (userInfo != null) {
-    let avatarUrl = userInfo.avatarUrl
-    // console.log(avatarUrl)
-    if ((avatarUrl != null) && (avatarUrl.length > 0) &&
-      !avatarUrl.startsWith('http') &&
-      !avatarUrl.startsWith('cloud://')) {
-      userInfo.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
-    }
+    // 使用工具函数处理头像 URL，确保有完整的 host 信息
+    const { fixUserInfoAvatar } = require("../utils/util")
+    userInfo = fixUserInfoAvatar(userInfo)
     // console.log(userInfo)
   }
 
@@ -602,16 +636,12 @@ exports.listAll = async (request, result) => {
     }
 
     // 处理 avatar URL 并规范化字段名，添加所属俱乐部信息
+    const { fixUserInfoAvatar } = require("../utils/util")
     let normalizedRows = rows.map(user => {
       let normalized = normalizeUserFields(user)
       
-      // 处理 avatar URL
-      const avatarUrl = normalized.avatarUrl
-      if (avatarUrl != null && avatarUrl.length > 0 && 
-          !avatarUrl.startsWith('http') && 
-          !avatarUrl.startsWith('cloud://')) {
-        normalized.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
-      }
+      // 使用工具函数处理 avatar URL，确保有完整的 host 信息
+      normalized = fixUserInfoAvatar(normalized)
       
       // 添加所属俱乐部信息
       normalized.clubs = clubsMap[normalized.openid] || []
@@ -673,13 +703,9 @@ exports.getById = async (request, result) => {
     // 规范化字段名
     user = normalizeUserFields(user)
 
-    // 处理 avatar URL
-    const avatarUrl = user.avatarUrl
-    if (avatarUrl != null && avatarUrl.length > 0 && 
-        !avatarUrl.startsWith('http') && 
-        !avatarUrl.startsWith('cloud://')) {
-      user.avatarUrl = SERVER_URL_UPLOADS + avatarUrl
-    }
+    // 使用工具函数处理 avatar URL，确保有完整的 host 信息
+    const { fixUserInfoAvatar } = require("../utils/util")
+    user = fixUserInfoAvatar(user)
     
     // 批量检查头像有效性并添加 avatarValid 字段
     const usersWithAvatarValid = await batchGetAvatarValidity([user])

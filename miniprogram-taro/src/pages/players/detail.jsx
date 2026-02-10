@@ -11,12 +11,37 @@ export default class PlayerDetail extends Component {
   }
 
   componentDidMount() {
-    const openid = getGlobalData('openid')
+    this.checkAndLogin()
+  }
+
+  // 检查并尝试静默登录
+  checkAndLogin = async () => {
+    let openid = getGlobalData('openid')
+    
+    // 如果没有 openid，尝试静默登录
     if (!openid) {
-      Taro.redirectTo({
-        url: '/pages/login/index'
-      })
-      return
+      this.setState({ loading: true })
+      try {
+        const { silentLogin } = await import('../../utils')
+        openid = await silentLogin()
+        
+        if (!openid) {
+          // 静默登录失败，跳转到登录页面（需要用户授权）
+          const router = Taro.getCurrentInstance().router
+          const { id } = router?.params || {}
+          const returnUrl = id ? `/pages/players/detail?id=${id}` : '/pages/players/detail'
+          Taro.redirectTo({
+            url: '/pages/login/index?returnUrl=' + encodeURIComponent(returnUrl)
+          })
+          return
+        }
+      } catch (error) {
+        console.error('Check and login error:', error)
+        Taro.redirectTo({
+          url: '/pages/login/index'
+        })
+        return
+      }
     }
 
     this.loadPlayer()

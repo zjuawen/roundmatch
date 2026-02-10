@@ -50,6 +50,8 @@ exports.main = async (request, result) => {
     data = await checkMatchCount(event.clubid)
   } else if (action == 'incMatchCountAllow') {
     data = await incMatchCountAllow(event.clubid)
+  } else if (action == 'listPublic') {
+    data = await listPublicClub(event.province)
   }
 
   console.log('clubService return:')
@@ -253,28 +255,75 @@ listOwnClub = async (openid) => {
 }
 
 //公开的俱乐部列表
-// listPublicClub = async () => {
-//   return await db.collection('clubs')
-//     .where({
-//       public: true,
-//       delete: _.neq(true),
-//     })
-//     .get()
-//     .then(res => {
-//       console.log(res)
-//       res.data.forEach(function(club) {
-//         let password = club.password
-//         if (password != null && password.length > 0) {
-//           club.locked = true
-//         } else {
-//           club.locked = false
-//         }
-//         club.password = null
-//       })
-//       console.log(res)
-//       return res.data
-//     })
-// }
+listPublicClub = async (province = null) => {
+  let whereCondition = {
+    public: 1,  // PostgreSQL 中 public 字段是 INTEGER 类型，1=公开
+    delete: {
+      [Op.ne]: 1  // PostgreSQL 中 delete 字段是 INTEGER 类型，0=未删除，1=已删除
+    }
+  }
+
+  let clubs = await sequelizeExecute(
+    db.collection('clubs').findAll({
+      where: whereCondition,
+      order: [['createdate', 'DESC']],
+      raw: true
+    })
+  )
+
+  // 如果指定了省份，需要通过创建者的省份来筛选
+  if (province) {
+    // 获取所有创建者的 openid
+    const creatorOpenids = [...new Set(clubs.map(club => club.creator).filter(Boolean))]
+    
+    if (creatorOpenids.length > 0) {
+      // 查询这些创建者的省份信息
+      const users = await sequelizeExecute(
+        db.collection('users').findAll({
+          where: {
+            openid: {
+              [Op.in]: creatorOpenids
+            },
+            province: province
+          },
+          attributes: ['openid'],
+          raw: true
+        })
+      )
+      
+      const matchingOpenids = new Set(users.map(user => user.openid))
+      // 筛选出创建者省份匹配的俱乐部
+      clubs = clubs.filter(club => matchingOpenids.has(club.creator))
+    }
+  }
+
+  // 处理每个俱乐部
+  clubs = clubs.map(club => {
+    trimClubField(club)
+    
+    const logo = club.logo
+    if (logo != null && logo.startsWith('cloud://')) {
+      console.log('warning: cloud image exist!')
+    }
+
+    if (logo != null && logo.length > 0 && !logo.startsWith('http') && !logo.startsWith('cloud://')) {
+      club.logo = SERVER_URL_UPLOADS + logo
+    }
+
+    // 处理密码字段
+    let password = club.password
+    if (password != null && password.length > 0) {
+      club.locked = true
+    } else {
+      club.locked = false
+    }
+    club.password = null
+
+    return club
+  })
+
+  return clubs
+}
 
 //参与的俱乐部列表
 listPrivateClub = async (openid) => {

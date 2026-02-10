@@ -1,10 +1,10 @@
 import { Component } from 'react'
 import Taro from '@tarojs/taro'
-import { saveGlobalData } from './utils'
+import { saveGlobalData, silentLogin } from './utils'
 import './app.scss'
 
 class App extends Component {
-  onLaunch(options) {
+  async onLaunch(options) {
     // 处理小程序启动参数（包括小程序码扫码进入）
     console.log('App onLaunch options:', options)
     
@@ -38,6 +38,20 @@ class App extends Component {
     if (scene) {
       saveGlobalData('launchScene', scene)
       console.log('保存 launchScene 到全局存储:', scene)
+    }
+
+    // 自动静默登录：获取 openid 并匹配系统用户
+    try {
+      console.log('开始自动登录...')
+      const openid = await silentLogin()
+      if (openid) {
+        console.log('自动登录成功，openid:', openid)
+      } else {
+        console.log('自动登录失败，将在需要时提示用户授权')
+      }
+    } catch (error) {
+      console.error('自动登录异常:', error)
+      // 登录失败不影响应用启动，后续页面会处理
     }
   }
 

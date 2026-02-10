@@ -20,20 +20,63 @@ const SERVER_URL_UPLOADS = getFileBaseUrl()
 exports.main = async (request, result) => {
   // console.log(request)
   // const wxContext = context// cloud.getWXContext()
-  let event = request.query
+  // multer 会将 formData 参数放在 request.body 中（除了文件）
+  // 文件在 request.file 中，其他 formData 参数在 request.body 中
+  let event = request.body || request.query
 
   console.log('mediaService')
-  console.log(event)
+  console.log('request.query:', request.query)
+  console.log('request.body:', request.body)
+  console.log('request.file:', request.file ? 'exists' : 'null')
+  console.log('event:', event)
   // console.log(cloud.DYNAMIC_CURRENT_ENV)
 
-  let action = event.action
+  let action = event?.action || request.body?.action || request.query?.action
+  let type = event?.type || request.body?.type || request.query?.type || 'head'
   let data = null
+
+  console.log('action:', action, 'type:', type)
 
   if (action == 'upload') {
     let file = request.file
-    console.log('receiving ')
-    console.log(file)
-    data = await upload(file, event.type)
+    console.log('receiving file:')
+    console.log('file object:', file)
+    console.log('file.path:', file?.path)
+    console.log('file.originalname:', file?.originalname)
+    console.log('file.mimetype:', file?.mimetype)
+    console.log('file.size:', file?.size)
+    console.log('event.type:', event.type)
+    console.log('request.body:', request.body)
+    console.log('request.query:', request.query)
+    
+    if (!file) {
+      console.error('没有接收到文件')
+      errorResponse(result, ErrorCode.VALIDATION_ERROR, '没有接收到文件')
+      return
+    }
+    
+    if (!file.path) {
+      console.error('文件路径为空')
+      errorResponse(result, ErrorCode.VALIDATION_ERROR, '文件路径为空')
+      return
+    }
+    
+    try {
+      data = await upload(file, event.type)
+      console.log('upload function returned:', JSON.stringify(data))
+      
+      if (!data || !data.url) {
+        console.error('upload 函数返回的数据无效:', data)
+        errorResponse(result, ErrorCode.INTERNAL_ERROR, '上传失败：服务器返回数据无效')
+        return
+      }
+    } catch (error) {
+      console.error('upload function error:', error)
+      console.error('error message:', error.message)
+      console.error('error stack:', error.stack)
+      errorResponse(result, ErrorCode.INTERNAL_ERROR, '上传失败: ' + (error.message || '未知错误'))
+      return
+    }
   }
 
   console.log('mediaService return:')
@@ -46,8 +89,41 @@ exports.main = async (request, result) => {
 
 upload = async (file, type) => {
   try {
+    if (!file) {
+      throw new Error('文件对象为空')
+    }
+    
+    if (!file.path) {
+      throw new Error('文件路径为空')
+    }
+    
     let inputFile = file.path // 获取临时文件路径
-    let fileName = 'icon-' + Date.now() + file.originalname.match(/\.[^.]+?$/)[0]
+    
+    // 检查文件是否存在
+    if (!fs.existsSync(inputFile)) {
+      throw new Error('临时文件不存在: ' + inputFile)
+    }
+    
+    // 获取文件扩展名
+    let ext = '.jpg' // 默认扩展名
+    if (file.originalname) {
+      const match = file.originalname.match(/\.[^.]+?$/)
+      if (match) {
+        ext = match[0]
+      }
+    } else if (file.mimetype) {
+      // 从 MIME 类型推断扩展名
+      const mimeToExt = {
+        'image/jpeg': '.jpg',
+        'image/jpg': '.jpg',
+        'image/png': '.png',
+        'image/gif': '.gif',
+        'image/webp': '.webp'
+      }
+      ext = mimeToExt[file.mimetype] || '.jpg'
+    }
+    
+    let fileName = 'icon-' + Date.now() + ext
     
     // 根据类型确定存储路径
     let objectKey = ''
@@ -59,28 +135,30 @@ upload = async (file, type) => {
       objectKey = 'images/' + fileName
     }
     
-    console.log('上传文件到 RustFS:', objectKey)
+    console.log('上传文件到 RustFS:', objectKey, '源文件:', inputFile)
     
     // 上传到 RustFS 对象存储
     const fileUrl = await uploadFile(inputFile, objectKey)
     
+    console.log('文件上传成功，URL:', fileUrl)
+    
     // 删除临时文件
     try {
       fs.unlinkSync(inputFile)
+      console.log('临时文件已删除:', inputFile)
     } catch (err) {
       console.warn('删除临时文件失败:', err)
     }
-    
-    console.log('文件上传成功，URL:', fileUrl)
     
     return {
       url: fileUrl
     }
   } catch (error) {
     console.error('文件上传失败:', error)
+    console.error('错误堆栈:', error.stack)
     // 确保临时文件被清理
     try {
-      if (file && file.path) {
+      if (file && file.path && fs.existsSync(file.path)) {
         fs.unlinkSync(file.path)
       }
     } catch (err) {

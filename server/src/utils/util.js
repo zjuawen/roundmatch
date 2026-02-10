@@ -30,6 +30,49 @@ exports.userAvatarFix = (players) => {
   return players
 }
 
+/**
+ * 处理用户头像 URL，如果没有 host 信息则拼接完整的 URL
+ * @param {string|null|undefined} avatarUrl - 头像 URL
+ * @returns {string|null} 处理后的头像 URL
+ */
+exports.fixAvatarUrl = (avatarUrl) => {
+  if (!avatarUrl || typeof avatarUrl !== 'string' || avatarUrl.length === 0) {
+    return null
+  }
+  
+  // 如果已经有完整的 URL（http/https）或者是云存储 URL，直接返回
+  if (avatarUrl.startsWith('http://') || avatarUrl.startsWith('https://') || avatarUrl.startsWith('cloud://')) {
+    return avatarUrl
+  }
+  
+  // 如果是相对路径，拼接完整的 URL
+  return SERVER_URL_UPLOADS + avatarUrl
+}
+
+/**
+ * 处理用户信息对象，确保 avatarUrl 有完整的 host 信息
+ * @param {object} userInfo - 用户信息对象
+ * @returns {object} 处理后的用户信息对象
+ */
+exports.fixUserInfoAvatar = (userInfo) => {
+  if (!userInfo) {
+    return userInfo
+  }
+  
+  // 处理 avatarurl（小写）字段，统一转换为 avatarUrl（驼峰）
+  if (userInfo.avatarurl !== undefined) {
+    userInfo.avatarUrl = exports.fixAvatarUrl(userInfo.avatarurl)
+    delete userInfo.avatarurl
+  }
+  
+  // 处理 avatarUrl（驼峰）字段
+  if (userInfo.avatarUrl) {
+    userInfo.avatarUrl = exports.fixAvatarUrl(userInfo.avatarUrl)
+  }
+  
+  return userInfo
+}
+
 exports.queryLike = (keyword, likeColumns) => {
     let query = {}
     if (likeColumns) {

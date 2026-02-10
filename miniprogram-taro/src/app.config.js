@@ -4,10 +4,13 @@ export default {
     'pages/clubs/list',
     'pages/clubs/create',
     'pages/clubs/detail',
+    'pages/clubs/public-list',
     'pages/matches/list',
     'pages/matches/detail',
     'pages/players/list',
-    'pages/players/detail'
+    'pages/players/detail',
+    'pages/profile/index',
+    'pages/profile/edit'
   ],
   window: {
     backgroundTextStyle: 'light',
@@ -23,16 +26,16 @@ export default {
     backgroundColor: '#ffffff',
     list: [
       {
-        pagePath: 'pages/clubs/list',
-        iconPath: 'assets/images/match-list.png',
-        selectedIconPath: 'assets/images/match-list-selected.png',
-        text: '俱乐部'
-      },
-      {
         pagePath: 'pages/matches/list',
         iconPath: 'assets/images/match-list.png',
         selectedIconPath: 'assets/images/match-list-selected.png',
         text: '比赛'
+      },
+      {
+        pagePath: 'pages/profile/index',
+        iconPath: 'assets/images/match-list.png',
+        selectedIconPath: 'assets/images/match-list-selected.png',
+        text: '个人中心'
       }
     ]
   }
