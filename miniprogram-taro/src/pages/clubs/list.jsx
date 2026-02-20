@@ -257,60 +257,6 @@ export default class ClubList extends Component {
     }
   }
 
-  loadClubs = async (openidParam) => {
-    this.setState({ loading: true })
-    try {
-      // 优先使用传入的参数，如果没有则从 state 获取
-      const openid = openidParam || this.state.openid || getGlobalData('openid')
-      
-      if (!openid) {
-        console.error('openid 为空，无法加载俱乐部列表')
-        Taro.showToast({
-          title: '登录信息失效，请重新登录',
-          icon: 'none'
-        })
-        Taro.redirectTo({
-          url: '/pages/login/index'
-        })
-        return
-      }
-      
-      console.log('加载俱乐部列表，openid:', openid)
-      const data = await clubService.list(openid)
-      console.log('俱乐部列表数据:', data)
-      
-      // 处理返回的数据，统一字段名为驼峰命名
-      const clubs = (data.data?.private || []).map(club => ({
-        _id: club._id,
-        wholeName: club.wholename || club.wholeName,
-        shortName: club.shortname || club.shortName,
-        logo: club.logo,
-        password: club.password,
-        vip: club.vip,
-        creator: club.creator,
-        delete: club.delete,
-        public: club.public,
-        maxMatchAllow: club.maxmatchallow || club.maxMatchAllow,
-        createDate: club.createdate || club.createDate,
-        updateTime: club.updatetime || club.updateTime,
-        owner: club.owner
-      }))
-      
-      console.log('处理后的俱乐部列表:', clubs)
-      this.setState({
-        clubs
-      })
-    } catch (error) {
-      console.error('Load clubs error:', error)
-      Taro.showToast({
-        title: '加载失败',
-        icon: 'none'
-      })
-    } finally {
-      this.setState({ loading: false })
-    }
-  }
-
   handleClubClick = (club) => {
     // 如果是公开俱乐部，需要先加入
     if (this.state.isShowingPublicClubs) {

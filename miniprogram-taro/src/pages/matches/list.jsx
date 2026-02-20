@@ -4,7 +4,11 @@ import Taro from '@tarojs/taro'
 import { matchService, clubService, userService } from '../../services/api'
 import { getGlobalData, formatDate } from '../../utils'
 import userUnloginImage from '../../assets/images/user-unlogin.png'
+import editIcon from '../../assets/images/edit.png'
 import './list.scss'
+
+// 立即执行的日志，确认文件被加载
+console.log('🔵 [比赛列表页面] 文件已加载，准备初始化组件')
 
 export default class MatchList extends Component {
   state = {
@@ -18,10 +22,12 @@ export default class MatchList extends Component {
     statusBarHeight: 0, // 状态栏高度（px）
     navBarContentHeightRpx: 88, // 导航栏内容高度（rpx）
     navBarTotalHeightPx: 44, // 导航栏总高度（px）
-    contentTopMarginRpx: 88 // 内容区域顶部间距（rpx）
+    contentTopMarginRpx: 88, // 内容区域顶部间距（rpx）
+    isCreator: false // 是否是俱乐部创建者
   }
 
   componentDidMount() {
+    console.log('=== 比赛列表页面 componentDidMount ===')
     // 获取系统信息，用于自定义导航栏
     const systemInfo = Taro.getSystemInfoSync()
     const statusBarHeight = systemInfo.statusBarHeight || 0
@@ -44,20 +50,25 @@ export default class MatchList extends Component {
       contentTopMarginRpx: navBarTotalHeightRpx // 内容区域顶部间距（rpx）
     })
     
+    console.log('准备调用 initMatchList 和 loadUserAvatar')
     this.initMatchList()
     this.loadUserAvatar()
   }
 
   // 初始化比赛列表
   initMatchList = async () => {
+    console.log('=== initMatchList 被调用 ===')
     const openid = getGlobalData('openid')
+    console.log('从全局数据获取的 openid:', openid)
     
     if (!openid) {
+      console.log('openid 为空，设置状态并返回')
       this.setState({ openid: null, clubid: null })
       return
     }
 
     let clubid = getGlobalData('selectedClubId')
+    console.log('从全局数据获取的 clubid:', clubid)
     
     // 如果没有选中的俱乐部，自动获取第一个俱乐部并设置为默认
     if (!clubid) {
@@ -82,24 +93,33 @@ export default class MatchList extends Component {
     
     // 加载数据
     if (clubid) {
+      console.log('initMatchList: 准备加载俱乐部信息和比赛列表')
+      console.log('clubid:', clubid, 'openid:', openid)
       this.loadClubInfo(clubid)
       this.loadMatches(clubid, openid)
+    } else {
+      console.log('initMatchList: clubid 为空，跳过加载')
     }
   }
 
   componentDidShow() {
+    console.log('=== 比赛列表页面 componentDidShow ===')
     // 页面显示时也检查是否有新的 clubid（因为 switchTab 跳转时可能不会重新执行 componentDidMount）
     const openid = getGlobalData('openid')
     let clubid = getGlobalData('selectedClubId')
+    console.log('componentDidShow - openid:', openid, 'clubid:', clubid)
+    console.log('componentDidShow - state.openid:', this.state.openid, 'state.clubid:', this.state.clubid)
     
     // 加载用户头像
     this.loadUserAvatar()
     
     // 如果没有选中的俱乐部且有 openid，尝试自动获取第一个俱乐部
     if (!clubid && openid && openid !== this.state.openid) {
+      console.log('componentDidShow: 没有 clubid，尝试自动获取第一个俱乐部')
       // 异步获取第一个俱乐部
       this.autoSelectDefaultClub(openid).then(selectedClubId => {
         if (selectedClubId) {
+          console.log('componentDidShow: 自动选择了俱乐部:', selectedClubId)
           clubid = selectedClubId
           this.setState({ clubid, openid })
           this.loadClubInfo(clubid)
@@ -111,6 +131,7 @@ export default class MatchList extends Component {
     
     // 如果 clubid 或 openid 有变化，重新加载数据
     if (clubid !== this.state.clubid || openid !== this.state.openid) {
+      console.log('componentDidShow: clubid 或 openid 有变化，重新加载数据')
       this.setState({ clubid, openid })
       // 只有登录后才加载数据
       if (openid && clubid) {
@@ -178,29 +199,90 @@ export default class MatchList extends Component {
     })
   }
 
+  // 点击创建按钮
+  handleCreateClick = () => {
+    Taro.navigateTo({
+      url: '/pages/matches/create'
+    })
+  }
+
+  // 点击修改俱乐部信息按钮
+  handleEditClubClick = () => {
+    Taro.navigateTo({
+      url: `/pages/clubs/edit?clubid=${this.state.clubid}`
+    })
+  }
+
   // 加载俱乐部信息
   loadClubInfo = async (clubid) => {
+    console.log('=== loadClubInfo 被调用 ===')
+    console.log('clubid:', clubid)
+    
     if (!clubid) {
-      this.setState({ clubInfo: null, description: '' })
+      console.log('clubid 为空，返回')
+      this.setState({ clubInfo: null, description: '', isCreator: false })
       return
     }
 
     try {
+      console.log('开始调用 clubService.info...')
       const data = await clubService.info(clubid)
+      console.log('clubService.info 返回:', data)
+      
       if (data.data) {
         const clubInfo = {
           wholeName: data.data.wholename || data.data.wholeName,
-          shortName: data.data.shortname || data.data.shortName
+          shortName: data.data.shortname || data.data.shortName,
+          creator: data.data.creator
         }
+        console.log('设置 clubInfo:', clubInfo)
         this.setState({ clubInfo })
         
         // 加载俱乐部简介（支持 description 和 intro 字段）
         const description = data.data.description || data.data.intro || ''
         this.setState({ description })
+        
+        // 检查是否是管理员（包括创建者和admins表中的管理员）
+        const openid = getGlobalData('openid')
+        console.log('获取到的 openid:', openid)
+        
+        if (openid) {
+          try {
+            console.log('开始调用 clubService.checkAdmin...')
+            console.log('参数 - clubid:', clubid, 'openid:', openid)
+            const adminCheckData = await clubService.checkAdmin(clubid, openid)
+            console.log('=== 比赛列表页面 - 判断是否是俱乐部管理员 ===')
+            console.log('当前用户 openid:', openid)
+            console.log('俱乐部ID clubid:', clubid)
+            console.log('俱乐部信息:', clubInfo)
+            console.log('俱乐部创建者 creator:', clubInfo.creator)
+            console.log('管理员检查结果:', adminCheckData)
+            console.log('管理员检查结果 data:', adminCheckData.data)
+            const isAdmin = adminCheckData.data?.isAdmin === true
+            console.log('最终判断结果 isAdmin:', isAdmin)
+            console.log('判断原因:', adminCheckData.data?.reason)
+            console.log('==========================================')
+            this.setState({ isCreator: isAdmin })
+          } catch (error) {
+            console.error('检查管理员权限失败:', error)
+            console.error('错误详情:', error.message)
+            console.error('错误堆栈:', error.stack)
+            // 如果检查失败，回退到只检查 creator
+            const isCreator = openid && clubInfo.creator === openid
+            console.log('回退到 creator 检查，结果:', isCreator)
+            this.setState({ isCreator })
+          }
+        } else {
+          console.log('openid 为空，设置 isCreator 为 false')
+          this.setState({ isCreator: false })
+        }
+      } else {
+        console.log('data.data 为空')
       }
     } catch (error) {
       console.error('Load club info error:', error)
-      this.setState({ description: '' })
+      console.error('错误详情:', error.message)
+      this.setState({ description: '', isCreator: false })
     }
   }
 
@@ -263,7 +345,7 @@ export default class MatchList extends Component {
   }
 
   render() {
-    const { matches, loading, openid, description, clubid, avatarUrl, statusBarHeight, navBarContentHeightRpx, contentTopMarginRpx, clubInfo } = this.state
+    const { matches, loading, openid, description, clubid, avatarUrl, statusBarHeight, navBarContentHeightRpx, contentTopMarginRpx, clubInfo, isCreator } = this.state
 
     return (
       <View className='match-list-page'>
@@ -285,7 +367,9 @@ export default class MatchList extends Component {
             <View className='navbar-center'>
               <Text className='navbar-title'>{clubInfo?.wholeName || '比赛列表'}</Text>
             </View>
-            <View className='navbar-right'></View>
+            <View className='navbar-right'>
+              {/* 创建按钮已移至右下角浮动按钮 */}
+            </View>
           </View>
         </View>
         
@@ -297,13 +381,28 @@ export default class MatchList extends Component {
           }}
         >
         {clubid && (
-          <View className='description-section'>
-            <View className='description-header'>
-              <View className='description-icon'>📝</View>
-              <Text className='description-title'>俱乐部简介</Text>
+          <>
+            <View className='description-section'>
+              <View className='description-header'>
+                <View className='description-icon'>📝</View>
+                <Text className='description-title'>俱乐部简介</Text>
+                {isCreator && (
+                  <View className='edit-club-icon-button' onClick={this.handleEditClubClick}>
+                    <Image className='edit-club-icon' src={editIcon} mode='aspectFit' />
+                  </View>
+                )}
+              </View>
+              <Text className='description-text'>{description || '暂无简介'}</Text>
             </View>
-            <Text className='description-text'>{description || '暂无简介'}</Text>
-          </View>
+            
+            {isCreator && (
+              <View className='create-match-section'>
+                <View className='create-match-button-full' onClick={this.handleCreateClick}>
+                  <Text className='create-match-button-text'>+ 创建比赛</Text>
+                </View>
+              </View>
+            )}
+          </>
         )}
         
         {!openid ? (

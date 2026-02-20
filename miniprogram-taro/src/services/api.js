@@ -67,7 +67,14 @@ export const clubService = {
   create: (info, userInfo) => api.get('api/clubservice', { action: 'create', info, userInfo }),
   join: (clubid, userInfo, password) => api.get('api/clubservice', { action: 'join', clubid, userInfo, password }),
   info: (clubid) => api.get('api/clubservice', { action: 'info', clubid }),
-  search: (keyword) => api.get('api/clubservice', { action: 'search', keyword })
+  checkAdmin: (clubid, openid) => api.get('api/clubservice', { action: 'checkAdmin', clubid, openid }),
+  search: (keyword) => api.get('api/clubservice', { action: 'search', keyword }),
+  update: (clubid, info, userInfo) => api.get('api/clubservice', { 
+    action: 'update', 
+    clubid,
+    info: JSON.stringify(info), 
+    userInfo: JSON.stringify(userInfo) 
+  })
 }
 
 export const userService = {
@@ -88,6 +95,14 @@ export const userService = {
       openid,
       clubid: clubid || null
     })
+  },
+  listPlayers: (clubid, pageNum = 1, pageSize = 100) => {
+    return api.get('api/userservice', {
+      action: 'list',
+      clubid,
+      pageNum,
+      pageSize
+    })
   }
 }
 
@@ -100,6 +115,27 @@ export const matchService = {
     pageSize 
   }),
   create: (players, type) => api.get('api/matchservice', { action: 'create', players, type }),
+  createMatch: (clubid, name, type, players, startDate, remark, openid) => {
+    // 将players数组序列化为JSON字符串
+    return api.get('api/matchservice', {
+      action: 'createMatch',
+      clubid,
+      name,
+      type,
+      players: JSON.stringify(players),
+      startDate,
+      remark,
+      openid
+    })
+  },
+  getMatchForCopy: (clubid, matchid, openid) => {
+    return api.get('api/matchservice', {
+      action: 'getForCopy',
+      clubid,
+      matchid,
+      openid
+    })
+  },
   read: (clubid, matchid) => api.get('api/matchservice', { action: 'read', clubid, matchid }),
   delete: (clubid, matchid) => api.get('api/matchservice', { action: 'delete', clubid, matchid }),
   ranking: (matchid) => api.get('api/matchservice', { action: 'ranking', matchid })

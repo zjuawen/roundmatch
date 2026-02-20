@@ -37,11 +37,16 @@ exports.main = async (request, result) => {
   } else if (action == 'create') {
     data = await createClub(event.info, event.userInfo)
   } else if (action == 'update') {
-    data = await updateClub(event.info, event.userInfo)
+    // update 操作需要 clubid 参数
+    const updateInfo = typeof event.info === 'string' ? JSON.parse(event.info) : event.info
+    updateInfo.clubid = event.clubid || updateInfo.clubid
+    data = await updateClub(updateInfo, event.userInfo)
   } else if (action == 'statis') {
     data = await statisUserInClub(event.clubid, event.date, event.minMatchCount)
   } else if (action == 'info') {
     data = await getClubInfo(event.clubid)
+  } else if (action == 'checkAdmin') {
+    data = await checkClubAdmin(event.clubid, event.openid)
   } else if (action == 'listByOwner') {
     data = await listOwnClub(event.openid)
   } else if (action == 'search') {
@@ -60,6 +65,156 @@ exports.main = async (request, result) => {
   successResponse(result, {
     data
   })
+}
+
+// 检查用户是否是俱乐部管理员（包括创建者和admins表中的管理员）
+checkClubAdmin = async (clubid, openid) => {
+  console.log('=== checkClubAdmin 后端函数被调用 ===')
+  console.log('参数 - clubid:', clubid, 'openid:', openid)
+  
+  if (!clubid || !openid) {
+    console.log('参数不完整，返回 false')
+    return {
+      isAdmin: false,
+      reason: '参数不完整'
+    }
+  }
+
+  try {
+    // 1. 检查是否是俱乐部创建者
+    console.log('查询俱乐部信息...')
+    const club = await sequelizeExecute(
+      db.collection('clubs').findByPk(clubid, {
+        attributes: ['_id', 'creator'],
+        raw: true
+      })
+    )
+
+    console.log('查询到的俱乐部信息:', club)
+
+    if (!club) {
+      console.log('俱乐部不存在')
+      return {
+        isAdmin: false,
+        reason: '俱乐部不存在'
+      }
+    }
+
+    console.log('俱乐部 creator:', club.creator, '类型:', typeof club.creator)
+    console.log('用户 openid:', openid, '类型:', typeof openid)
+    console.log('creator === openid:', club.creator === openid)
+    console.log('creator == openid (宽松比较):', club.creator == openid)
+    console.log('String(creator) === String(openid):', String(club.creator || '') === String(openid || ''))
+
+    // 检查是否是创建者
+    if (club.creator === openid) {
+      console.log('✓ 是俱乐部创建者')
+      return {
+        isAdmin: true,
+        reason: 'club_creator'
+      }
+    }
+
+    // 2. 检查是否在admins表中，并且关联到该俱乐部
+    console.log('不是创建者，检查 admins 表...')
+    const admins = await sequelizeExecute(
+      db.collection('admins').findAll({
+        where: {
+          openid: openid,
+          status: {
+            [Op.ne]: 0  // 状态不为禁用
+          }
+        },
+        raw: true
+      })
+    )
+
+    console.log('查询到的 admins 记录数:', admins ? admins.length : 0)
+    console.log('查询到的 admins 信息:', JSON.stringify(admins, null, 2))
+
+    if (!admins || admins.length === 0) {
+      console.log('✗ 不在 admins 表中')
+      return {
+        isAdmin: false,
+        reason: 'not_in_admins'
+      }
+    }
+
+    // 检查是否有超级管理员
+    const superAdmin = admins.find(a => a.role === 'super_admin')
+    if (superAdmin) {
+      console.log('✓ 是超级管理员')
+      return {
+        isAdmin: true,
+        reason: 'super_admin'
+      }
+    }
+
+    // 收集所有可能的俱乐部ID
+    let allClubIds = []
+    
+    // 1. 从 admins 表的 clubid 字段收集（向后兼容）
+    admins.forEach(admin => {
+      if (admin.clubid && admin.role === 'club_admin') {
+        allClubIds.push(admin.clubid)
+      }
+    })
+    console.log('从 admins.clubid 收集的 clubIds:', allClubIds)
+
+    // 2. 从 admin_clubs 关联表收集所有关联的俱乐部
+    // 获取所有 admin._id
+    const adminIds = admins.map(a => a._id).filter(Boolean)
+    console.log('所有 admin._id:', adminIds)
+    
+    if (adminIds.length > 0) {
+      const adminClubs = await sequelizeExecute(
+        db.collection('adminClubs').findAll({
+          where: {
+            adminid: {
+              [Op.in]: adminIds
+            }
+          },
+          attributes: ['clubid'],
+          raw: true
+        })
+      )
+
+      console.log('查询到的 adminClubs:', JSON.stringify(adminClubs, null, 2))
+      console.log('adminClubs 数组长度:', adminClubs ? adminClubs.length : 0)
+      
+      const adminClubsClubIds = adminClubs.map(ac => ac.clubid).filter(Boolean)
+      console.log('从 adminClubs 提取的 clubIds:', adminClubsClubIds)
+      
+      // 合并所有俱乐部ID（去重）
+      allClubIds = [...new Set([...allClubIds, ...adminClubsClubIds])]
+      console.log('合并后的所有 clubIds:', allClubIds)
+    }
+
+    // 检查当前俱乐部是否在列表中
+    console.log('当前查询的 clubid:', clubid)
+    console.log('clubIds.includes(clubid):', allClubIds.includes(clubid))
+    
+    if (allClubIds.includes(clubid)) {
+      console.log('✓ 找到匹配的管理员权限')
+      return {
+        isAdmin: true,
+        reason: 'admin_clubs_match'
+      }
+    }
+
+    console.log('✗ 没有找到匹配的管理员权限')
+    return {
+      isAdmin: false,
+      reason: 'no_club_access'
+    }
+  } catch (error) {
+    console.error('checkClubAdmin error:', error)
+    console.error('错误堆栈:', error.stack)
+    return {
+      isAdmin: false,
+      reason: 'error: ' + error.message
+    }
+  }
 }
 
 trimClubField = (data) => {
@@ -513,27 +668,35 @@ updateClub = async (info, userInfo) => {
     userInfo = JSON.parse(userInfo)
   }
   let openid = userInfo.openid
+  const clubid = info.clubid
 
-  let clubs = await sequelizeExecute(
-    db.collection('clubs').findAll({
-      where: {
-        creator: openid,
-        delete: {
-          [Op.not]: true
-        }
-      },
+  if (!clubid) {
+    return {
+      errCode: 1,
+      errMsg: "错误：缺少俱乐部ID"
+    }
+  }
+
+  // 检查俱乐部是否存在
+  const club = await sequelizeExecute(
+    db.collection('clubs').findByPk(clubid, {
       raw: true
     })
   )
 
-  console.log(clubs)
-
-  let exist = (clubs.length > 0)
-
-  if (!exist) {
+  if (!club) {
     return {
       errCode: 1,
-      errMsg: "错误：未找到俱乐部"
+      errMsg: "错误：俱乐部不存在"
+    }
+  }
+
+  // 权限检查：检查是否是俱乐部管理员（包括创建者和admins表中的管理员）
+  const adminCheck = await checkClubAdmin(clubid, openid)
+  if (!adminCheck.isAdmin) {
+    return {
+      errCode: ErrorCode.ERROR_NEED_LOGIN,
+      errMsg: "无权修改该俱乐部信息"
     }
   }
 
@@ -553,16 +716,21 @@ updateClub = async (info, userInfo) => {
     console.log('trim logo to: ' + logo)
   }
 
+  // 构建更新数据
+  let updateData = {}
+  if (info.wholeName !== undefined) updateData.wholeName = info.wholeName
+  if (info.shortName !== undefined) updateData.shortName = info.shortName
+  if (info.password !== undefined) updateData.password = info.password || null
+  if (info.description !== undefined) updateData.description = info.description || null
+  if (logo !== undefined) updateData.logo = logo
+  if (info.public !== undefined) {
+    updateData.public = info.public === true || info.public === 1 || info.public === '1' ? 1 : 0
+  }
+
   let updated = await sequelizeExecute(
-    db.collection('clubs').update({
-      password: info.password,
-      shortName: info.shortName,
-      wholeName: info.wholeName,
-      logo: logo,
-      public: info.public
-    }, {
+    db.collection('clubs').update(updateData, {
       where: {
-        _id: info.clubid
+        _id: clubid
       }
     })
   )

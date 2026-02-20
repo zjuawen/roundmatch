@@ -1,0 +1,448 @@
+.match-create-page {
+  padding: 20rpx;
+  background-color: #F6F6F6;
+  min-height: 100vh;
+  padding-bottom: 40rpx;
+}
+
+/* 创建模式选择 */
+.mode-selector {
+  display: flex;
+  background-color: #fff;
+  border-radius: 8rpx;
+  padding: 8rpx;
+  margin-bottom: 20rpx;
+}
+
+.mode-item {
+  flex: 1;
+  text-align: center;
+  padding: 20rpx;
+  border-radius: 6rpx;
+  font-size: 28rpx;
+  color: #666;
+  transition: all 0.3s;
+}
+
+.mode-item.active {
+  background-color: #07c160;
+  color: #fff;
+}
+
+/* 历史比赛列表 */
+.history-matches-section {
+  background-color: #fff;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.section-title {
+  font-size: 32rpx;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20rpx;
+}
+
+.history-matches-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.history-match-item {
+  padding: 24rpx;
+  background-color: #f8f8f8;
+  border-radius: 8rpx;
+  border: 1rpx solid #e8e8e8;
+}
+
+.match-name {
+  font-size: 30rpx;
+  color: #333;
+  margin-bottom: 12rpx;
+  font-weight: 500;
+}
+
+.match-info {
+  display: flex;
+  justify-content: space-between;
+  font-size: 24rpx;
+  color: #999;
+}
+
+.match-type {
+  padding: 4rpx 12rpx;
+  background-color: #e8f4ff;
+  color: #409eff;
+  border-radius: 4rpx;
+}
+
+.match-date {
+  color: #999;
+}
+
+/* 创建表单 */
+.create-form {
+  background-color: #fff;
+  border-radius: 8rpx;
+  padding: 20rpx;
+}
+
+.form-item {
+  margin-bottom: 32rpx;
+}
+
+.label {
+  display: block;
+  font-size: 28rpx;
+  color: #333;
+  margin-bottom: 16rpx;
+  font-weight: 500;
+}
+
+.input {
+  width: 100%;
+  padding: 20rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  background-color: #fff;
+}
+
+.search-input {
+  width: 100%;
+  padding: 20rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  background-color: #f8f8f8;
+  margin-bottom: 20rpx;
+}
+
+.textarea {
+  width: 100%;
+  min-height: 120rpx;
+  padding: 20rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  box-sizing: border-box;
+  background-color: #fff;
+}
+
+.picker {
+  padding: 20rpx;
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  font-size: 28rpx;
+  color: #333;
+  background-color: #fff;
+}
+
+.player-count {
+  font-size: 28rpx;
+  color: #07c160;
+  font-weight: bold;
+}
+
+/* 已选选手标签 */
+.selected-players {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12rpx;
+  margin-bottom: 20rpx;
+}
+
+.selected-player-tag {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 20rpx;
+  background-color: #e8f4ff;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+}
+
+.selected-player-tag .player-name {
+  color: #409eff;
+  margin-right: 12rpx;
+}
+
+.selected-player-tag .remove-btn {
+  color: #999;
+  font-size: 32rpx;
+  line-height: 1;
+  cursor: pointer;
+}
+
+/* 配对显示 */
+.player-pairs {
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+  margin-bottom: 20rpx;
+}
+
+.pair-item {
+  padding: 20rpx;
+  background-color: #f8f8f8;
+  border-radius: 8rpx;
+  border: 1rpx solid #e8e8e8;
+}
+
+.pair-label {
+  font-size: 24rpx;
+  color: #666;
+  margin-bottom: 16rpx;
+}
+
+.pair-players {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.pair-slot {
+  flex: 1;
+  padding: 20rpx;
+  background-color: #fff;
+  border: 2rpx solid #ddd;
+  border-radius: 8rpx;
+  text-align: center;
+  position: relative;
+  min-height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pair-slot.empty {
+  border-style: dashed;
+}
+
+.pair-slot.active {
+  border-color: #07c160;
+  background-color: #f0f9ff;
+}
+
+.pair-slot .player-name {
+  font-size: 26rpx;
+  color: #333;
+}
+
+.pair-slot .placeholder {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.pair-slot .remove-btn {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  width: 32rpx;
+  height: 32rpx;
+  background-color: #ff4757;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 24rpx;
+  line-height: 32rpx;
+  text-align: center;
+}
+
+.pair-connector {
+  font-size: 32rpx;
+  color: #999;
+  font-weight: bold;
+}
+
+.remove-pair-btn {
+  display: inline-block;
+  padding: 8rpx 16rpx;
+  color: #ff4757;
+  font-size: 24rpx;
+  border-radius: 4rpx;
+  border: 1rpx solid #ff4757;
+}
+
+.add-pair-btn {
+  width: 100%;
+  padding: 20rpx;
+  background-color: #f8f8f8;
+  border: 1rpx dashed #ddd;
+  border-radius: 8rpx;
+  color: #666;
+  font-size: 26rpx;
+}
+
+/* 分组显示 */
+.player-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
+}
+
+.group-header {
+  display: flex;
+  gap: 16rpx;
+  margin-bottom: 12rpx;
+}
+
+.group-label {
+  flex: 1;
+  text-align: center;
+  font-size: 26rpx;
+  font-weight: bold;
+  color: #333;
+  padding: 12rpx;
+  background-color: #f0f0f0;
+  border-radius: 8rpx;
+}
+
+.group-row {
+  display: flex;
+  gap: 16rpx;
+}
+
+.group-slot {
+  flex: 1;
+  padding: 20rpx;
+  background-color: #fff;
+  border: 2rpx solid #ddd;
+  border-radius: 8rpx;
+  text-align: center;
+  position: relative;
+  min-height: 80rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.group-slot.empty {
+  border-style: dashed;
+}
+
+.group-slot.active {
+  border-color: #07c160;
+  background-color: #f0f9ff;
+}
+
+.group-slot .player-name {
+  font-size: 26rpx;
+  color: #333;
+}
+
+.group-slot .placeholder {
+  font-size: 24rpx;
+  color: #999;
+}
+
+.group-slot .remove-btn {
+  position: absolute;
+  top: -8rpx;
+  right: -8rpx;
+  width: 32rpx;
+  height: 32rpx;
+  background-color: #ff4757;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 24rpx;
+  line-height: 32rpx;
+  text-align: center;
+}
+
+/* 激活提示 */
+.active-hint {
+  padding: 16rpx;
+  background-color: #ecf5ff;
+  border: 1rpx solid #b3d8ff;
+  border-radius: 8rpx;
+  margin-bottom: 20rpx;
+  font-size: 24rpx;
+  color: #409eff;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cancel-active {
+  color: #409eff;
+  font-size: 24rpx;
+  text-decoration: underline;
+}
+
+/* 成员列表网格 */
+.players-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+  margin-top: 20rpx;
+}
+
+.player-item {
+  padding: 20rpx;
+  background-color: #f8f8f8;
+  border: 2rpx solid #e8e8e8;
+  border-radius: 8rpx;
+  text-align: center;
+  position: relative;
+  transition: all 0.3s;
+}
+
+.player-item.clickable {
+  border-color: #07c160;
+  background-color: #f0f9ff;
+}
+
+.player-item.selected {
+  border-color: #07c160;
+  background-color: #e8f4ff;
+}
+
+.player-item .player-name {
+  font-size: 26rpx;
+  color: #333;
+  display: block;
+}
+
+.player-item .check-icon {
+  position: absolute;
+  top: 8rpx;
+  right: 8rpx;
+  width: 32rpx;
+  height: 32rpx;
+  background-color: #07c160;
+  color: #fff;
+  border-radius: 50%;
+  font-size: 24rpx;
+  line-height: 32rpx;
+  text-align: center;
+}
+
+/* 提交按钮 */
+.submit-button {
+  width: 100%;
+  margin-top: 40rpx;
+  background-color: #07c160;
+  color: #fff;
+  border-radius: 8rpx;
+  padding: 28rpx;
+  font-size: 32rpx;
+  font-weight: bold;
+}
+
+.submit-button[disabled] {
+  background-color: #ccc;
+}
+
+/* 加载和空状态 */
+.loading,
+.empty {
+  text-align: center;
+  padding: 60rpx 20rpx;
+  color: #999;
+  font-size: 28rpx;
+}

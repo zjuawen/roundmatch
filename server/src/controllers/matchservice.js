@@ -41,6 +41,36 @@ exports.main = async (request, result) => {
   } else if (action == 'ranking') {
     // 小程序获取排名统计
     data = await getRankingForMiniProgram(event.matchid)
+  } else if (action == 'createMatch') {
+    // 小程序端创建比赛
+    const result_data = await createMatchForMiniProgram(event.clubid, event.name, event.type, event.players, event.startDate, event.remark, event.openid)
+    if (result_data.errCode !== undefined) {
+      if (result_data.errCode === 0) {
+        successResponse(result, {
+          data: result_data.data
+        })
+        return
+      } else {
+        errorResponse(result, result_data.errCode, result_data.errMsg || '操作失败')
+        return
+      }
+    }
+    data = result_data
+  } else if (action == 'getForCopy') {
+    // 获取历史比赛详情（用于复制）
+    const result_data = await getMatchForCopy(event.clubid, event.matchid, event.openid)
+    if (result_data.errCode !== undefined) {
+      if (result_data.errCode === 0) {
+        successResponse(result, {
+          data: result_data.data
+        })
+        return
+      } else {
+        errorResponse(result, result_data.errCode, result_data.errMsg || '操作失败')
+        return
+      }
+    }
+    data = result_data
   }
 
   console.log('matchService return:')
@@ -2785,5 +2815,530 @@ getRankingForMiniProgram = async (matchId) => {
     console.error('getRankingForMiniProgram error:', error)
     console.error('错误堆栈:', error.stack)
     return []
+  }
+}
+
+// 小程序端创建比赛
+createMatchForMiniProgram = async (clubid, name, type, players, startDate, remark, openid) => {
+  try {
+    if (!clubid) {
+      return {
+        errCode: ErrorCode.VALIDATION_ERROR,
+        errMsg: '俱乐部ID不能为空'
+      }
+    }
+
+    if (!openid) {
+      return {
+        errCode: ErrorCode.ERROR_NEED_LOGIN,
+        errMsg: '用户未登录'
+      }
+    }
+
+    // 检查俱乐部是否存在并验证权限
+    const club = await sequelizeExecute(
+      db.collection('clubs').findByPk(clubid, {
+        raw: true
+      })
+    )
+
+    if (!club) {
+      return {
+        errCode: ErrorCode.ERROR_DATA_NOT_EXIST,
+        errMsg: '俱乐部不存在'
+      }
+    }
+
+    // 权限验证：检查是否是俱乐部管理员（包括创建者和admins表中的管理员）
+    const isCreator = club.creator === openid
+    let isAdmin = false
+    
+    if (!isCreator) {
+      // 检查是否在admins表中
+      const admin = await sequelizeExecute(
+        db.collection('admins').findOne({
+          where: {
+            openid: openid,
+            status: {
+              [Op.ne]: 0  // 状态不为禁用
+            }
+          },
+          raw: true
+        })
+      )
+      
+      if (admin) {
+        // 超级管理员有所有权限
+        if (admin.role === 'super_admin') {
+          isAdmin = true
+        } else if (admin.role === 'club_admin') {
+          // 检查旧的 clubid 字段（向后兼容）
+          if (admin.clubid === clubid) {
+            isAdmin = true
+          } else {
+            // 检查关联表中的俱乐部
+            const adminClubs = await sequelizeExecute(
+              db.collection('adminClubs').findAll({
+                where: {
+                  adminid: admin._id
+                },
+                attributes: ['clubid'],
+                raw: true
+              })
+            )
+            const clubIds = adminClubs.map(ac => ac.clubid).filter(Boolean)
+            if (clubIds.includes(clubid)) {
+              isAdmin = true
+            }
+          }
+        }
+      }
+    }
+    
+    if (!isCreator && !isAdmin) {
+      return {
+        errCode: ErrorCode.ERROR_NEED_LOGIN,
+        errMsg: '无权为该俱乐部创建赛事'
+      }
+    }
+
+    let finalPlayerCount = 0
+    let totalGames = 0
+    let matchType = type || 'none'
+
+    // 如果传入了选手列表，生成对阵数据
+    if (players && Array.isArray(players) && players.length > 0) {
+      // 获取比赛配置限制
+      const matchConfig = await getMatchConfig()
+
+      // 统一类型：将 'fix' 转换为 'fixpair'（向后兼容）
+      let matchDataType = matchType
+      if (matchType === 'fix') {
+        matchDataType = 'fixpair'
+      }
+
+      // 根据类型处理选手数组
+      let playerArray = players
+      if (matchType === 'fixpair' || matchType === 'fix' || matchType === 'group') {
+        // 固定搭档和分组类型，需要配对格式
+        // 如果传入的是单个选手ID数组，需要转换为配对格式
+        if (players[0] && typeof players[0] === 'string') {
+          // 单个ID数组，需要配对
+          playerArray = []
+          for (let i = 0; i < players.length; i += 2) {
+            if (i + 1 < players.length) {
+              playerArray.push({
+                player1: { _id: players[i] },
+                player2: { _id: players[i + 1] }
+              })
+            } else {
+              playerArray.push({
+                player1: { _id: players[i] },
+                player2: null
+              })
+            }
+          }
+        }
+
+        // 验证配对数量
+        const completePairs = playerArray.filter(pair => pair.player1 && pair.player2)
+        const pairCount = completePairs.length
+        const actualPlayerCount = pairCount * 2
+
+        // 检查是否有未完成的配对
+        const incompletePairs = playerArray.filter(pair => !pair.player1 || !pair.player2)
+        if (incompletePairs.length > 0) {
+          return {
+            errCode: ErrorCode.VALIDATION_ERROR,
+            errMsg: '请完成所有配对，每个配对需要2名选手'
+          }
+        }
+
+        // 验证配对数量限制
+        if (pairCount < matchConfig.minPairs) {
+          return {
+            errCode: ErrorCode.VALIDATION_ERROR,
+            errMsg: `至少需要${matchConfig.minPairs}组配对（${matchConfig.minPairs * 2}名选手）`
+          }
+        }
+        if (pairCount > matchConfig.maxPairs) {
+          return {
+            errCode: ErrorCode.VALIDATION_ERROR,
+            errMsg: `最多支持${matchConfig.maxPairs}组配对（${matchConfig.maxPairs * 2}名选手）`
+          }
+        }
+        if (actualPlayerCount > matchConfig.maxPlayers) {
+          return {
+            errCode: ErrorCode.VALIDATION_ERROR,
+            errMsg: `最多支持${matchConfig.maxPlayers}名选手`
+          }
+        }
+      } else {
+        // 无固定类型，转换为对象数组
+        if (players[0] && typeof players[0] === 'string') {
+          playerArray = players.map(id => ({ _id: id }))
+        }
+
+        // 验证选手数量限制
+        const playerCount = playerArray.length
+        if (playerCount < matchConfig.minPlayers) {
+          return {
+            errCode: ErrorCode.VALIDATION_ERROR,
+            errMsg: `至少需要${matchConfig.minPlayers}个选手`
+          }
+        }
+        if (playerCount > matchConfig.maxPlayers) {
+          return {
+            errCode: ErrorCode.VALIDATION_ERROR,
+            errMsg: `最多支持${matchConfig.maxPlayers}名选手`
+          }
+        }
+      }
+
+      // 生成对阵数据
+      const allgames = await createMatchData(matchDataType, playerArray)
+      
+      if (allgames && allgames.length > 0) {
+        // 使用第一个赛制的对阵数据
+        const games = allgames[0].data || []
+        totalGames = games.length
+
+        // 计算实际玩家数
+        if (matchType === 'fixpair' || matchType === 'fix' || matchType === 'group') {
+          const playerArrayFlat = flatPlayerArray(playerArray)
+          finalPlayerCount = playerArrayFlat.length
+        } else {
+          finalPlayerCount = playerArray.length
+        }
+
+        // 处理开始日期
+        let startDateValue = null
+        if (startDate) {
+          if (typeof startDate === 'string') {
+            startDateValue = new Date(startDate)
+            startDateValue.setHours(0, 0, 0, 0)
+          } else if (startDate instanceof Date) {
+            startDateValue = startDate
+            startDateValue.setHours(0, 0, 0, 0)
+          }
+        }
+
+        // 创建赛事并保存对阵数据
+        const saved = await saveMatchData(
+          openid,
+          matchType,
+          clubid,
+          games,
+          finalPlayerCount,
+          remark || '',
+          startDateValue
+        )
+
+        if (saved && saved.matchid) {
+          const match = await sequelizeExecute(
+            db.collection('matches').findByPk(saved.matchid, {
+              raw: true
+            })
+          )
+
+          if (match) {
+            // 更新比赛名称
+            if (name) {
+              await sequelizeExecute(
+                db.collection('matches').update({
+                  name: name
+                }, {
+                  where: {
+                    _id: saved.matchid
+                  }
+                })
+              )
+              match.name = name
+            }
+
+            const normalizedMatch = normalizeMatchFields(match)
+            
+            // 生成小程序码
+            try {
+              const scene = saved.matchid.substring(0, 32)
+              const page = 'pages/matches/detail'
+              const qrcodeUrl = await wechat.getUnlimitedQRCode(scene, page, {
+                width: 280,
+                autoColor: true,
+                isHyaline: false
+              })
+              
+              await sequelizeExecute(
+                db.collection('matches').update({
+                  qrcodeUrl: qrcodeUrl
+                }, {
+                  where: {
+                    _id: saved.matchid
+                  }
+                })
+              )
+              
+              normalizedMatch.qrcodeUrl = qrcodeUrl
+            } catch (error) {
+              console.error('生成小程序码失败:', error)
+            }
+            
+            return {
+              errCode: 0,
+              data: normalizedMatch
+            }
+          }
+        }
+      }
+    }
+
+    // 如果没有传入选手列表，只创建赛事记录（不生成对阵数据）
+    let startDateValue = null
+    if (startDate) {
+      if (typeof startDate === 'string') {
+        startDateValue = new Date(startDate)
+        startDateValue.setHours(0, 0, 0, 0)
+      } else if (startDate instanceof Date) {
+        startDateValue = startDate
+        startDateValue.setHours(0, 0, 0, 0)
+      }
+    }
+    
+    const match = await sequelizeExecute(
+      db.collection('matches').create({
+        clubid: clubid,
+        name: name || '',
+        createDate: db.serverDate(),
+        startDate: startDateValue,
+        total: totalGames,
+        finish: 0,
+        playerCount: finalPlayerCount,
+        type: matchType,
+        delete: 0,
+        owner: openid,
+        remark: remark || ''
+      }, {
+        raw: true
+      })
+    )
+
+    if (match) {
+      const normalizedMatch = normalizeMatchFields(match)
+      
+      // 生成小程序码
+      try {
+        const scene = match._id.substring(0, 32)
+        const page = 'pages/matches/detail'
+        const qrcodeUrl = await wechat.getUnlimitedQRCode(scene, page, {
+          width: 280,
+          autoColor: true,
+          isHyaline: false
+        })
+        
+        await sequelizeExecute(
+          db.collection('matches').update({
+            qrcodeUrl: qrcodeUrl
+          }, {
+            where: {
+              _id: match._id
+            }
+          })
+        )
+        
+        normalizedMatch.qrcodeUrl = qrcodeUrl
+      } catch (error) {
+        console.error('生成小程序码失败:', error)
+      }
+      
+      return {
+        errCode: 0,
+        data: normalizedMatch
+      }
+    } else {
+      return {
+        errCode: ErrorCode.DATABASE_ERROR,
+        errMsg: '创建赛事失败'
+      }
+    }
+  } catch (error) {
+    console.error('createMatchForMiniProgram error:', error)
+    return {
+      errCode: ErrorCode.DATABASE_ERROR,
+      errMsg: '创建赛事失败: ' + error.message
+    }
+  }
+}
+
+// 获取历史比赛详情（用于复制）
+getMatchForCopy = async (clubid, matchid, openid) => {
+  try {
+    if (!clubid || !matchid || !openid) {
+      return {
+        errCode: ErrorCode.VALIDATION_ERROR,
+        errMsg: '参数不完整'
+      }
+    }
+
+    // 检查俱乐部是否存在并验证权限
+    const club = await sequelizeExecute(
+      db.collection('clubs').findByPk(clubid, {
+        raw: true
+      })
+    )
+
+    if (!club) {
+      return {
+        errCode: ErrorCode.ERROR_DATA_NOT_EXIST,
+        errMsg: '俱乐部不存在'
+      }
+    }
+
+    // 权限验证：检查是否是俱乐部管理员（包括创建者和admins表中的管理员）
+    const isCreator = club.creator === openid
+    let isAdmin = false
+    
+    if (!isCreator) {
+      // 检查是否在admins表中
+      const admin = await sequelizeExecute(
+        db.collection('admins').findOne({
+          where: {
+            openid: openid,
+            status: {
+              [Op.ne]: 0  // 状态不为禁用
+            }
+          },
+          raw: true
+        })
+      )
+      
+      if (admin) {
+        // 超级管理员有所有权限
+        if (admin.role === 'super_admin') {
+          isAdmin = true
+        } else if (admin.role === 'club_admin') {
+          // 检查旧的 clubid 字段（向后兼容）
+          if (admin.clubid === clubid) {
+            isAdmin = true
+          } else {
+            // 检查关联表中的俱乐部
+            const adminClubs = await sequelizeExecute(
+              db.collection('adminClubs').findAll({
+                where: {
+                  adminid: admin._id
+                },
+                attributes: ['clubid'],
+                raw: true
+              })
+            )
+            const clubIds = adminClubs.map(ac => ac.clubid).filter(Boolean)
+            if (clubIds.includes(clubid)) {
+              isAdmin = true
+            }
+          }
+        }
+      }
+    }
+    
+    if (!isCreator && !isAdmin) {
+      return {
+        errCode: ErrorCode.ERROR_NEED_LOGIN,
+        errMsg: '无权查看该比赛'
+      }
+    }
+
+    // 查询比赛信息
+    const match = await sequelizeExecute(
+      db.collection('matches').findByPk(matchid, {
+        raw: true
+      })
+    )
+
+    if (!match) {
+      return {
+        errCode: ErrorCode.ERROR_DATA_NOT_EXIST,
+        errMsg: '比赛不存在'
+      }
+    }
+
+    // 验证比赛是否属于该俱乐部
+    if (match.clubid !== clubid) {
+      return {
+        errCode: ErrorCode.VALIDATION_ERROR,
+        errMsg: '比赛不属于该俱乐部'
+      }
+    }
+
+    // 查询该比赛的所有games（按order排序）
+    let games = await sequelizeExecute(
+      db.collection('games').findAll({
+        attributes: ['player1', 'player2', 'player3', 'player4', 'order'],
+        where: {
+          matchid: matchid,
+          [Op.or]: [
+            { delete: { [Op.ne]: 1 } },
+            { delete: null }
+          ]
+        },
+        order: [['order', 'ASC']],
+        raw: true
+      })
+    )
+
+    // 提取所有选手ID（去重，保持顺序）
+    const playerIds = []
+    const seenIds = new Set()
+
+    games.forEach(game => {
+      const players = [game.player1, game.player2, game.player3, game.player4]
+      players.forEach(playerId => {
+        if (playerId && !seenIds.has(playerId)) {
+          seenIds.add(playerId)
+          playerIds.push(playerId)
+        }
+      })
+    })
+
+    // 根据比赛类型返回不同格式
+    let players = playerIds
+    const matchType = match.type || 'none'
+
+    if (matchType === 'fixpair' || matchType === 'fix' || matchType === 'group') {
+      // 固定搭档/分组类型：保持games中的配对顺序
+      // player1+player2为一对，player3+player4为一对
+      players = []
+      games.forEach(game => {
+        if (game.player1) players.push(game.player1)
+        if (game.player2) players.push(game.player2)
+        if (game.player3) players.push(game.player3)
+        if (game.player4) players.push(game.player4)
+      })
+      // 去重但保持顺序
+      const uniquePlayers = []
+      const seen = new Set()
+      players.forEach(id => {
+        if (id && !seen.has(id)) {
+          seen.add(id)
+          uniquePlayers.push(id)
+        }
+      })
+      players = uniquePlayers
+    }
+
+    return {
+      errCode: 0,
+      data: {
+        name: match.name || '',
+        type: matchType,
+        remark: match.remark || '',
+        playerCount: match.playerCount || 0,
+        players: players
+      }
+    }
+  } catch (error) {
+    console.error('getMatchForCopy error:', error)
+    return {
+      errCode: ErrorCode.DATABASE_ERROR,
+      errMsg: '获取比赛详情失败: ' + error.message
+    }
   }
 }
