@@ -306,6 +306,20 @@
         <el-form-item label="创建者">
           <el-input v-model="matchForm.owner" placeholder="请输入创建者（默认：admin）" />
         </el-form-item>
+        <el-form-item label="比赛开始日期" prop="startDate">
+          <el-date-picker
+            v-model="matchForm.startDate"
+            type="date"
+            placeholder="请选择比赛开始日期（可选，不填则使用创建日期）"
+            format="YYYY-MM-DD"
+            value-format="YYYY-MM-DD"
+            style="width: 100%;"
+            clearable
+          />
+          <div style="margin-top: 5px; color: #999; font-size: 12px;">
+            如果比赛创建时间早于开始时间，请设置此字段。不填则使用创建日期判断比赛是否已结束。
+          </div>
+        </el-form-item>
         <el-form-item label="备注">
           <el-input
             v-model="matchForm.remark"
@@ -427,13 +441,23 @@ const playersPageSize = ref(10)
 const playersTotal = ref(0)
 const searchTimer = ref(null)
 
+// 获取今天的日期（格式：YYYY-MM-DD）
+const getTodayDate = () => {
+  const today = new Date()
+  const year = today.getFullYear()
+  const month = String(today.getMonth() + 1).padStart(2, '0')
+  const day = String(today.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
+
 const matchForm = ref({
   clubid: '',
   name: '',
   type: 'none',
   playerCount: 0,
   owner: 'admin',
-  remark: ''
+  remark: '',
+  startDate: getTodayDate() // 比赛开始日期，默认为今天
 })
 
 const newPlayerForm = ref({
@@ -948,6 +972,7 @@ const handleSubmit = async () => {
           playerCount: matchForm.value.playerCount,
           owner: matchForm.value.owner || 'admin',
           remark: matchForm.value.remark || '',
+          startDate: matchForm.value.startDate || null, // 比赛开始日期
           players: playerIds
         })
         ElMessage.success('创建成功')

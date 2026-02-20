@@ -33,6 +33,33 @@
           </el-descriptions-item>
           <el-descriptions-item label="创建者">{{ match.owner || '未知' }}</el-descriptions-item>
           <el-descriptions-item label="创建时间">{{ formatDate(match.createDate) }}</el-descriptions-item>
+          <el-descriptions-item label="比赛开始日期">
+            <div v-if="!editingStartDate" style="display: flex; align-items: center; gap: 10px;">
+              <span v-if="match.startDate">{{ formatDate(match.startDate) }}</span>
+              <span v-else style="color: #999;">未设置（使用创建日期）</span>
+              <el-button 
+                type="text" 
+                size="small" 
+                @click="handleEditStartDate"
+                style="margin-left: 10px;"
+              >
+                编辑
+              </el-button>
+            </div>
+            <div v-else style="display: flex; align-items: center; gap: 10px;">
+              <el-date-picker
+                v-model="startDateValue"
+                type="date"
+                placeholder="请选择比赛开始日期"
+                format="YYYY-MM-DD"
+                value-format="YYYY-MM-DD"
+                style="width: 200px;"
+                clearable
+              />
+              <el-button type="primary" size="small" @click="handleSaveStartDate">保存</el-button>
+              <el-button size="small" @click="handleCancelEditStartDate">取消</el-button>
+            </div>
+          </el-descriptions-item>
           <el-descriptions-item label="更新时间">{{ formatDate(match.updateTime) }}</el-descriptions-item>
           <el-descriptions-item label="备注">
             <span v-if="match.remark" class="remark-text" :title="match.remark">{{ match.remark }}</span>
@@ -506,6 +533,8 @@ const rankingLoading = ref(false)
 const useScoreRanking = ref(false) // 是否启用积分排名
 const enrollment = ref([])
 const enrollmentLoading = ref(false)
+const editingStartDate = ref(false)
+const startDateValue = ref(null)
 
 onMounted(() => {
   loadMatchDetail()
@@ -552,6 +581,38 @@ const handleBack = () => {
 
 const handleEdit = () => {
   router.push(`/matches/${matchId}?edit=true`)
+}
+
+// 编辑开始日期
+const editingStartDate = ref(false)
+const startDateValue = ref(null)
+
+const handleEditStartDate = () => {
+  if (match.value && match.value.startDate) {
+    const date = new Date(match.value.startDate)
+    startDateValue.value = date.toISOString().split('T')[0] // 格式化为 YYYY-MM-DD
+  } else {
+    startDateValue.value = null
+  }
+  editingStartDate.value = true
+}
+
+const handleSaveStartDate = async () => {
+  try {
+    await matchesApi.update(matchId, {
+      startDate: startDateValue.value || null
+    })
+    ElMessage.success('更新成功')
+    editingStartDate.value = false
+    await loadMatchDetail() // 重新加载数据
+  } catch (error) {
+    ElMessage.error('更新失败：' + (error.response?.data?.msg || error.message))
+  }
+}
+
+const handleCancelEditStartDate = () => {
+  editingStartDate.value = false
+  startDateValue.value = null
 }
 
 const handleClubClick = (clubId) => {

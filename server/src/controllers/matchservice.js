@@ -76,9 +76,23 @@ updateMatch = async (matchid, value) => {
 }
 
 //保存新增的比赛数据
-saveMatchData = async (owner, type, clubid, games, playerCount, remark = "") => {
+saveMatchData = async (owner, type, clubid, games, playerCount, remark = "", startDate = null) => {
   if (typeof games === 'string') {
     games = JSON.parse(games)
+  }
+
+  // 处理开始日期：如果提供了 startDate，转换为 Date 对象
+  let startDateValue = null
+  if (startDate) {
+    if (typeof startDate === 'string') {
+      // 如果是字符串格式（如 "YYYY-MM-DD"），转换为 Date
+      startDateValue = new Date(startDate)
+      // 设置为当天的开始时间（00:00:00）
+      startDateValue.setHours(0, 0, 0, 0)
+    } else if (startDate instanceof Date) {
+      startDateValue = startDate
+      startDateValue.setHours(0, 0, 0, 0)
+    }
   }
 
   let saved = await sequelizeExecute(
@@ -86,6 +100,7 @@ saveMatchData = async (owner, type, clubid, games, playerCount, remark = "") => 
       // id: _.inc(1),
       clubid: clubid,
       createDate: db.serverDate(),
+      startDate: startDateValue, // 比赛开始日期
       total: games.length,
       finish: 0,
       playerCount: playerCount,
@@ -584,13 +599,13 @@ readMatch = async (clubid, matchid) => {
 
   console.log(games)
 
-  // 查询 match 信息（包括 type 和 createDate）
+  // 查询 match 信息（包括 type、createDate 和 startDate）
   let matchInfo = null
   if (finalMatchid) {
     try {
       matchInfo = await sequelizeExecute(
         db.collection('matches').findByPk(finalMatchid, {
-          attributes: ['_id', 'clubid', 'type', 'name', 'createDate'],
+          attributes: ['_id', 'clubid', 'type', 'name', 'createDate', 'startDate'],
           raw: true
         })
       )
@@ -762,6 +777,10 @@ const normalizeMatchFields = (match) => {
   if (match.createdate !== undefined) {
     normalized.createDate = match.createdate
     delete normalized.createdate
+  }
+  if (match.startdate !== undefined) {
+    normalized.startDate = match.startdate
+    delete normalized.startdate
   }
   if (match.updatetime !== undefined) {
     normalized.updateTime = match.updatetime
@@ -1255,7 +1274,7 @@ getMatchConfig = async () => {
 // 创建赛事（管理台）
 exports.create = async (request, result) => {
   try {
-    const { clubid, name, type, playerCount, owner, remark, players } = request.body
+    const { clubid, name, type, playerCount, owner, remark, players, startDate } = request.body
 
     if (!clubid) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
@@ -1378,7 +1397,8 @@ exports.create = async (request, result) => {
           clubid,
           games,
           finalPlayerCount,
-          remark || ''
+          remark || '',
+          startDate || null // 比赛开始日期
         )
 
         if (saved && saved.matchid) {
@@ -1430,11 +1450,26 @@ exports.create = async (request, result) => {
     }
 
     // 如果没有传入选手列表，只创建赛事记录（不生成对阵数据）
+    // 处理开始日期：如果提供了 startDate，转换为 Date 对象
+    let startDateValue = null
+    if (startDate) {
+      if (typeof startDate === 'string') {
+        // 如果是字符串格式（如 "YYYY-MM-DD"），转换为 Date
+        startDateValue = new Date(startDate)
+        // 设置为当天的开始时间（00:00:00）
+        startDateValue.setHours(0, 0, 0, 0)
+      } else if (startDate instanceof Date) {
+        startDateValue = startDate
+        startDateValue.setHours(0, 0, 0, 0)
+      }
+    }
+    
     const match = await sequelizeExecute(
       db.collection('matches').create({
         clubid: clubid,
         name: name || '',
         createDate: db.serverDate(),
+        startDate: startDateValue, // 比赛开始日期
         total: totalGames,
         finish: 0,
         playerCount: finalPlayerCount,
@@ -1494,7 +1529,7 @@ exports.create = async (request, result) => {
 exports.update = async (request, result) => {
   try {
     const matchId = request.params.id
-    const { name, type, playerCount, remark, finish } = request.body
+    const { name, type, playerCount, remark, finish, startDate } = request.body
 
     if (!matchId) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '赛事ID不能为空')
@@ -1525,6 +1560,25 @@ exports.update = async (request, result) => {
     if (playerCount !== undefined) updateData.playerCount = playerCount
     if (remark !== undefined) updateData.remark = remark
     if (finish !== undefined) updateData.finish = finish
+    
+    // 处理开始日期
+    if (startDate !== undefined) {
+      if (startDate === null || startDate === '') {
+        // 清空开始日期
+        updateData.startDate = null
+      } else {
+        // 转换开始日期
+        let startDateValue = null
+        if (typeof startDate === 'string') {
+          startDateValue = new Date(startDate)
+          startDateValue.setHours(0, 0, 0, 0)
+        } else if (startDate instanceof Date) {
+          startDateValue = startDate
+          startDateValue.setHours(0, 0, 0, 0)
+        }
+        updateData.startDate = startDateValue
+      }
+    }
 
     const updated = await sequelizeExecute(
       db.collection('matches').update(updateData, {

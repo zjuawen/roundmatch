@@ -250,6 +250,19 @@ module.exports.matches = (database, Sequelize) => {
             type: Sequelize.STRING,
             allowNull: true  // 小程序码URL
         },
+        startDate: {
+            type: Sequelize.DATE,
+            allowNull: true,  // 比赛开始时间（可选）
+            set(value) {
+                if (typeof value === 'string') {
+                    this.setDataValue('startDate', Date.parse(value))
+                } else if (typeof value === 'object' && value['$date']) {
+                    this.setDataValue('startDate', value['$date'])
+                } else {
+                    this.setDataValue('startDate', value)
+                }
+            }
+        },
         createDate: {
             type: Sequelize.DATE,
             set(value) {

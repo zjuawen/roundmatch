@@ -798,17 +798,25 @@ export default class MatchDetail extends Component {
     }
   }
 
-  // 检查比赛是否已结束（创建时间在当天之前）
+  // 检查比赛是否已结束（优先使用开始时间，如果没有则使用创建时间）
   checkMatchExpired = () => {
     const { matchInfo } = this.state
-    if (!matchInfo || !matchInfo.createDate) {
-      // 如果没有比赛信息或创建时间，允许操作（向后兼容）
+    if (!matchInfo) {
+      // 如果没有比赛信息，允许操作（向后兼容）
       return false
     }
     
-    // 获取比赛创建时间
-    const createDate = new Date(matchInfo.createDate)
-    if (isNaN(createDate.getTime())) {
+    // 优先使用 startDate（比赛开始时间），如果没有则使用 createDate（创建时间）
+    const matchDateStr = matchInfo.startDate || matchInfo.startdate || matchInfo.createDate || matchInfo.createdate
+    
+    if (!matchDateStr) {
+      // 如果既没有开始时间也没有创建时间，允许操作（向后兼容）
+      return false
+    }
+    
+    // 获取比赛日期
+    const matchDate = new Date(matchDateStr)
+    if (isNaN(matchDate.getTime())) {
       // 如果日期无效，允许操作
       return false
     }
@@ -817,12 +825,12 @@ export default class MatchDetail extends Component {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     
-    // 获取比赛创建日期（只比较日期，不比较时间）
-    const matchDate = new Date(createDate)
-    matchDate.setHours(0, 0, 0, 0)
+    // 获取比赛日期（只比较日期，不比较时间）
+    const matchDateOnly = new Date(matchDate)
+    matchDateOnly.setHours(0, 0, 0, 0)
     
-    // 如果比赛创建日期在今天之前，则比赛已结束
-    return matchDate < today
+    // 如果比赛日期在今天之前，则比赛已结束
+    return matchDateOnly < today
   }
 
   // 点击 VS 或比分，打开比分输入对话框
