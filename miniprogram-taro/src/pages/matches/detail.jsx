@@ -63,6 +63,17 @@ export default class MatchDetail extends Component {
       try {
         const actionData = JSON.parse(pendingAction)
         if (actionData.action === 'score' && actionData.gameIndex !== undefined) {
+          // 检查比赛是否已结束
+          if (this.checkMatchExpired()) {
+            Taro.showToast({
+              title: '比赛已结束',
+              icon: 'none',
+              duration: 2000
+            })
+            saveGlobalData('pendingScoreAction', null)
+            return
+          }
+          
           const gameIndex = parseInt(actionData.gameIndex)
           const games = this.state.games || []
           
@@ -787,8 +798,45 @@ export default class MatchDetail extends Component {
     }
   }
 
+  // 检查比赛是否已结束（创建时间在当天之前）
+  checkMatchExpired = () => {
+    const { matchInfo } = this.state
+    if (!matchInfo || !matchInfo.createDate) {
+      // 如果没有比赛信息或创建时间，允许操作（向后兼容）
+      return false
+    }
+    
+    // 获取比赛创建时间
+    const createDate = new Date(matchInfo.createDate)
+    if (isNaN(createDate.getTime())) {
+      // 如果日期无效，允许操作
+      return false
+    }
+    
+    // 获取今天的日期（只比较日期，不比较时间）
+    const today = new Date()
+    today.setHours(0, 0, 0, 0)
+    
+    // 获取比赛创建日期（只比较日期，不比较时间）
+    const matchDate = new Date(createDate)
+    matchDate.setHours(0, 0, 0, 0)
+    
+    // 如果比赛创建日期在今天之前，则比赛已结束
+    return matchDate < today
+  }
+
   // 点击 VS 或比分，打开比分输入对话框
   handleScoreClick = (game, index) => {
+    // 检查比赛是否已结束
+    if (this.checkMatchExpired()) {
+      Taro.showToast({
+        title: '比赛已结束',
+        icon: 'none',
+        duration: 2000
+      })
+      return
+    }
+    
     // 检查登录状态和授权状态
     const openid = getGlobalData('openid')
     const userInfo = getGlobalData('userInfo')
@@ -956,6 +1004,17 @@ export default class MatchDetail extends Component {
 
   // 保存比分
   handleSaveScore = async () => {
+    // 检查比赛是否已结束
+    if (this.checkMatchExpired()) {
+      Taro.showToast({
+        title: '比赛已结束',
+        icon: 'none',
+        duration: 2000
+      })
+      this.handleScoreDialogClose()
+      return
+    }
+    
     // 检查登录状态，未登录用户不能保存比分
     const openid = getGlobalData('openid')
     if (!openid) {

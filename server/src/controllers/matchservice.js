@@ -584,13 +584,13 @@ readMatch = async (clubid, matchid) => {
 
   console.log(games)
 
-  // 查询 match 信息（包括 type）
+  // 查询 match 信息（包括 type 和 createDate）
   let matchInfo = null
   if (finalMatchid) {
     try {
       matchInfo = await sequelizeExecute(
         db.collection('matches').findByPk(finalMatchid, {
-          attributes: ['_id', 'clubid', 'type', 'name'],
+          attributes: ['_id', 'clubid', 'type', 'name', 'createDate'],
           raw: true
         })
       )
