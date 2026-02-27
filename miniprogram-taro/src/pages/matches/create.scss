@@ -103,20 +103,24 @@
 
 .input {
   width: 100%;
-  padding: 20rpx;
+  height: 88rpx;
+  padding: 0 20rpx;
   border: 1rpx solid #ddd;
   border-radius: 8rpx;
   font-size: 28rpx;
+  line-height: 88rpx;
   box-sizing: border-box;
   background-color: #fff;
 }
 
 .search-input {
   width: 100%;
-  padding: 20rpx;
+  height: 88rpx;
+  padding: 0 20rpx;
   border: 1rpx solid #ddd;
   border-radius: 8rpx;
   font-size: 28rpx;
+  line-height: 88rpx;
   box-sizing: border-box;
   background-color: #f8f8f8;
   margin-bottom: 20rpx;
@@ -134,12 +138,17 @@
 }
 
 .picker {
-  padding: 20rpx;
+  height: 88rpx;
+  padding: 0 20rpx;
   border: 1rpx solid #ddd;
   border-radius: 8rpx;
   font-size: 28rpx;
+  line-height: 88rpx;
   color: #333;
   background-color: #fff;
+  display: flex;
+  align-items: center;
+  box-sizing: border-box;
 }
 
 .player-count {
