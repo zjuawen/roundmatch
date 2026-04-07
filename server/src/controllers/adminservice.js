@@ -64,6 +64,81 @@ const getAdminClubIds = async (adminId) => {
   return adminClubs.map(ac => ac.clubid).filter(Boolean)
 }
 
+const normalizeOpenid = (val) => {
+  if (val == null) return ''
+  const s = String(val).trim()
+  return s
+}
+
+/**
+ * 俱乐部管理员：写入 normalizedAdmin.clubIds。
+ * 若存在 openid，则合并同一微信下所有 club_admin 记录的俱乐部（支持一人多俱乐部绑定）。
+ */
+const mergeClubAdminClubIds = async (normalizedAdmin) => {
+  if (!normalizedAdmin || normalizedAdmin.role !== 'club_admin') return
+  const o = normalizeOpenid(normalizedAdmin.openid)
+  if (o) {
+    const cohort = await sequelizeExecute(
+      db.collection('admins').findAll({
+        where: {
+          openid: o,
+          role: 'club_admin',
+          status: { [Op.ne]: 0 }
+        },
+        raw: true
+      })
+    )
+    const idSet = new Set()
+    for (const a of cohort) {
+      const ids = await getAdminClubIds(a._id)
+      ids.forEach((cid) => idSet.add(cid))
+      if (a.clubid) idSet.add(a.clubid)
+    }
+    normalizedAdmin.clubIds = [...idSet]
+    if (normalizedAdmin.clubid && !normalizedAdmin.clubIds.map(String).includes(String(normalizedAdmin.clubid))) {
+      normalizedAdmin.clubIds.push(normalizedAdmin.clubid)
+    }
+  } else {
+    normalizedAdmin.clubIds = await getAdminClubIds(normalizedAdmin._id)
+    if (normalizedAdmin.clubid && !normalizedAdmin.clubIds.includes(normalizedAdmin.clubid)) {
+      normalizedAdmin.clubIds.push(normalizedAdmin.clubid)
+    }
+  }
+}
+
+/** 俱乐部管理员绑定的微信须至少在一个关联俱乐部中有球员身份 */
+const assertOpenidInClubs = async (openid, clubIds) => {
+  const o = normalizeOpenid(openid)
+  const ids = [...new Set((clubIds || []).filter(Boolean))]
+  if (!o || ids.length === 0) return true
+  const cnt = await sequelizeExecute(
+    db.collection('players').count({
+      where: {
+        openid: o,
+        clubid: { [Op.in]: ids },
+        enable: { [Op.ne]: 0 }
+      }
+    })
+  )
+  return cnt > 0
+}
+
+/** 与 Sequelize clubs 模型一致的表限定名，供原生 SQL 使用（勿硬编码 roundmatch schema） */
+const qualifiedClubsTableSql = () => {
+  const spec = db.collection('clubs').getTableName()
+  const quote = (id) => `"${String(id).replace(/"/g, '""')}"`
+  if (typeof spec === 'string') {
+    return quote(spec)
+  }
+  if (spec && spec.schema && spec.tableName) {
+    return `${quote(spec.schema)}.${quote(spec.tableName)}`
+  }
+  if (spec && spec.tableName) {
+    return quote(spec.tableName)
+  }
+  return quote('clubs')
+}
+
 // 检查管理员是否有权限访问某个俱乐部
 const hasClubAccess = async (admin, clubId) => {
   if (!admin || !clubId) return false
@@ -75,14 +150,16 @@ const hasClubAccess = async (admin, clubId) => {
   
   // 俱乐部管理员需要检查关联的俱乐部
   if (admin.role === 'club_admin') {
-    // 先检查旧的 clubid 字段（向后兼容）
-    if (admin.clubid === clubId) {
+    const want = String(clubId)
+    if (admin.clubid != null && String(admin.clubid) === want) {
       return true
     }
-    
-    // 检查关联表中的俱乐部
+    // verifyToken 已合并同一 openid 下多条记录的 clubIds
+    if (Array.isArray(admin.clubIds) && admin.clubIds.length > 0) {
+      return admin.clubIds.some((cid) => String(cid) === want)
+    }
     const clubIds = await getAdminClubIds(admin._id)
-    return clubIds.includes(clubId)
+    return clubIds.some((cid) => String(cid) === want)
   }
   
   return false
@@ -119,15 +196,8 @@ exports.verifyToken = async (request, result, next) => {
     }
 
     const normalizedAdmin = normalizeAdminFields(admin)
-    
-    // 如果是俱乐部管理员，加载关联的俱乐部列表
-    if (normalizedAdmin.role === 'club_admin') {
-      normalizedAdmin.clubIds = await getAdminClubIds(admin._id)
-      // 向后兼容：如果旧的 clubid 存在且不在列表中，添加进去
-      if (normalizedAdmin.clubid && !normalizedAdmin.clubIds.includes(normalizedAdmin.clubid)) {
-        normalizedAdmin.clubIds.push(normalizedAdmin.clubid)
-      }
-    }
+
+    await mergeClubAdminClubIds(normalizedAdmin)
     
     request.admin = normalizedAdmin
     // 将 hasClubAccess 函数附加到 request 上，方便其他中间件使用
@@ -186,6 +256,7 @@ exports.login = async (request, result) => {
 
     // 生成 Token
     const normalizedAdmin = normalizeAdminFields(admin)
+    await mergeClubAdminClubIds(normalizedAdmin)
     const token = generateToken(normalizedAdmin)
 
     // 返回管理员信息（不包含密码）
@@ -223,24 +294,29 @@ exports.loginByWechat = async (request, result) => {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '无法获取微信用户信息')
     }
 
-    const admin = await sequelizeExecute(
-      db.collection('admins').findOne({
+    const matches = await sequelizeExecute(
+      db.collection('admins').findAll({
         where: {
           openid: openid,
           status: {
             [Op.ne]: 0
           }
         },
+        order: [['createdate', 'ASC']],
         raw: true
       })
     )
 
-    if (!admin) {
+    if (!matches || matches.length === 0) {
       return errorResponse(result, ErrorCode.ERROR_USER_NOT_EXIST, '该微信账号未绑定管理员')
     }
 
-    // 生成 Token
+    const superOne = matches.find((a) => a.role === 'super_admin')
+    const admin = superOne || matches[0]
+
+    // 生成 Token（JWT 仅存一条 admin id；verifyToken / 此处均按 openid 合并俱乐部）
     const normalizedAdmin = normalizeAdminFields(admin)
+    await mergeClubAdminClubIds(normalizedAdmin)
     const token = generateToken(normalizedAdmin)
 
     // 返回管理员信息（不包含密码）
@@ -429,9 +505,10 @@ exports.create = async (request, result) => {
           try {
             // 使用原生SQL查询，将_id转换为字符串进行比较
             const sequelize = db.databaseConf
+            const fromClubs = qualifiedClubsTableSql()
             const query = `
               SELECT _id::text as _id 
-              FROM roundmatch.clubs 
+              FROM ${fromClubs} 
               WHERE _id::text IN (:ids)
             `
             const nonUuidClubs = await sequelize.query(query, {
@@ -484,6 +561,18 @@ exports.create = async (request, result) => {
       }
     }
 
+    const oid = normalizeOpenid(openid)
+    const effRole = role || 'club_admin'
+    if (effRole === 'club_admin' && oid) {
+      if (finalClubIds.length === 0) {
+        return errorResponse(result, ErrorCode.VALIDATION_ERROR, '绑定微信前请先选择关联俱乐部')
+      }
+      const ok = await assertOpenidInClubs(oid, finalClubIds)
+      if (!ok) {
+        return errorResponse(result, ErrorCode.VALIDATION_ERROR, '所选微信用户须为关联俱乐部中的在册成员')
+      }
+    }
+
     // 加密密码
     const hashedPassword = await bcrypt.hash(password, 10)
 
@@ -492,7 +581,7 @@ exports.create = async (request, result) => {
       db.collection('admins').create({
         username: username,
         password: hashedPassword,
-        openid: openid || null,
+        openid: oid || null,
         clubid: role === 'super_admin' ? null : (finalClubIds[0] || null),
         role: role || 'club_admin',
         status: 1,
@@ -556,11 +645,16 @@ exports.update = async (request, result) => {
       return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '管理员不存在')
     }
 
+    const nextRole = role !== undefined ? role : existingAdmin.role
+
     let updateData = {}
     if (password !== undefined) {
       updateData.password = await bcrypt.hash(password, 10)
     }
-    if (openid !== undefined) updateData.openid = openid
+    if (openid !== undefined) {
+      const trimmed = normalizeOpenid(openid)
+      updateData.openid = trimmed || null
+    }
     if (role !== undefined) updateData.role = role
     if (status !== undefined) updateData.status = status
     
@@ -604,6 +698,28 @@ exports.update = async (request, result) => {
         updateData.clubid = finalClubIds[0]
       } else {
         updateData.clubid = null
+      }
+    }
+
+    let clubsForOpenidCheck = null
+    if (finalClubIds !== null) {
+      clubsForOpenidCheck = [...finalClubIds]
+    } else if (nextRole === 'club_admin') {
+      clubsForOpenidCheck = await getAdminClubIds(adminId)
+      if (existingAdmin.clubid && !clubsForOpenidCheck.map(String).includes(String(existingAdmin.clubid))) {
+        clubsForOpenidCheck.push(existingAdmin.clubid)
+      }
+    }
+    const effectiveOpenid = openid !== undefined
+      ? normalizeOpenid(openid)
+      : normalizeOpenid(existingAdmin.openid)
+    if (nextRole === 'club_admin' && effectiveOpenid) {
+      if (!clubsForOpenidCheck || clubsForOpenidCheck.length === 0) {
+        return errorResponse(result, ErrorCode.VALIDATION_ERROR, '绑定微信前请先设置关联俱乐部')
+      }
+      const ok = await assertOpenidInClubs(effectiveOpenid, clubsForOpenidCheck)
+      if (!ok) {
+        return errorResponse(result, ErrorCode.VALIDATION_ERROR, '所选微信用户须为关联俱乐部中的在册成员')
       }
     }
 
@@ -658,30 +774,6 @@ exports.update = async (request, result) => {
           normalizedAdmin.clubIds.push(normalizedAdmin.clubid)
         }
       }
-      delete normalizedAdmin.password
-      successResponse(result, {
-        data: normalizedAdmin
-      })
-    } else {
-      errorResponse(result, ErrorCode.DATABASE_ERROR, '更新管理员失败')
-    }
-    if (status !== undefined) updateData.status = status
-
-    const updated = await sequelizeExecute(
-      db.collection('admins').update(updateData, {
-        where: {
-          _id: adminId
-        }
-      })
-    )
-
-    if (updated > 0) {
-      const updatedAdmin = await sequelizeExecute(
-        db.collection('admins').findByPk(adminId, {
-          raw: true
-        })
-      )
-      const normalizedAdmin = normalizeAdminFields(updatedAdmin)
       delete normalizedAdmin.password
       successResponse(result, {
         data: normalizedAdmin

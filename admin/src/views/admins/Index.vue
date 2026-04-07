@@ -42,6 +42,12 @@
             <span v-else style="color: #999;">-</span>
           </template>
         </el-table-column>
+        <el-table-column label="微信绑定" width="140">
+          <template #default="{ row }">
+            <span v-if="row.openid" :title="row.openid">{{ maskOpenid(row.openid) }}</span>
+            <span v-else style="color: #999;">未绑定</span>
+          </template>
+        </el-table-column>
         <el-table-column prop="status" label="状态">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'info'">
@@ -107,7 +113,7 @@
           </div>
         </el-form-item>
         <el-form-item label="角色" prop="role">
-          <el-select v-model="adminForm.role" placeholder="选择角色" style="width: 100%;">
+          <el-select v-model="adminForm.role" placeholder="选择角色" style="width: 100%;" @change="onAdminRoleChange">
             <el-option label="超级管理员" value="super_admin" />
             <el-option label="俱乐部管理员" value="club_admin" />
           </el-select>
@@ -123,6 +129,7 @@
             style="width: 100%;"
             clearable
             @focus="handleClubSelectFocus"
+            @change="onClubChangeForWechat"
           >
             <el-option
               v-for="club in clubs"
@@ -138,6 +145,32 @@
               </div>
             </el-option>
           </el-select>
+        </el-form-item>
+        <el-form-item
+          v-if="adminForm.role === 'club_admin'"
+          label="绑定微信用户"
+        >
+          <el-select
+            v-model="adminForm.openid"
+            filterable
+            remote
+            clearable
+            reserve-keyword
+            placeholder="选俱乐部后，按昵称搜索在册成员"
+            :remote-method="searchWechatMembers"
+            :loading="wechatSearchLoading"
+            style="width: 100%;"
+          >
+            <el-option
+              v-for="u in wechatOptions"
+              :key="u.openid"
+              :label="wechatOptionLabel(u)"
+              :value="u.openid"
+            />
+          </el-select>
+          <div style="color: #999; font-size: 12px; margin-top: 6px;">
+            可选。绑定后该微信可通过管理台「微信登录」进入；须为所选俱乐部球员名单中的成员。
+          </div>
         </el-form-item>
         <el-form-item label="状态" prop="status">
           <el-radio-group v-model="adminForm.status">
@@ -158,6 +191,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { adminsApi } from '@/api/admins'
 import { clubsApi } from '@/api/clubs'
+import { usersApi } from '@/api/users'
 import { ElMessage, ElMessageBox } from 'element-plus'
 
 const admins = ref([])
@@ -165,6 +199,8 @@ const clubs = ref([])
 const loading = ref(false)
 const submitLoading = ref(false)
 const clubSearchLoading = ref(false)
+const wechatSearchLoading = ref(false)
+const wechatOptions = ref([])
 const total = ref(0)
 const pageNum = ref(1)
 const pageSize = ref(10)
@@ -182,6 +218,7 @@ const adminForm = ref({
   password: '',
   role: 'club_admin',
   clubid: null,
+  openid: '',
   status: 1
 })
 
@@ -264,6 +301,55 @@ const loadInitialClubs = async () => {
   }
 }
 
+const wechatOptionLabel = (u) => {
+  const name = u?.name || '未命名'
+  const o = u?.openid || ''
+  const tail = o.length > 8 ? `…${o.slice(-8)}` : o
+  return tail ? `${name}（${tail}）` : name
+}
+
+const maskOpenid = (openid) => {
+  if (!openid || typeof openid !== 'string') return ''
+  if (openid.length <= 10) return `${openid.slice(0, 3)}***`
+  return `${openid.slice(0, 4)}…${openid.slice(-4)}`
+}
+
+const searchWechatMembers = async (query) => {
+  if (!adminForm.value.clubid) {
+    ElMessage.warning('请先选择关联俱乐部')
+    wechatOptions.value = []
+    return
+  }
+  wechatSearchLoading.value = true
+  try {
+    const response = await usersApi.list({
+      clubid: adminForm.value.clubid,
+      keyword: typeof query === 'string' ? query : '',
+      pageNum: 1,
+      pageSize: 40
+    })
+    wechatOptions.value = response.data.list || []
+  } catch (error) {
+    console.error('搜索俱乐部成员失败:', error)
+    ElMessage.error('搜索用户失败：' + error.message)
+    wechatOptions.value = []
+  } finally {
+    wechatSearchLoading.value = false
+  }
+}
+
+const onAdminRoleChange = (role) => {
+  if (role === 'super_admin') {
+    adminForm.value.openid = ''
+    wechatOptions.value = []
+  }
+}
+
+const onClubChangeForWechat = () => {
+  adminForm.value.openid = ''
+  wechatOptions.value = []
+}
+
 const handleAdd = () => {
   isEdit.value = false
   currentAdminId.value = null
@@ -272,8 +358,10 @@ const handleAdd = () => {
     password: '',
     role: 'club_admin',
     clubid: null,
+    openid: '',
     status: 1
   }
+  wechatOptions.value = []
   dialogVisible.value = true
 }
 
@@ -285,7 +373,21 @@ const handleEdit = async (row) => {
     password: '',
     role: row.role,
     clubid: row.clubid,
+    openid: row.openid || '',
     status: row.status
+  }
+  wechatOptions.value = []
+  if (row.openid && row.role === 'club_admin') {
+    try {
+      const ures = await usersApi.getById(row.openid)
+      const u = ures.data
+      if (u && u.openid) {
+        wechatOptions.value = [u]
+      }
+    } catch (e) {
+      console.warn('加载已绑定用户信息失败', e)
+      wechatOptions.value = [{ openid: row.openid, name: '已绑定' }]
+    }
   }
   
   // 如果有关联的俱乐部，加载该俱乐部信息到列表中
@@ -332,9 +434,12 @@ const handleSubmit = async () => {
         delete submitData.password
       }
       
-      // 如果是超级管理员，清空 clubid
+      // 如果是超级管理员，清空 clubid 与微信绑定
       if (submitData.role === 'super_admin') {
         submitData.clubid = null
+        submitData.openid = null
+      } else {
+        submitData.openid = submitData.openid ? submitData.openid : null
       }
       
       submitLoading.value = true

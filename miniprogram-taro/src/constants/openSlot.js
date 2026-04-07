@@ -1,5 +1,5 @@
 /** 与服务端 openSlot 常量一致：空位占位 id */
-export const OPEN_SLOT_PLAYER_ID = '00000000-0000-0000-0000-000000000000'
+export const OPEN_SLOT_PLAYER_ID = '0'
 
 export function isOpenSlotPlayer (player) {
   if (!player) return true

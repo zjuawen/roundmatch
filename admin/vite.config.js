@@ -11,7 +11,7 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0', // 允许外部访问，不仅仅是localhost
-    port: 8080,
+    port: 9080,
     allowedHosts: [
       'rmadmin.sdiread.com' // 允许的域名
     ],

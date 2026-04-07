@@ -550,17 +550,64 @@ exports.listAll = async (request, result) => {
       }
     }
 
-    // 搜索条件 - PostgreSQL 字段名是小写的（只搜索姓名）
-    if (keyword) {
-      if (allowedOpenids) {
-        whereCondition = {
-          ...whereCondition,
-          ...queryLike(keyword, ['name'])
+    // 按俱乐部筛选：仅返回该俱乐部 players 表中的微信 openid（与 allowedOpenids 取交集）
+    const restrictClubId = String(request.query.clubid || request.query.clubId || '').trim()
+    if (restrictClubId) {
+      if (request.admin && request.admin.role === 'club_admin') {
+        const owned = new Set(
+          [...(request.admin.clubIds || []).map(String), request.admin.clubid && String(request.admin.clubid)].filter(Boolean)
+        )
+        if (!owned.has(restrictClubId)) {
+          return errorResponse(result, ErrorCode.VALIDATION_ERROR, '无权查询该俱乐部成员')
         }
+      }
+      const clubPlayers = await sequelizeExecute(
+        db.collection('players').findAll({
+          where: {
+            clubid: restrictClubId,
+            enable: {
+              [Op.ne]: 0
+            }
+          },
+          attributes: ['openid'],
+          raw: true
+        })
+      )
+      const clubOpenids = [...new Set(clubPlayers.map(p => p.openid).filter(Boolean))]
+      if (clubOpenids.length === 0) {
+        return successResponse(result, {
+          data: {
+            list: [],
+            total: 0,
+            pageNum: pageNum,
+            pageSize: pageSize
+          }
+        })
+      }
+      if (whereCondition.openid && whereCondition.openid[Op.in]) {
+        const allowed = new Set(clubOpenids)
+        const merged = whereCondition.openid[Op.in].filter((o) => allowed.has(o))
+        if (merged.length === 0) {
+          return successResponse(result, {
+            data: {
+              list: [],
+              total: 0,
+              pageNum: pageNum,
+              pageSize: pageSize
+            }
+          })
+        }
+        whereCondition.openid = { [Op.in]: merged }
       } else {
-        whereCondition = {
-          ...queryLike(keyword, ['name'])
-        }
+        whereCondition.openid = { [Op.in]: clubOpenids }
+      }
+    }
+
+    // 搜索条件 - PostgreSQL 字段名是小写的（只搜索姓名），始终与已有条件合并
+    if (keyword) {
+      whereCondition = {
+        ...whereCondition,
+        ...queryLike(keyword, ['name'])
       }
     }
 
