@@ -246,6 +246,22 @@ module.exports.matches = (database, Sequelize) => {
         remark: {
             type: Sequelize.STRING
         },
+        venueName: {
+            type: Sequelize.STRING,
+            allowNull: true
+        },
+        venueAddress: {
+            type: Sequelize.STRING,
+            allowNull: true
+        },
+        venueLatitude: {
+            type: Sequelize.DOUBLE,
+            allowNull: true
+        },
+        venueLongitude: {
+            type: Sequelize.DOUBLE,
+            allowNull: true
+        },
         qrcodeUrl: {
             type: Sequelize.STRING,
             allowNull: true  // 小程序码URL
@@ -692,9 +708,8 @@ module.exports.userconfig = (database, Sequelize) => {
         createdAt: false,
         updatedAt: 'updateTime',
         indexes: [
-            { fields: ['openid'] },
-            { fields: ['openid', 'key'] },
-            { unique: true, fields: ['openid', 'key'] }
+            { name: 'userconfig_openid_idx', fields: ['openid'] },
+            { name: 'userconfig_openid_key_unique', unique: true, fields: ['openid', 'key'] }
         ]
     })
 }

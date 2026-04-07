@@ -419,6 +419,16 @@ readUserDetail = async (openid) => {
 
 //列出俱乐部成员
 listUserInClub = async (clubid, pageNum, pageSize) => {
+  // 获取总数
+  const total = await sequelizeExecute(
+    db.collection('players').count({
+      where: {
+        clubid: clubid,
+      }
+    })
+  )
+
+  // 获取分页数据
   let players = await sequelizeExecute(
     db.collection('players').findAll({
       where: {
@@ -437,7 +447,14 @@ listUserInClub = async (clubid, pageNum, pageSize) => {
    
   console.log(players)
 
-  return players
+  // 返回分页信息
+  return {
+    list: players,
+    total: total,
+    pageNum: pageNum,
+    pageSize: pageSize,
+    hasMore: pageNum * pageSize < total
+  }
 }
 
 //列出俱乐部成员

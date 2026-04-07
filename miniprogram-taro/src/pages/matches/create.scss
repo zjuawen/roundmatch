@@ -93,12 +93,36 @@
   margin-bottom: 32rpx;
 }
 
+.form-item-hint .player-placeholder-hint,
+.player-optional-tip {
+  display: block;
+  font-size: 26rpx;
+  color: #888;
+  line-height: 1.55;
+  padding: 16rpx 20rpx;
+  background-color: #f5f5f5;
+  border-radius: 8rpx;
+}
+
+.player-optional-tip {
+  margin-bottom: 16rpx;
+}
+
 .label {
   display: block;
   font-size: 28rpx;
   color: #333;
   margin-bottom: 16rpx;
   font-weight: 500;
+}
+
+.label-required {
+  color: #e53935;
+  font-weight: 600;
+  margin-right: 6rpx;
+  font-size: 30rpx;
+  line-height: 1;
+  vertical-align: middle;
 }
 
 .input {
@@ -126,6 +150,80 @@
   margin-bottom: 20rpx;
 }
 
+.label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.selected-count {
+  font-size: 24rpx;
+  color: #07c160;
+  font-weight: 500;
+}
+
+.quick-actions {
+  margin-bottom: 20rpx;
+}
+
+.action-buttons {
+  display: flex;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 16rpx;
+  background-color: #f0f9ff;
+  border: 1rpx solid #07c160;
+  border-radius: 8rpx;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.action-btn:active {
+  background-color: #e0f5f0;
+  transform: scale(0.98);
+}
+
+.action-btn-text {
+  font-size: 26rpx;
+  color: #07c160;
+  font-weight: 500;
+}
+
+.filter-buttons {
+  display: flex;
+  gap: 12rpx;
+}
+
+.filter-btn {
+  flex: 1;
+  padding: 12rpx;
+  background-color: #f8f8f8;
+  border: 1rpx solid #e8e8e8;
+  border-radius: 8rpx;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.filter-btn.active {
+  background-color: #07c160;
+  border-color: #07c160;
+}
+
+.filter-btn-text {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.filter-btn.active .filter-btn-text {
+  color: #fff;
+  font-weight: 500;
+}
+
 .textarea {
   width: 100%;
   min-height: 120rpx;
@@ -149,6 +247,69 @@
   display: flex;
   align-items: center;
   box-sizing: border-box;
+}
+
+.venue-section {
+  border: 1rpx solid #ddd;
+  border-radius: 8rpx;
+  padding: 20rpx;
+  background-color: #fff;
+}
+
+.venue-actions {
+  display: flex;
+  gap: 16rpx;
+}
+
+.venue-btn {
+  flex: 1;
+  margin: 0;
+  padding: 0;
+  height: 72rpx;
+  line-height: 72rpx;
+  font-size: 26rpx;
+  border-radius: 8rpx;
+  background-color: #07c160;
+  color: #fff;
+}
+
+.venue-btn::after {
+  border: none;
+}
+
+.venue-btn-clear {
+  background-color: #f8f8f8;
+  color: #666;
+}
+
+.venue-info {
+  margin-top: 16rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.venue-name {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+}
+
+.venue-address {
+  font-size: 24rpx;
+  color: #666;
+}
+
+.venue-coord {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.venue-placeholder {
+  display: block;
+  margin-top: 16rpx;
+  font-size: 24rpx;
+  color: #999;
 }
 
 .player-count {
@@ -389,6 +550,50 @@
   grid-template-columns: repeat(3, 1fr);
   gap: 16rpx;
   margin-top: 20rpx;
+  padding-bottom: 20rpx;
+}
+
+.load-more-section {
+  margin-top: 20rpx;
+  margin-bottom: 20rpx;
+}
+
+.load-more-btn {
+  width: 100%;
+  padding: 24rpx;
+  background-color: #f8f8f8;
+  border: 1rpx dashed #ddd;
+  border-radius: 8rpx;
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.load-more-btn:active {
+  background-color: #e8e8e8;
+  transform: scale(0.98);
+}
+
+.load-more-text {
+  font-size: 28rpx;
+  color: #666;
+}
+
+.loading-more {
+  text-align: center;
+  padding: 24rpx;
+  color: #999;
+  font-size: 26rpx;
+}
+
+.players-total-info {
+  text-align: center;
+  padding: 16rpx;
+  margin-top: 20rpx;
+}
+
+.total-text {
+  font-size: 24rpx;
+  color: #999;
 }
 
 .player-item {
@@ -454,4 +659,51 @@
   padding: 60rpx 20rpx;
   color: #999;
   font-size: 28rpx;
+}
+
+.scale-hint {
+  display: block;
+  margin-top: 12rpx;
+  font-size: 24rpx;
+  color: #888;
+  line-height: 1.5;
+}
+
+.prefill-card {
+  padding: 24rpx;
+  background: linear-gradient(135deg, #f8faf8 0%, #eef7f0 100%);
+  border: 1rpx solid #c8e6c9;
+  border-radius: 12rpx;
+}
+
+.prefill-main {
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8rpx;
+}
+
+.prefill-summary {
+  font-size: 28rpx;
+  color: #333;
+  font-weight: 500;
+  flex: 1;
+  padding-right: 16rpx;
+}
+
+.prefill-arrow {
+  font-size: 28rpx;
+  color: #07c160;
+  font-weight: 600;
+}
+
+.prefill-sub {
+  font-size: 24rpx;
+  color: #888;
+  line-height: 1.4;
+}
+
+.create-players-inner {
+  padding-bottom: 48rpx;
 }

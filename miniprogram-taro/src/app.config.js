@@ -9,6 +9,7 @@ export default {
     'pages/matches/list',
     'pages/matches/detail',
     'pages/matches/create',
+    'pages/matches/create-players',
     'pages/players/list',
     'pages/players/detail',
     'pages/profile/index',

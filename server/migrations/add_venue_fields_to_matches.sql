@@ -1,0 +1,12 @@
+-- 为 matches 表添加比赛场馆定位信息
+ALTER TABLE matches
+ADD COLUMN IF NOT EXISTS venuename VARCHAR(255);
+
+ALTER TABLE matches
+ADD COLUMN IF NOT EXISTS venueaddress VARCHAR(255);
+
+ALTER TABLE matches
+ADD COLUMN IF NOT EXISTS venuelatitude DOUBLE PRECISION;
+
+ALTER TABLE matches
+ADD COLUMN IF NOT EXISTS venuelongitude DOUBLE PRECISION;

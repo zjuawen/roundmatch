@@ -12,6 +12,23 @@ const userAvatarFix = require("../utils/util").userAvatarFix
 const { batchGetAvatarValidity } = require("../utils/avatarCheck")
 const ErrorCode = require("./errorcode")
 const wechat = require("./wechat")
+const { OPEN_SLOT_PLAYER_ID, isOpenSlotPlayerId } = require("../constants/openSlot")
+
+// 规范化场馆定位参数（支持字符串和数字）
+const normalizeVenueLocation = (venueName, venueAddress, venueLatitude, venueLongitude) => {
+  const toNumberOrNull = (value) => {
+    if (value === undefined || value === null || value === '') return null
+    const parsed = Number(value)
+    return Number.isFinite(parsed) ? parsed : null
+  }
+
+  return {
+    venueName: venueName ? String(venueName).trim() : null,
+    venueAddress: venueAddress ? String(venueAddress).trim() : null,
+    venueLatitude: toNumberOrNull(venueLatitude),
+    venueLongitude: toNumberOrNull(venueLongitude)
+  }
+}
 
 // 云函数入口函数
 exports.main = async (request, result) => {
@@ -41,9 +58,44 @@ exports.main = async (request, result) => {
   } else if (action == 'ranking') {
     // 小程序获取排名统计
     data = await getRankingForMiniProgram(event.matchid)
+  } else if (action == 'claimOpenSlot') {
+    const result_data = await claimOpenSlot(event.matchid, event.gameid, event.slot, event.openid)
+    if (result_data.errCode !== undefined) {
+      if (result_data.errCode === 0) {
+        successResponse(result, { data: result_data.data !== undefined ? result_data.data : { ok: true } })
+        return
+      }
+      errorResponse(result, result_data.errCode, result_data.errMsg || '操作失败')
+      return
+    }
+    successResponse(result, { data: result_data })
+    return
   } else if (action == 'createMatch') {
-    // 小程序端创建比赛
-    const result_data = await createMatchForMiniProgram(event.clubid, event.name, event.type, event.players, event.startDate, event.remark, event.openid)
+    // 小程序端创建比赛（players 经 GET 传递时为 JSON 字符串）
+    let playersParam = event.players
+    if (typeof playersParam === 'string' && playersParam.trim() !== '') {
+      try {
+        playersParam = JSON.parse(playersParam)
+      } catch (e) {
+        playersParam = []
+      }
+    }
+    if (!Array.isArray(playersParam)) {
+      playersParam = []
+    }
+    const result_data = await createMatchForMiniProgram(
+      event.clubid,
+      event.name,
+      event.type,
+      playersParam,
+      event.startDate,
+      event.remark,
+      event.openid,
+      event.venueName,
+      event.venueAddress,
+      event.venueLatitude,
+      event.venueLongitude
+    )
     if (result_data.errCode !== undefined) {
       if (result_data.errCode === 0) {
         successResponse(result, {
@@ -106,7 +158,19 @@ updateMatch = async (matchid, value) => {
 }
 
 //保存新增的比赛数据
-saveMatchData = async (owner, type, clubid, games, playerCount, remark = "", startDate = null) => {
+saveMatchData = async (
+  owner,
+  type,
+  clubid,
+  games,
+  playerCount,
+  remark = "",
+  startDate = null,
+  venueName = null,
+  venueAddress = null,
+  venueLatitude = null,
+  venueLongitude = null
+) => {
   if (typeof games === 'string') {
     games = JSON.parse(games)
   }
@@ -125,6 +189,8 @@ saveMatchData = async (owner, type, clubid, games, playerCount, remark = "", sta
     }
   }
 
+  const venue = normalizeVenueLocation(venueName, venueAddress, venueLatitude, venueLongitude)
+
   let saved = await sequelizeExecute(
     db.collection('matches').create({
       // id: _.inc(1),
@@ -138,6 +204,10 @@ saveMatchData = async (owner, type, clubid, games, playerCount, remark = "", sta
       delete: false,
       owner: owner,
       remark: remark,
+      venueName: venue.venueName,
+      venueAddress: venue.venueAddress,
+      venueLatitude: venue.venueLatitude,
+      venueLongitude: venue.venueLongitude
     })
   )
 
@@ -147,6 +217,13 @@ saveMatchData = async (owner, type, clubid, games, playerCount, remark = "", sta
   let matchid = saved._id
   console.log("added new match: " + matchid)
   return await savaGames(clubid, matchid, games)
+}
+
+const gamePlayerFieldToStoredId = (p) => {
+  if (p == null) return OPEN_SLOT_PLAYER_ID
+  if (typeof p === 'string') return p || OPEN_SLOT_PLAYER_ID
+  if (p._id) return p._id
+  return OPEN_SLOT_PLAYER_ID
 }
 
 //保存对阵数据
@@ -165,10 +242,10 @@ savaGames = async (clubid, matchid, games) => {
       clubid: clubid,
       matchid: matchid,
       order: data[i].order,
-      player1: (data[i].player1._id) ? data[i].player1._id : data[i].player1.toString(),
-      player2: (data[i].player2._id) ? data[i].player2._id : data[i].player2.toString(),
-      player3: (data[i].player3._id) ? data[i].player3._id : data[i].player3.toString(),
-      player4: (data[i].player4._id) ? data[i].player4._id : data[i].player4.toString(),
+      player1: gamePlayerFieldToStoredId(data[i].player1),
+      player2: gamePlayerFieldToStoredId(data[i].player2),
+      player3: gamePlayerFieldToStoredId(data[i].player3),
+      player4: gamePlayerFieldToStoredId(data[i].player4),
       score1: -1,
       score2: -1,
       createDate: db.serverDate(),
@@ -204,6 +281,9 @@ collectPlayerWeight = (playerWeight, data) => {
   let players = [data.player1, data.player2, data.player3, data.player4]
 
   players.forEach(function(playerid) {
+    if (!playerid || !playerid._id || isOpenSlotPlayerId(playerid._id)) {
+      return
+    }
     let found = false
 
     for (let i = 0; i < playerWeight.length; i++) {
@@ -228,6 +308,9 @@ collectPlayerWeight = (playerWeight, data) => {
 justifyPlayerOrder = async (weightObj) => {
   console.log("justifyPlayerOrder")
   console.log(weightObj)
+  if (!weightObj.playerid || !weightObj.playerid._id || isOpenSlotPlayerId(weightObj.playerid._id)) {
+    return 0
+  }
   let res = await sequelizeExecute(
     db.collection('players')
     .update({
@@ -318,15 +401,13 @@ createMatchData = async (type, playerArray) => {
   return allgames
 }
 
+const openSlotPlayerObject = () => ({ _id: OPEN_SLOT_PLAYER_ID, name: '空位', isOpenSlot: true })
+
 flatPlayerArray = (array) => {
   var newArray = []
   array.forEach(pair => {
-    if (pair.player1) {
-      newArray.push(pair.player1)
-    }
-    if (pair.player2) {
-      newArray.push(pair.player2)
-    }
+    newArray.push(pair.player1 || openSlotPlayerObject())
+    newArray.push(pair.player2 || openSlotPlayerObject())
   })
 
   return newArray
@@ -577,32 +658,31 @@ readMatch = async (clubid, matchid) => {
 
   console.log('最终查询结果:', games)
 
-  let players = []
+  let playerIdList = []
   await games.forEach(game => {
-    // console.log(game['player_1'])
     for (let i = 1; i < 5; i++) {
-      let player = game['player' + i]
-      // console.log(player)
-      if (players.includes(player)) {
-        continue
+      let pid = game['player' + i]
+      if (pid && !isOpenSlotPlayerId(pid) && !playerIdList.includes(pid)) {
+        playerIdList.push(pid)
       }
-      players.push(player)
     }
   })
 
-  console.log(players)
+  console.log(playerIdList)
 
-  players = await sequelizeExecute(
-    db.collection('players').findAll({
-      attributes: ['_id', 'name', 'avatarUrl', 'openid'],
-      where: {
-        _id: {
-          [Op.in]: players
+  let players = playerIdList.length
+    ? await sequelizeExecute(
+      db.collection('players').findAll({
+        attributes: ['_id', 'name', 'avatarUrl', 'openid'],
+        where: {
+          _id: {
+            [Op.in]: playerIdList
+          },
         },
-      },
-      raw: true
-    })
-  )
+        raw: true
+      })
+    )
+    : []
 
   players = userAvatarFix(players)
   
@@ -611,11 +691,25 @@ readMatch = async (clubid, matchid) => {
   
   console.log(players)
 
+  const openSlotHydrated = () => ({
+    _id: OPEN_SLOT_PLAYER_ID,
+    name: '空位',
+    isOpenSlot: true,
+    openSlot: true,
+    avatarUrl: '',
+    avatarValid: true,
+    openid: null
+  })
+
   await games.forEach(game => {
     for (let i = 1; i < 5; i++) {
-      let player = game['player' + i]
+      const rawId = game['player' + i]
+      if (isOpenSlotPlayerId(rawId)) {
+        game['player' + i] = openSlotHydrated()
+        continue
+      }
       const foundPlayer = players.find((p) => {
-        return p._id === game['player' + i];
+        return p._id === rawId
       })
       if (foundPlayer) {
         game['player' + i] = {
@@ -635,7 +729,7 @@ readMatch = async (clubid, matchid) => {
     try {
       matchInfo = await sequelizeExecute(
         db.collection('matches').findByPk(finalMatchid, {
-          attributes: ['_id', 'clubid', 'type', 'name', 'createDate', 'startDate'],
+          attributes: ['_id', 'clubid', 'type', 'name', 'createDate', 'startDate', 'venueName', 'venueAddress', 'venueLatitude', 'venueLongitude'],
           raw: true
         })
       )
@@ -826,6 +920,22 @@ const normalizeMatchFields = (match) => {
   if (match.qrcodeurl !== undefined) {
     normalized.qrcodeUrl = match.qrcodeurl
     delete normalized.qrcodeurl
+  }
+  if (match.venuename !== undefined) {
+    normalized.venueName = match.venuename
+    delete normalized.venuename
+  }
+  if (match.venueaddress !== undefined) {
+    normalized.venueAddress = match.venueaddress
+    delete normalized.venueaddress
+  }
+  if (match.venuelatitude !== undefined) {
+    normalized.venueLatitude = match.venuelatitude
+    delete normalized.venuelatitude
+  }
+  if (match.venuelongitude !== undefined) {
+    normalized.venueLongitude = match.venuelongitude
+    delete normalized.venuelongitude
   }
   return normalized
 }
@@ -1304,7 +1414,8 @@ getMatchConfig = async () => {
 // 创建赛事（管理台）
 exports.create = async (request, result) => {
   try {
-    const { clubid, name, type, playerCount, owner, remark, players, startDate } = request.body
+    const { clubid, name, type, playerCount, owner, remark, players, startDate, venueName, venueAddress, venueLatitude, venueLongitude } = request.body
+    const venue = normalizeVenueLocation(venueName, venueAddress, venueLatitude, venueLongitude)
 
     if (!clubid) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '俱乐部ID不能为空')
@@ -1412,12 +1523,12 @@ exports.create = async (request, result) => {
         const games = allgames[0].data || []
         totalGames = games.length
 
-        // 计算实际玩家数
+        // 已报名人数（不含空位占位）
         if (matchType === 'fixpair' || matchType === 'fix' || matchType === 'group') {
           const playerArrayFlat = flatPlayerArray(playerArray)
-          finalPlayerCount = playerArrayFlat.length
+          finalPlayerCount = playerArrayFlat.filter(p => p && p._id && !isOpenSlotPlayerId(p._id)).length
         } else {
-          finalPlayerCount = playerArray.length
+          finalPlayerCount = playerArray.filter(p => p && p._id && !isOpenSlotPlayerId(p._id)).length
         }
 
         // 创建赛事并保存对阵数据
@@ -1428,7 +1539,11 @@ exports.create = async (request, result) => {
           games,
           finalPlayerCount,
           remark || '',
-          startDate || null // 比赛开始日期
+          startDate || null, // 比赛开始日期
+          venue.venueName,
+          venue.venueAddress,
+          venue.venueLatitude,
+          venue.venueLongitude
         )
 
         if (saved && saved.matchid) {
@@ -1506,7 +1621,11 @@ exports.create = async (request, result) => {
         type: matchType,
         delete: 0,
         owner: owner || 'admin',
-        remark: remark || ''
+        remark: remark || '',
+        venueName: venue.venueName,
+        venueAddress: venue.venueAddress,
+        venueLatitude: venue.venueLatitude,
+        venueLongitude: venue.venueLongitude
       }, {
         raw: true
       })
@@ -1559,7 +1678,7 @@ exports.create = async (request, result) => {
 exports.update = async (request, result) => {
   try {
     const matchId = request.params.id
-    const { name, type, playerCount, remark, finish, startDate } = request.body
+    const { name, type, playerCount, remark, finish, startDate, venueName, venueAddress, venueLatitude, venueLongitude } = request.body
 
     if (!matchId) {
       return errorResponse(result, ErrorCode.VALIDATION_ERROR, '赛事ID不能为空')
@@ -1590,6 +1709,24 @@ exports.update = async (request, result) => {
     if (playerCount !== undefined) updateData.playerCount = playerCount
     if (remark !== undefined) updateData.remark = remark
     if (finish !== undefined) updateData.finish = finish
+    if (venueName !== undefined) updateData.venueName = venueName === null ? null : String(venueName).trim()
+    if (venueAddress !== undefined) updateData.venueAddress = venueAddress === null ? null : String(venueAddress).trim()
+    if (venueLatitude !== undefined) {
+      if (venueLatitude === null || venueLatitude === '') {
+        updateData.venueLatitude = null
+      } else {
+        const parsedLatitude = Number(venueLatitude)
+        updateData.venueLatitude = Number.isFinite(parsedLatitude) ? parsedLatitude : null
+      }
+    }
+    if (venueLongitude !== undefined) {
+      if (venueLongitude === null || venueLongitude === '') {
+        updateData.venueLongitude = null
+      } else {
+        const parsedLongitude = Number(venueLongitude)
+        updateData.venueLongitude = Number.isFinite(parsedLongitude) ? parsedLongitude : null
+      }
+    }
     
     // 处理开始日期
     if (startDate !== undefined) {
@@ -2818,9 +2955,101 @@ getRankingForMiniProgram = async (matchId) => {
   }
 }
 
-// 小程序端创建比赛
-createMatchForMiniProgram = async (clubid, name, type, players, startDate, remark, openid) => {
+// 俱乐部成员占用空位报名（games.player1..4 为占位 UUID 时可点选）
+claimOpenSlot = async (matchid, gameid, slot, openid) => {
   try {
+    if (!matchid || !gameid || !openid) {
+      return { errCode: ErrorCode.VALIDATION_ERROR, errMsg: '参数不完整' }
+    }
+    const slotNum = parseInt(slot, 10)
+    if (![1, 2, 3, 4].includes(slotNum)) {
+      return { errCode: ErrorCode.VALIDATION_ERROR, errMsg: '位置参数无效' }
+    }
+
+    const match = await sequelizeExecute(
+      db.collection('matches').findByPk(matchid, { raw: true })
+    )
+    if (!match || match.delete === 1 || match.delete === true) {
+      return { errCode: ErrorCode.ERROR_DATA_NOT_EXIST, errMsg: '比赛不存在' }
+    }
+
+    const clubid = match.clubid
+    const playerRow = await sequelizeExecute(
+      db.collection('players').findOne({
+        where: {
+          clubid,
+          openid,
+          enable: true
+        },
+        raw: true
+      })
+    )
+    if (!playerRow) {
+      return { errCode: ErrorCode.ERROR_NEED_LOGIN, errMsg: '您不是该俱乐部成员，无法报名' }
+    }
+
+    const game = await sequelizeExecute(
+      db.collection('games').findByPk(gameid, { raw: true })
+    )
+    if (!game || String(game.matchid) !== String(matchid)) {
+      return { errCode: ErrorCode.ERROR_DATA_NOT_EXIST, errMsg: '场次不存在' }
+    }
+
+    const field = 'player' + slotNum
+    const currentId = game[field]
+    if (!isOpenSlotPlayerId(currentId)) {
+      return { errCode: ErrorCode.VALIDATION_ERROR, errMsg: '该位置已被占用' }
+    }
+
+    const allGames = await sequelizeExecute(
+      db.collection('games').findAll({
+        where: { matchid },
+        attributes: ['_id', 'player1', 'player2', 'player3', 'player4'],
+        raw: true
+      })
+    )
+    for (const g of allGames) {
+      for (let i = 1; i <= 4; i++) {
+        const pid = g['player' + i]
+        if (pid && String(pid) === String(playerRow._id)) {
+          return { errCode: ErrorCode.VALIDATION_ERROR, errMsg: '您已在该场比赛中报名' }
+        }
+      }
+    }
+
+    await sequelizeExecute(
+      db.collection('games').update(
+        { [field]: playerRow._id },
+        { where: { _id: gameid } }
+      )
+    )
+
+    return { errCode: 0, data: { ok: true } }
+  } catch (e) {
+    console.error('claimOpenSlot', e)
+    return {
+      errCode: ErrorCode.DATABASE_ERROR,
+      errMsg: e.message || '报名失败'
+    }
+  }
+}
+
+// 小程序端创建比赛
+createMatchForMiniProgram = async (
+  clubid,
+  name,
+  type,
+  players,
+  startDate,
+  remark,
+  openid,
+  venueName = null,
+  venueAddress = null,
+  venueLatitude = null,
+  venueLongitude = null
+) => {
+  try {
+    const venue = normalizeVenueLocation(venueName, venueAddress, venueLatitude, venueLongitude)
     if (!clubid) {
       return {
         errCode: ErrorCode.VALIDATION_ERROR,
@@ -2923,51 +3152,43 @@ createMatchForMiniProgram = async (clubid, name, type, players, startDate, remar
         // 固定搭档和分组类型，需要配对格式
         // 如果传入的是单个选手ID数组，需要转换为配对格式
         if (players[0] && typeof players[0] === 'string') {
-          // 单个ID数组，需要配对
           playerArray = []
           for (let i = 0; i < players.length; i += 2) {
-            if (i + 1 < players.length) {
-              playerArray.push({
-                player1: { _id: players[i] },
-                player2: { _id: players[i + 1] }
-              })
-            } else {
-              playerArray.push({
-                player1: { _id: players[i] },
-                player2: null
-              })
-            }
+            playerArray.push({
+              player1: players[i] ? { _id: players[i] } : null,
+              player2: (i + 1 < players.length && players[i + 1]) ? { _id: players[i + 1] } : null
+            })
           }
         }
 
-        // 验证配对数量
-        const completePairs = playerArray.filter(pair => pair.player1 && pair.player2)
-        const pairCount = completePairs.length
-        const actualPlayerCount = pairCount * 2
-
-        // 检查是否有未完成的配对
-        const incompletePairs = playerArray.filter(pair => !pair.player1 || !pair.player2)
-        if (incompletePairs.length > 0) {
-          return {
-            errCode: ErrorCode.VALIDATION_ERROR,
-            errMsg: '请完成所有配对，每个配对需要2名选手'
-          }
+        const normalizePairSlot = (p) => {
+          if (p == null) return openSlotPlayerObject()
+          if (typeof p === 'string') return p ? { _id: p } : openSlotPlayerObject()
+          if (typeof p === 'object' && p._id) return { _id: p._id, name: p.name }
+          return openSlotPlayerObject()
         }
+        playerArray = playerArray.map(pair => ({
+          player1: normalizePairSlot(pair.player1),
+          player2: normalizePairSlot(pair.player2)
+        }))
 
-        // 验证配对数量限制
+        // 按「搭档组数」校验；组内允许空位（后续由成员点击报名）
+        const pairCount = playerArray.length
+        const seatCount = pairCount * 2
+
         if (pairCount < matchConfig.minPairs) {
           return {
             errCode: ErrorCode.VALIDATION_ERROR,
-            errMsg: `至少需要${matchConfig.minPairs}组配对（${matchConfig.minPairs * 2}名选手）`
+            errMsg: `至少需要${matchConfig.minPairs}组搭档`
           }
         }
         if (pairCount > matchConfig.maxPairs) {
           return {
             errCode: ErrorCode.VALIDATION_ERROR,
-            errMsg: `最多支持${matchConfig.maxPairs}组配对（${matchConfig.maxPairs * 2}名选手）`
+            errMsg: `最多支持${matchConfig.maxPairs}组配对（${matchConfig.maxPairs * 2}个位置）`
           }
         }
-        if (actualPlayerCount > matchConfig.maxPlayers) {
+        if (seatCount > matchConfig.maxPlayers) {
           return {
             errCode: ErrorCode.VALIDATION_ERROR,
             errMsg: `最多支持${matchConfig.maxPlayers}名选手`
@@ -3003,12 +3224,12 @@ createMatchForMiniProgram = async (clubid, name, type, players, startDate, remar
         const games = allgames[0].data || []
         totalGames = games.length
 
-        // 计算实际玩家数
+        // 已报名人数（不含空位占位）
         if (matchType === 'fixpair' || matchType === 'fix' || matchType === 'group') {
           const playerArrayFlat = flatPlayerArray(playerArray)
-          finalPlayerCount = playerArrayFlat.length
+          finalPlayerCount = playerArrayFlat.filter(p => p && p._id && !isOpenSlotPlayerId(p._id)).length
         } else {
-          finalPlayerCount = playerArray.length
+          finalPlayerCount = playerArray.filter(p => p && p._id && !isOpenSlotPlayerId(p._id)).length
         }
 
         // 处理开始日期
@@ -3031,7 +3252,11 @@ createMatchForMiniProgram = async (clubid, name, type, players, startDate, remar
           games,
           finalPlayerCount,
           remark || '',
-          startDateValue
+          startDateValue,
+          venue.venueName,
+          venue.venueAddress,
+          venue.venueLatitude,
+          venue.venueLongitude
         )
 
         if (saved && saved.matchid) {
@@ -3116,7 +3341,11 @@ createMatchForMiniProgram = async (clubid, name, type, players, startDate, remar
         type: matchType,
         delete: 0,
         owner: openid,
-        remark: remark || ''
+        remark: remark || '',
+        venueName: venue.venueName,
+        venueAddress: venue.venueAddress,
+        venueLatitude: venue.venueLatitude,
+        venueLongitude: venue.venueLongitude
       }, {
         raw: true
       })
@@ -3291,7 +3520,7 @@ getMatchForCopy = async (clubid, matchid, openid) => {
     games.forEach(game => {
       const players = [game.player1, game.player2, game.player3, game.player4]
       players.forEach(playerId => {
-        if (playerId && !seenIds.has(playerId)) {
+        if (playerId && !isOpenSlotPlayerId(playerId) && !seenIds.has(playerId)) {
           seenIds.add(playerId)
           playerIds.push(playerId)
         }
@@ -3316,7 +3545,7 @@ getMatchForCopy = async (clubid, matchid, openid) => {
       const uniquePlayers = []
       const seen = new Set()
       players.forEach(id => {
-        if (id && !seen.has(id)) {
+        if (id && !isOpenSlotPlayerId(id) && !seen.has(id)) {
           seen.add(id)
           uniquePlayers.push(id)
         }
@@ -3330,6 +3559,10 @@ getMatchForCopy = async (clubid, matchid, openid) => {
         name: match.name || '',
         type: matchType,
         remark: match.remark || '',
+        venueName: match.venuename || match.venueName || '',
+        venueAddress: match.venueaddress || match.venueAddress || '',
+        venueLatitude: match.venuelatitude ?? match.venueLatitude ?? null,
+        venueLongitude: match.venuelongitude ?? match.venueLongitude ?? null,
         playerCount: match.playerCount || 0,
         players: players
       }

@@ -115,7 +115,14 @@ export const matchService = {
     pageSize 
   }),
   create: (players, type) => api.get('api/matchservice', { action: 'create', players, type }),
-  createMatch: (clubid, name, type, players, startDate, remark, openid) => {
+  createMatch: (clubid, name, type, players, startDate, remark, openid, venueInfo = {}) => {
+    const {
+      venueName = null,
+      venueAddress = null,
+      venueLatitude = null,
+      venueLongitude = null
+    } = venueInfo || {}
+
     // 将players数组序列化为JSON字符串
     return api.get('api/matchservice', {
       action: 'createMatch',
@@ -125,7 +132,11 @@ export const matchService = {
       players: JSON.stringify(players),
       startDate,
       remark,
-      openid
+      openid,
+      venueName,
+      venueAddress,
+      venueLatitude,
+      venueLongitude
     })
   },
   getMatchForCopy: (clubid, matchid, openid) => {
@@ -138,7 +149,10 @@ export const matchService = {
   },
   read: (clubid, matchid) => api.get('api/matchservice', { action: 'read', clubid, matchid }),
   delete: (clubid, matchid) => api.get('api/matchservice', { action: 'delete', clubid, matchid }),
-  ranking: (matchid) => api.get('api/matchservice', { action: 'ranking', matchid })
+  ranking: (matchid) => api.get('api/matchservice', { action: 'ranking', matchid }),
+  /** 俱乐部成员占用对阵中空位 matchid, gameid, slot 1-4 */
+  claimOpenSlot: (matchid, gameid, slot, openid) =>
+    api.get('api/matchservice', { action: 'claimOpenSlot', matchid, gameid, slot, openid })
 }
 
 export const gameService = {

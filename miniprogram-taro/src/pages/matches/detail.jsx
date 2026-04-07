@@ -4,6 +4,7 @@ import Taro from '@tarojs/taro'
 import { matchService, gameService, userService } from '../../services/api'
 import { getGlobalData, saveGlobalData, safeNavigateBack } from '../../utils'
 import { generateAvatarColor, getAvatarText } from '../../utils/imageUtils'
+import { isOpenSlotPlayer } from '../../constants/openSlot'
 import './detail.scss'
 
 export default class MatchDetail extends Component {
@@ -519,36 +520,27 @@ export default class MatchDetail extends Component {
     
     games.forEach(game => {
       if (isPairMode) {
-        // 固定搭档或分组模式：player1和player2是一对，player3和player4是一对
-        if (game.player1 && game.player2) {
-          const player1Id = getPlayerId(game.player1)
-          const player2Id = getPlayerId(game.player2)
-          const pairKey1 = [player1Id, player2Id].sort().join('_')
-          if (!processedPairs.has(pairKey1)) {
-            processedPairs.add(pairKey1)
-            enrollmentMap.set(pairKey1, {
-              player1: game.player1,
-              player2: game.player2,
-              index: enrollmentMap.size + 1
-            })
-          }
+        const addPairSide = (p1, p2, sideKey) => {
+          if (!p1 && !p2) return
+          const id1 = getPlayerId(p1)
+          const id2 = getPlayerId(p2)
+          const bothReal = id1 && id2 && !isOpenSlotPlayer(p1) && !isOpenSlotPlayer(p2)
+          const pairKey = bothReal ? [id1, id2].sort().join('_') : `${game._id}-${sideKey}`
+          if (processedPairs.has(pairKey)) return
+          processedPairs.add(pairKey)
+          enrollmentMap.set(pairKey, {
+            player1: p1 || null,
+            player2: p2 || null,
+            index: enrollmentMap.size + 1
+          })
         }
-        if (game.player3 && game.player4) {
-          const player3Id = getPlayerId(game.player3)
-          const player4Id = getPlayerId(game.player4)
-          const pairKey2 = [player3Id, player4Id].sort().join('_')
-          if (!processedPairs.has(pairKey2)) {
-            processedPairs.add(pairKey2)
-            enrollmentMap.set(pairKey2, {
-              player1: game.player3,
-              player2: game.player4,
-              index: enrollmentMap.size + 1
-            })
-          }
-        }
+        addPairSide(game.player1, game.player2, 'L')
+        addPairSide(game.player3, game.player4, 'R')
       } else {
         // 不固定模式：每个选手单独显示（按人员列表）
-        const players = [game.player1, game.player2, game.player3, game.player4].filter(Boolean)
+        const players = [game.player1, game.player2, game.player3, game.player4].filter(
+          p => p && !isOpenSlotPlayer(p)
+        )
         players.forEach(player => {
           const playerId = getPlayerId(player)
           if (playerId && !enrollmentMap.has(playerId)) {
@@ -563,6 +555,46 @@ export default class MatchDetail extends Component {
     })
     
     return Array.from(enrollmentMap.values())
+  }
+
+  gameHasOpenSlot = (game) => {
+    if (!game) return false
+    return [1, 2, 3, 4].some(i => isOpenSlotPlayer(game[`player${i}`]))
+  }
+
+  handleClaimOpenSlot = (game, slot) => {
+    if (this.checkMatchExpired()) {
+      Taro.showToast({ title: '比赛已结束', icon: 'none' })
+      return
+    }
+    const openid = getGlobalData('openid')
+    if (!openid) {
+      const { matchId, clubid } = this.state
+      const returnUrl = `/pages/matches/detail?clubid=${clubid || ''}&id=${matchId || ''}`
+      Taro.navigateTo({
+        url: `/pages/login/index?returnUrl=${encodeURIComponent(returnUrl)}`
+      })
+      return
+    }
+    const { matchId } = this.state
+    if (!matchId || !game?._id) return
+    Taro.showModal({
+      title: '报名空位',
+      content: '确定占用该空位参加比赛吗？',
+      success: async (res) => {
+        if (!res.confirm) return
+        try {
+          Taro.showLoading({ title: '报名中...' })
+          await matchService.claimOpenSlot(matchId, game._id, slot, openid)
+          Taro.hideLoading()
+          Taro.showToast({ title: '报名成功', icon: 'success' })
+          this.loadMatch()
+        } catch (e) {
+          Taro.hideLoading()
+          Taro.showToast({ title: e.message || '报名失败', icon: 'none' })
+        }
+      }
+    })
   }
 
   // 分享比赛按钮点击处理
@@ -841,6 +873,14 @@ export default class MatchDetail extends Component {
         title: '比赛已结束',
         icon: 'none',
         duration: 2000
+      })
+      return
+    }
+
+    if (this.gameHasOpenSlot(game)) {
+      Taro.showToast({
+        title: '尚有未报名空位，无法录入比分',
+        icon: 'none'
       })
       return
     }
@@ -1341,6 +1381,15 @@ export default class MatchDetail extends Component {
                 </Text>
               </View>
             )}
+            {this.state.matchInfo && (this.state.matchInfo.venueName || this.state.matchInfo.venueAddress) && (
+              <View className='enrollment-match-type'>
+                <Text className='enrollment-match-type-label'>比赛场馆：</Text>
+                <Text className='enrollment-match-type-value'>
+                  {this.state.matchInfo.venueName || '未命名场馆'}
+                  {this.state.matchInfo.venueAddress ? ` ${this.state.matchInfo.venueAddress}` : ''}
+                </Text>
+              </View>
+            )}
             {/* 报名名单显示 */}
             <View className='enrollment-match-type'>
               <Text className='enrollment-match-type-label'>报名名单：</Text>
@@ -1348,6 +1397,9 @@ export default class MatchDetail extends Component {
             </View>
             {this.state.enrollment && this.state.enrollment.length > 0 ? (
               <View className='enrollment-list'>
+                <View className='enrollment-open-hint'>
+                  <Text className='enrollment-open-hint-text'>若有空位，请在「对阵」页点击对应位置报名</Text>
+                </View>
                 {this.state.enrollment.map((item, index) => (
                   <View key={index} className='enrollment-item'>
                     <View className='enrollment-number'>
@@ -1356,56 +1408,78 @@ export default class MatchDetail extends Component {
                     <View className='enrollment-players'>
                       {/* 第一个选手 */}
                       <View className='enrollment-player'>
-                        {item.player1?.avatarValid && item.player1?.avatarUrl && item.player1.avatarUrl.trim() !== '' ? (
-                          <Image 
-                            className='enrollment-player-avatar'
-                            src={item.player1.avatarUrl}
-                            mode='aspectFill'
-                          />
+                        {isOpenSlotPlayer(item.player1) ? (
+                          <>
+                            <View className='enrollment-player-avatar-open'>
+                              <Text className='enrollment-player-avatar-open-text'>空</Text>
+                            </View>
+                            <Text className='enrollment-player-name enrollment-player-name-open'>空位</Text>
+                          </>
                         ) : (
-                          <View
-                            className='enrollment-player-avatar-text'
-                            style={{ backgroundColor: generateAvatarColor(item.player1?.name || '') }}
-                          >
-                            <Text className='enrollment-player-avatar-text-content'>
-                              {getAvatarText(item.player1?.name || '')}
-                            </Text>
-                          </View>
-                        )}
-                        {item.player1?.gender !== undefined && (
-                          <View className={`enrollment-gender-badge ${item.player1.gender === 1 ? 'male' : 'female'}`}>
-                            <Text className='enrollment-gender-icon'>{item.player1.gender === 1 ? '♂' : '♀'}</Text>
-                          </View>
-                        )}
-                        <Text className='enrollment-player-name'>{item.player1?.name || '未知'}</Text>
-                      </View>
-                      {/* 固定搭档模式：显示第二个选手 */}
-                      {item.player2 && (
-                        <>
-                          <Text className='enrollment-pair-separator'>+</Text>
-                          <View className='enrollment-player'>
-                            {item.player2?.avatarValid && item.player2?.avatarUrl && item.player2.avatarUrl.trim() !== '' ? (
+                          <>
+                            {item.player1?.avatarValid && item.player1?.avatarUrl && item.player1.avatarUrl.trim() !== '' ? (
                               <Image 
                                 className='enrollment-player-avatar'
-                                src={item.player2.avatarUrl}
+                                src={item.player1.avatarUrl}
                                 mode='aspectFill'
                               />
                             ) : (
                               <View
                                 className='enrollment-player-avatar-text'
-                                style={{ backgroundColor: generateAvatarColor(item.player2?.name || '') }}
+                                style={{ backgroundColor: generateAvatarColor(item.player1?.name || '') }}
                               >
                                 <Text className='enrollment-player-avatar-text-content'>
-                                  {getAvatarText(item.player2?.name || '')}
+                                  {getAvatarText(item.player1?.name || '')}
                                 </Text>
                               </View>
                             )}
-                            {item.player2?.gender !== undefined && (
-                              <View className={`enrollment-gender-badge ${item.player2.gender === 1 ? 'male' : 'female'}`}>
-                                <Text className='enrollment-gender-icon'>{item.player2.gender === 1 ? '♂' : '♀'}</Text>
+                            {item.player1?.gender !== undefined && (
+                              <View className={`enrollment-gender-badge ${item.player1.gender === 1 ? 'male' : 'female'}`}>
+                                <Text className='enrollment-gender-icon'>{item.player1.gender === 1 ? '♂' : '♀'}</Text>
                               </View>
                             )}
-                            <Text className='enrollment-player-name'>{item.player2?.name || '未知'}</Text>
+                            <Text className='enrollment-player-name'>{item.player1?.name || '未知'}</Text>
+                          </>
+                        )}
+                      </View>
+                      {/* 固定搭档模式：显示第二个选手或空位 */}
+                      {(this.state.matchInfo?.type === 'fixpair' || this.state.matchInfo?.type === 'fix' || this.state.matchInfo?.type === 'group') && (
+                        <>
+                          <Text className='enrollment-pair-separator'>+</Text>
+                          <View className='enrollment-player'>
+                            {isOpenSlotPlayer(item.player2) ? (
+                              <>
+                                <View className='enrollment-player-avatar-open'>
+                                  <Text className='enrollment-player-avatar-open-text'>空</Text>
+                                </View>
+                                <Text className='enrollment-player-name enrollment-player-name-open'>空位</Text>
+                              </>
+                            ) : item.player2 ? (
+                              <>
+                                {item.player2?.avatarValid && item.player2?.avatarUrl && item.player2.avatarUrl.trim() !== '' ? (
+                                  <Image 
+                                    className='enrollment-player-avatar'
+                                    src={item.player2.avatarUrl}
+                                    mode='aspectFill'
+                                  />
+                                ) : (
+                                  <View
+                                    className='enrollment-player-avatar-text'
+                                    style={{ backgroundColor: generateAvatarColor(item.player2?.name || '') }}
+                                  >
+                                    <Text className='enrollment-player-avatar-text-content'>
+                                      {getAvatarText(item.player2?.name || '')}
+                                    </Text>
+                                  </View>
+                                )}
+                                {item.player2?.gender !== undefined && (
+                                  <View className={`enrollment-gender-badge ${item.player2.gender === 1 ? 'male' : 'female'}`}>
+                                    <Text className='enrollment-gender-icon'>{item.player2.gender === 1 ? '♂' : '♀'}</Text>
+                                  </View>
+                                )}
+                                <Text className='enrollment-player-name'>{item.player2?.name || '未知'}</Text>
+                              </>
+                            ) : null}
                           </View>
                         </>
                       )}
@@ -1466,15 +1540,22 @@ export default class MatchDetail extends Component {
                 <View className='game-card-content'>
                   {/* 左侧队伍 */}
                   <View className='game-team game-team-left'>
-                    <View className='game-player-row'>
+                    <View
+                      className={'game-player-row' + (isOpenSlotPlayer(game.player1) ? ' game-player-row-open' : '')}
+                      onClick={isOpenSlotPlayer(game.player1) ? () => this.handleClaimOpenSlot(game, 1) : undefined}
+                    >
                       <View className='game-player-name'>
                         <View className='game-player-name-wrapper'>
                           <Text className='game-player-name-text'>
-                            {game.player1?.name || '未知'}
+                            {isOpenSlotPlayer(game.player1) ? '空位（点击报名）' : (game.player1?.name || '未知')}
                           </Text>
                         </View>
                       </View>
-                      {game.player1?.avatarValid && game.player1?.avatarUrl ? (
+                      {isOpenSlotPlayer(game.player1) ? (
+                        <View className='game-player-avatar-open'>
+                          <Text className='game-player-avatar-open-text'>+</Text>
+                        </View>
+                      ) : game.player1?.avatarValid && game.player1?.avatarUrl ? (
                         <Image 
                           className='game-player-avatar'
                           src={game.player1.avatarUrl}
@@ -1482,7 +1563,6 @@ export default class MatchDetail extends Component {
                           onLongPress={(e) => game.player1?._id && this.handleAvatarLongPress(e, game.player1._id, game.player1.name)}
                           onError={() => {
                             console.error('玩家1头像加载失败:', game.player1?.avatarUrl)
-                            // 标记为无效，更新状态
                             this.handleAvatarError(game._id, 1)
                           }}
                         />
@@ -1499,15 +1579,22 @@ export default class MatchDetail extends Component {
                       )}
                     </View>
                     <View className='game-team-divider' />
-                    <View className='game-player-row'>
+                    <View
+                      className={'game-player-row' + (isOpenSlotPlayer(game.player2) ? ' game-player-row-open' : '')}
+                      onClick={isOpenSlotPlayer(game.player2) ? () => this.handleClaimOpenSlot(game, 2) : undefined}
+                    >
                       <View className='game-player-name'>
                         <View className='game-player-name-wrapper'>
                           <Text className='game-player-name-text'>
-                            {game.player2?.name || '未知'}
+                            {isOpenSlotPlayer(game.player2) ? '空位（点击报名）' : (game.player2?.name || '未知')}
                           </Text>
                         </View>
                       </View>
-                      {game.player2?.avatarValid && game.player2?.avatarUrl ? (
+                      {isOpenSlotPlayer(game.player2) ? (
+                        <View className='game-player-avatar-open'>
+                          <Text className='game-player-avatar-open-text'>+</Text>
+                        </View>
+                      ) : game.player2?.avatarValid && game.player2?.avatarUrl ? (
                         <Image 
                           className='game-player-avatar'
                           src={game.player2.avatarUrl}
@@ -1561,8 +1648,15 @@ export default class MatchDetail extends Component {
                   
                   {/* 右侧队伍 */}
                   <View className='game-team game-team-right'>
-                    <View className='game-player-row'>
-                      {game.player3?.avatarValid && game.player3?.avatarUrl ? (
+                    <View
+                      className={'game-player-row' + (isOpenSlotPlayer(game.player3) ? ' game-player-row-open' : '')}
+                      onClick={isOpenSlotPlayer(game.player3) ? () => this.handleClaimOpenSlot(game, 3) : undefined}
+                    >
+                      {isOpenSlotPlayer(game.player3) ? (
+                        <View className='game-player-avatar-open'>
+                          <Text className='game-player-avatar-open-text'>+</Text>
+                        </View>
+                      ) : game.player3?.avatarValid && game.player3?.avatarUrl ? (
                         <Image 
                           className='game-player-avatar'
                           src={game.player3.avatarUrl}
@@ -1587,14 +1681,21 @@ export default class MatchDetail extends Component {
                       <View className='game-player-name'>
                         <View className='game-player-name-wrapper'>
                           <Text className='game-player-name-text'>
-                            {game.player3?.name || '未知'}
+                            {isOpenSlotPlayer(game.player3) ? '空位（点击报名）' : (game.player3?.name || '未知')}
                           </Text>
                         </View>
                       </View>
                     </View>
                     <View className='game-team-divider' />
-                    <View className='game-player-row'>
-                      {game.player4?.avatarValid && game.player4?.avatarUrl ? (
+                    <View
+                      className={'game-player-row' + (isOpenSlotPlayer(game.player4) ? ' game-player-row-open' : '')}
+                      onClick={isOpenSlotPlayer(game.player4) ? () => this.handleClaimOpenSlot(game, 4) : undefined}
+                    >
+                      {isOpenSlotPlayer(game.player4) ? (
+                        <View className='game-player-avatar-open'>
+                          <Text className='game-player-avatar-open-text'>+</Text>
+                        </View>
+                      ) : game.player4?.avatarValid && game.player4?.avatarUrl ? (
                         <Image 
                           className='game-player-avatar'
                           src={game.player4.avatarUrl}
@@ -1619,7 +1720,7 @@ export default class MatchDetail extends Component {
                       <View className='game-player-name'>
                         <View className='game-player-name-wrapper'>
                           <Text className='game-player-name-text'>
-                            {game.player4?.name || '未知'}
+                            {isOpenSlotPlayer(game.player4) ? '空位（点击报名）' : (game.player4?.name || '未知')}
                           </Text>
                         </View>
                       </View>

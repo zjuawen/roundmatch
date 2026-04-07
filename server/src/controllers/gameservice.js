@@ -10,6 +10,7 @@ const sequelizeExecute = require("../utils/util").sequelizeExecute
 const successResponse = require("../utils/response").successResponse
 const errorResponse = require("../utils/response").errorResponse
 const ErrorCode = require("./errorcode")
+const { isOpenSlotPlayerId } = require("../constants/openSlot")
 
 // 云函数入口函数
 exports.main = async (request, result) => {
@@ -25,6 +26,10 @@ exports.main = async (request, result) => {
     // 从请求参数中获取操作者信息（小程序端传递的openid）
     const operator = event.openid || request.openid || request.user?.openid || 'unknown'
     data = await saveGameData(event.clubid, event.gamedata, operator, 'wechat')
+    if (data && data.errMsg && data.stats && data.stats.updated === 0) {
+      errorResponse(result, ErrorCode.VALIDATION_ERROR, data.errMsg)
+      return
+    }
   } else if (action == 'read') {
     // data = await readGameData(event.clubid, event.gameid)
   }
@@ -59,6 +64,11 @@ exports.updateScore = async (request, result) => {
 
     if (!game) {
       return errorResponse(result, ErrorCode.ERROR_DATA_NOT_EXIST, '比赛数据不存在')
+    }
+
+    const slotCheck = [game.player1, game.player2, game.player3, game.player4]
+    if (slotCheck.some(s => isOpenSlotPlayerId(s))) {
+      return errorResponse(result, ErrorCode.VALIDATION_ERROR, '尚有未报名空位，无法修改比分')
     }
 
     // 记录操作流水
@@ -287,6 +297,14 @@ saveGameData = async (clubid, gamedata, operator = null, operatorType = 'wechat'
         updated: 0
       },
       errMsg: 'no record found!'
+    })
+  }
+
+  const slotIds = [old.player1, old.player2, old.player3, old.player4]
+  if (slotIds.some(s => isOpenSlotPlayerId(s))) {
+    return ({
+      stats: { updated: 0 },
+      errMsg: '尚有未报名空位，无法录入比分'
     })
   }
 

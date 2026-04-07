@@ -388,6 +388,63 @@
   width: 100%; /* 确保占满父容器宽度 */
 }
 
+.game-player-row-open {
+  opacity: 0.95;
+}
+
+.game-player-avatar-open {
+  width: 52rpx;
+  height: 52rpx;
+  border-radius: 50%;
+  border: 2rpx dashed #9ccc65;
+  background-color: #f1f8e9;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.game-player-avatar-open-text {
+  font-size: 32rpx;
+  color: #7cb342;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.enrollment-open-hint {
+  padding: 12rpx 16rpx;
+  margin-bottom: 12rpx;
+  background: #fff8e1;
+  border-radius: 10rpx;
+  border-left: 4rpx solid #ffc107;
+}
+
+.enrollment-open-hint-text {
+  font-size: 24rpx;
+  color: #795548;
+  line-height: 1.5;
+}
+
+.enrollment-player-avatar-open {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  border: 2rpx dashed #bdbdbd;
+  background-color: #fafafa;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.enrollment-player-avatar-open-text {
+  font-size: 22rpx;
+  color: #9e9e9e;
+}
+
+.enrollment-player-name-open {
+  color: #9e9e9e !important;
+}
+
 /* 左侧队伍：名称在左，头像在右 */
 .game-team-left .game-player-row {
   justify-content: flex-start; /* 左对齐 */
